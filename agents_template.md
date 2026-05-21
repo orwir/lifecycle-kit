@@ -270,4 +270,4 @@ Where the template's defaults assume a long-running service, here's how each pro
 
 ## When to update the template itself
 
-If you've kickstarted two or more projects with this template and noticed the same paragraph getting hand-edited the same way each time, that paragraph is wrong and the template should be updated. Open a PR to this file — improvements compound across every future project. Conversely, if a section keeps getting deleted on copy, consider whether it belongs in `project_kickstart.md` instead, since the template should be terser than the playbook.
+If you've kickstarted two or more projects with this template and noticed the same paragraph getting hand-edited the same way each time, that paragraph is wrong and the template should be updated. Edit the canonical gist (then re-sync each project's mirror) — improvements compound across every future project. Conversely, if a section keeps getting deleted on copy, consider whether it belongs in `project_kickstart.md` instead, since the template should be terser than the playbook.
