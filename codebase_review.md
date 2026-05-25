@@ -80,7 +80,7 @@ The 12 phases below cover most full-stack Python services. Skip irrelevant phase
 | N+3 | Operations & deployment | Docker, CI, backups, release |
 | N+4 | Final passes | Self-enforcing rules, doc sweep, close out |
 
-**Domain phase count.** The 7..N row expands to as many phases as the project has critical subsystems — typically 2–4. Two slots is fine for a small service (e.g. LLM + safety). A richer service often needs 3–4: a *foundation* layer (providers / integrations), an *orchestration* layer (pipelines, dispatchers), a *cross-cutting gate* (safety / authz), and a *settlement* layer (billing, accounting). When in doubt, give an orchestration layer or a strict-liability surface its own phase rather than folding it into a neighbour — both have subtle correctness logic that benefits from focused review. Order domain phases by execution flow (foundation → orchestration → gate → settlement) so each phase's findings are concrete by the time the dependent phase is picked up.
+**Domain phase count.** The 7..N row expands to as many phases as the project has critical subsystems — typically 2–4. Two slots is fine for a small service. A richer service often needs 3–4 layers along the lines of: a *foundation* layer (external integrations, providers), an *orchestration* layer (pipelines, dispatchers), a *cross-cutting gate* (validation, safety, authz), and a *settlement* layer (anything with strict bookkeeping — billing, accounting, state machines). Translate these labels to your domain: an LLM service might hit all four; a Windows overlay might have only *capture* and *render*; a CLI tool might collapse to a single *commands* phase. What matters is that each layer with its own correctness logic gets a focused phase. When in doubt, give an orchestration layer or a strict-liability surface its own phase rather than folding it into a neighbour — both have subtle correctness logic that benefits from focused review. Order domain phases by execution flow (foundation → orchestration → gate → settlement) so each phase's findings are concrete by the time the dependent phase is picked up.
 
 ### Cross-phase working habits
 
@@ -101,6 +101,10 @@ Rules that apply throughout, not in any one phase.
 
 - **First deliverable per task is analysis, not code.** Surface findings + suggested changes; commit only after the user authorises.
 - **Broken state between phases is fine.** Failing tests are acceptable mid-phase; fix at phase or session boundaries.
+
+**Project layout.**
+
+- **Substitute `packages apps` with your project's source roots** throughout the grep / find / coverage recipes below. The template uses `packages apps` as a stand-in (a common Python monorepo layout); your project may use `src/`, `lib/`, `internal/`, `cmd/`, or a single nested package. Decide the substitution once at the start of Phase 0 and apply it consistently — the commands won't run as-written on a layout that doesn't have a top-level `packages/`.
 
 ### Phase 0 sub-checks — baseline & ground rules
 
@@ -228,7 +232,7 @@ For each load-bearing name in 3.X:
   - *Residue from superseded assumption* — the shape outlived its reason. Severity: `Drift` (architectural). Action: surface the simplification with a decision-shape item so the maintainer picks the new boundary; don't unilaterally rewrite a load-bearing abstraction.
   - *Coupled residue* — the residue can't be peeled off without restructuring (e.g. the cache and the decorator are bound together — removing the cache re-introduces the perf problem the cache was fixing). Treat as one action item, not two; the split is the wrong axis.
 
-A standing example: a moderation decorator was wired around every LLM call because the original design wanted to moderate every hop. Later revisions narrowed pre-check to one hop's worth of user intent and added a per-request cache to keep the decorator from re-moderating across hops. The surviving justification was "moderate user intent once per request", but the implementation was still "decorator at every hop + cache". The audit said: decorator + cache are coupled residue; the new shape is "single gate called once at request entry."
+A standing example (from a Discord LLM service — translate the shape to your domain): a moderation decorator was wired around every LLM call because the original design wanted to moderate every hop. Later revisions narrowed pre-check to one hop's worth of user intent and added a per-request cache to keep the decorator from re-moderating across hops. The surviving justification was "moderate user intent once per request", but the implementation was still "decorator at every hop + cache". The audit said: decorator + cache are coupled residue; the new shape is "single gate called once at request entry."
 
 Do NOT pattern-match on superficial cues (long file, many imports, deeply nested logic). The signal is the *delta* between what the rationale needs now and what the implementation does. A short, simple file can still be residue; a long, complex one can still be load-bearing.
 
