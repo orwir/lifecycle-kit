@@ -60,7 +60,14 @@ For the full rationale behind any rule, read [CONTRIBUTING.md](CONTRIBUTING.md) 
   - Subject in imperative mood, no trailing period, under 72 characters.
   - Body (when used) explains **why**, not what. The diff shows what.
 - Never use `--no-verify` to bypass hooks. If a hook fails, fix the underlying issue. If the hook is wrong, say so and propose a fix — do not skip.
-- Never create a commit the user did not explicitly ask for. Approval to *implement* a task is not approval to *commit* it — after writing code, surface the diff and pause. The same gate applies to `git push`, `gh pr create`, and `gh pr merge`. Auto mode is permission to write code without re-asking, not permission to land it.
+
+## Task workflow — three phases
+
+Every tracked task moves through three explicit phases. **Do not collapse them** — each gate is the user's, not yours to assume.
+
+1. **Clarify.** Read the ticket and/or description, ask for any missing detail, and surface scope or constraint conflicts *before* writing code. Move the board item to `In Progress` when you pick it up. Implementation does not begin until the details are clear — whether from the ticket, added clarification, or the discussion.
+2. **Implement & stop.** Do the work in full: code, tests, docs, fixtures. Run the local gate (lint + tests). Then **stop and hand back for review** — leave the changes **uncommitted** in the working tree. If review turns up corrections, work them out here and stop again. Do **not** commit, push, or close anything in this phase.
+3. **Complete — on explicit approval only.** An explicit go-ahead ("complete the task", "lgtm", or equivalent) is the *only* trigger to commit the task work, push, close the ticket, and move the board item to `Done`. No approval → no commit, no push, no close. The same gate applies to `git push`, `gh pr create`, and `gh pr merge` — auto mode is permission to write code without re-asking, not permission to land it.
 
 ## Code layout
 
@@ -81,6 +88,14 @@ For the full rationale behind any rule, read [CONTRIBUTING.md](CONTRIBUTING.md) 
   - **Group under Added / Changed / Fixed / Removed once per version.** Collapse duplicate section headers within a release.
   - **No rationale prose.** "In production this lands at…", "we did this because…", "which means…" belong in the commit message or PR description. Drop the effect clause when it just restates the mechanism.
 - The release process is documented as a numbered checklist in [CONTRIBUTING.md § Releasing](CONTRIBUTING.md). Do not invent shortcuts.
+
+## Release workflow — three phases
+
+Releases run in three explicit phases too, mirroring the task workflow. Full mechanics (commands, file targets, post-merge steps) live in [CONTRIBUTING.md § Releasing](CONTRIBUTING.md); this section is the contract.
+
+1. **Prepare.** Decide the next version yourself from [semver](https://semver.org/) based on the changes since the last release (breaking → major, additive → minor, fixes only → patch) — unless the user names a specific version. Bump the version string in `{{VERSION_FILE}}`, date the CHANGELOG entry, complete any doc-sync, commit, and open the `{{INTEGRATION_BRANCH}} → {{PRODUCTION_BRANCH}}` release PR. All reversible inside this phase; no extra approval needed.
+2. **Review.** **Stop** and surface the PR URL plus a one-paragraph summary. Wait for explicit "proceed". Work out any corrections here, then stop again.
+3. **Ship — on explicit approval only.** The "proceed" authorizes the entire ship phase in one batch: merge the release PR, push the `vX.Y.Z` tag, fast-forward the integration branch, publish the GitHub release, close the milestone, and verify post-deploy. A prior "do the release" instruction does **not** extend past the review checkpoint — only the phase-3 approval does. The publish steps (PR merge + tag push) are irreversible.
 
 ## Tests and quality gates
 
@@ -164,8 +179,7 @@ Only after this checklist passes should you report the task as done.
 ## Executing actions
 
 - Carefully consider blast radius before destructive actions. Freely: edit files, run tests locally, create feature branches. Confirm first: `git reset --hard`, `git push --force`, force-pushing, deleting branches, dropping {{database/state-store}} tables, amending published commits, pushing to shared remotes, publishing to a registry, uploading a release artifact.
-- Tool approval in one scope does not extend to other scopes. `git commit` approval is not `git push` approval, and "proceed with the implementation" is not commit approval.
-- **Release checkpoints.** Releases run in three phases (full description in `CONTRIBUTING.md § Releasing`): **prepare** (version bump, CHANGELOG, commit, push integration branch, open release PR — reversible, no extra approval), **review** (stop and surface PR URL plus summary, wait for explicit "proceed"), **ship** (merge, tag push, integration-branch fast-forward, GitHub release, milestone close, verification — one batch on that approval). A prior "do the release" instruction does not extend past the review checkpoint; the "proceed" there authorizes the entire ship phase without further per-step prompts.
+- Tool approval in one scope does not extend to other scopes (see the *Task workflow* and *Release workflow* sections for the per-workflow gates).
 - If you hit unfamiliar files, branches, or config, investigate before deleting — it may be the user's in-progress work.
 - When running into a failing check, diagnose the root cause. Do not bypass with `--no-verify`, test-skip markers, lint-suppress comments, or similar. Ask the user if you're stuck.
 
