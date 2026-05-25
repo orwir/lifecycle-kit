@@ -51,6 +51,15 @@ project/
 └── <pkg manifest>              # pyproject.toml, package.json, go.mod, Cargo.toml, …
 ```
 
+### Day-zero guardrails
+
+Before your first commit lands, wire up a local hook config that runs the same checks as CI. The principle (covered in depth in *Pre-commit: local == CI* later in this doc) is that identical commands run at every layer — editor, local git hook, CI — so a check passing locally means it passes CI. Two stages, distinct loops:
+
+- **Commit-stage (fast loop, changed files only):** linter, formatter, trailing-whitespace / config-file (YAML / TOML / JSON) sanity checks, large-file guard, **secret scan** (e.g. gitleaks). Should add no perceivable latency to `git commit`.
+- **Push-stage (CI-parity gate, full tree):** linter and formatter re-run on the **entire source tree** (not just changed files), the **full test suite**, and the **same coverage threshold CI enforces**. If a project skips the coverage threshold in the hook, the floor isn't actually enforced — CI catches it minutes later, after the push has already landed and the assistant has moved on.
+
+The exact tools depend on language (lint/format/test-runner names differ across Python, Go, Rust, TypeScript, Swift, etc.), but the *category list above* is constant. Get all of it in place before the first feature commit — retrofitting hooks after dozens of commits means a noisy "fix everything" pass, which discourages the cleanup that's the whole point.
+
 ### Split transport from logic
 
 Whatever your language, separate **entry points** from **reusable logic**.
