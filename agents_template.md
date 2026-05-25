@@ -104,7 +104,7 @@ Releases run in three explicit phases too, mirroring the task workflow. Full mec
 - Coverage floor is `{{COVERAGE_FLOOR}}%` and enforced by both pre-commit (pre-push stage) and CI. If your change drops coverage below the floor, add tests, don't lower the floor.
 - Integration tests hit real I/O ({{e.g., a real SQLite database, a real filesystem, a real local HTTP listener}}). **Do not mock the {{primary-side-effect target}} in integration tests.** Unit tests of pure functions are fine without it.
 - Lint + format: `{{LINT_TOOL}}` only ({{e.g., `ruff`, `eslint` + `prettier`, `gofmt` + `golangci-lint`, `rustfmt` + `clippy`, `swiftlint` + `swift-format`}}). Never introduce competing tools that do the same job — pick one per role and stick with it.
-- Pre-commit is wired to run the same commands as CI. If something passes locally, it should pass CI.
+- Pre-commit hooks are wired to run the same commands as CI. If something passes locally, it should pass CI. **If this project lacks a local hook config covering lint, format, full test suite, coverage threshold, and secret scan**, set one up before the first commit — see [project_kickstart.md § Day-zero guardrails](docs/guides/project_kickstart.md). Coverage threshold and lint checks should fail the *push*, not just CI.
 
 ## Documentation
 
