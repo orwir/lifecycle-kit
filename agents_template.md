@@ -99,7 +99,7 @@ For the full rationale behind any rule, read [CONTRIBUTING.md](CONTRIBUTING.md) 
   - `CHANGELOG.md` — release history
   - `docs/product/` — vision, requirements, the "what" and "why"
   - `docs/architecture/` — the "how": components, data flow, config reference
-  - `docs/guides/` — task-oriented howtos (deploy / publish / package, extend, kickstart)
+  - `docs/guides/` — task-oriented howtos (deploy / publish / package, extend, kickstart, comprehensive review)
   - `docs/adr/` — architecture decision records, one per significant choice
 - **Do not create new documentation files unprompted.** Work from conversation context; if you need to capture a decision, suggest an ADR and wait for approval.
 - **Do not recreate `roadmap.md`** or any equivalent tracking file. Tracked work lives on GitHub: issues, milestones, the project board.
@@ -195,6 +195,7 @@ Only after this checklist passes should you report the task as done.
 - Do not mock the {{primary-side-effect target}} in integration tests.
 - Do not add `print()` / `console.log` / `println!` for debugging — use the project's structured logger.
 - Do not add dependencies casually. New dependencies need a reason that justifies the supply-chain surface.
+- Do not improvise a comprehensive-review process — when asked for one, follow `docs/guides/codebase_review.md`.
 
 ## When in doubt
 
