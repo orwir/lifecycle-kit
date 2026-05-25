@@ -11,19 +11,23 @@ mirrors.
   user-facing-surface foundation, what to grow / what to skip).
 - **`agents_template.md`** — copy-and-fill skeleton for a new repo's `AGENTS.md`
   (the operating contract AI assistants read).
+- **`codebase_review.md`** — 12-phase comprehensive-review template for solo-
+  maintained Python repos. Run after a heavy build phase to catch drift, dead
+  code, and quiet bugs; plan lives in `docs/reviews/` as a permanent record.
 
 ## Use in a project
 
-Mirror both files into the repo and point `AGENTS.md` at the kickstart as the
+Mirror the files into the repo and point `AGENTS.md` at the kickstart as the
 "why":
 
 ```bash
 base=https://gist.githubusercontent.com/orwir/d288ef4ec7dcb37a4cd3e9ae2019c037/raw
 curl -sL "$base/project_kickstart.md" -o docs/guides/project_kickstart.md
 curl -sL "$base/agents_template.md"   -o docs/guides/agents_template.md
+curl -sL "$base/codebase_review.md"   -o docs/guides/codebase_review.md
 ```
 
-Re-run the same two lines to pull the latest after editing the canonical here.
+Re-run the same lines to pull the latest after editing the canonical here.
 
 ## Edit the canonical
 
