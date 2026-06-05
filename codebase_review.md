@@ -1,6 +1,6 @@
 # Codebase review template
 
-When the user asks for a comprehensive codebase review (multi-phase walk through every layer to catch drift, dead code, and quiet bugs after a heavy build phase), follow this template. Optimised for: solo-maintained Python repos, work-as-you-go execution, plan kept in `docs/reviews/` as historical record with selective GitHub issues for cross-cutting follow-ups.
+When the user asks for a comprehensive codebase review (multi-phase walk through every layer to catch drift, dead code, over-engineering, and quiet bugs after a heavy build phase), follow this template. Optimised for: solo-maintained Python repos, work-as-you-go execution, plan kept in `docs/reviews/` as historical record with selective GitHub issues for cross-cutting follow-ups.
 
 ## When to use this template
 
@@ -10,6 +10,8 @@ Run this template when accumulated drift is felt but hard to name — typically 
 - Sub-week projects — the payback isn't there.
 - Active feature work on the same surface — the codebase is moving; reviews need a stable target.
 - Pre-launch hardening — that's a security review (Phase 5 alone), not a 12-phase walk.
+
+**Minimum viable review.** When a full pass is too heavy right now, run Phase 0 → Phase 1 → Phase 3 → close-out and skip the rest deliberately: baseline, doc truth-up, the architecture/simplification audit, delta + ledger. That loop catches the highest-value drift; an abandoned full template catches nothing.
 
 If an early phase produces severe findings (architectural rot, security exposure), surface them and pause — escalating those is itself a valid output of the review.
 
@@ -24,16 +26,18 @@ Concrete stance the reviewer holds throughout:
 - **Coupled residue lands together.** If removing the cache forces removing the decorator, treat them as one action item, not two — the split is the wrong axis. A half-removal often re-introduces the original perf or correctness problem the residue was masking.
 - **Watch for "no abstractions for single-use code."** Generic decorators, protocols, factories that have exactly one caller and one implementation are residue from a planned-but-cancelled second user. Either ship the second user or collapse the abstraction.
 
-This stance is operationalised in the phase sub-checks; the reviewer doesn't need to remember to apply it ad hoc.
+**Simplification proposals are a first-class deliverable, not a by-product.** Accumulation is the default direction of drift — every feature adds, almost nothing removes — and the bill lands on performance, maintainability, and everything built on top. The review is the scheduled counterweight: every phase is expected to surface removal and collapse candidates alongside its findings, the close-out aggregates them into a ranked ledger (12.4), and a review whose output is purely additive (more tests, more docs, more checks) almost certainly didn't look hard enough.
+
+This stance is operationalised in the phase sub-checks and the cross-phase habits below; the reviewer doesn't need to remember to apply it ad hoc.
 
 ## How this template runs
 
 A 12-phase review is not a single sitting. Run it in passes — each phase is its own context-bounded unit, picked up cold from the plan file when you start it.
 
-1. **Pass 1 — Skeleton.** One session. Fill in the phase table (skip irrelevant phases; customise Phase 7/8 for the project's domain), capture Phase 0 baseline metrics, write the file header. Don't try to write sub-check detail for phases beyond 0 yet — the template's sub-checks are enough; project-specific Phase 7/8 detail gets written when those phases are picked up, not now.
-2. **Pass 2 — Per-phase analysis.** One session per phase (or per tight cluster). Pick up the plan, re-read it end-to-end, run the phase's sub-checks, produce findings and proposed action items, surface to the user. Authorize, then execute the action items in the same session if cheap, otherwise defer to a follow-up session.
+1. **Pass 1 — Skeleton.** One session. Fill in the phase table (skip irrelevant phases; customise the domain phases for the project), capture Phase 0 baseline metrics, write the file header. Don't try to write sub-check detail for phases beyond 0 yet — the template's sub-checks and starter lists are enough; project-specific domain-phase detail gets written when those phases are picked up, not now.
+2. **Pass 2 — Per-phase analysis.** One session per phase (or per tight cluster). Pick up the plan, re-read it end-to-end, run the phase's sub-checks, produce findings and proposed action items, and surface them to the user. Once the user authorizes, execute the cheap action items in the same session and defer the rest to a follow-up session.
 3. **Pass 3 — Execution and revisits.** Action items often span sessions; the lifecycle markers (`Open` / `Done` / `Deferred → #issue`) keep the plan honest across resumptions.
-4. **Pass 4 — Close-out.** Phase 12. Re-run the baseline, populate the delta table, confirm every deferred item has an issue, delete the plan file.
+4. **Pass 4 — Close-out.** The final phase (12 in the default layout). Re-run the baseline, populate the delta table, compile the simplification ledger, file issues for the issue-worthy deferred items and leave the rest `[DEFERRED]` for the next review. The plan file stays in `docs/reviews/` permanently — don't delete it (see [Phase 12.5](#closing-out-phase-12)).
 
 **Per-phase context discipline.** When you pick up a phase you should be able to start from: the plan file + the Phase 0 baseline + the project's contract docs. Don't depend on prior-session conversation memory — write findings and decisions into the plan, not into the chat.
 
@@ -41,13 +45,13 @@ A 12-phase review is not a single sitting. Run it in passes — each phase is it
 
 ## Working document
 
-Create `docs/reviews/YYYY-MM-codebase-review.md` (e.g. `docs/reviews/2026-Q2-codebase-review.md`). **Tracked** — the plan is a permanent historical record, not a throwaway. Past review docs are how [Phase 0.2](#02-ground-rules-read) of the *next* review picks up unresolved items.
+Create `docs/reviews/YYYY-MM-codebase-review.md` (or `YYYY-Q#`; e.g. `docs/reviews/2026-06-codebase-review.md`). **Tracked** — the plan is a permanent historical record, not a throwaway. Past review docs are how [Phase 0.2](#02-ground-rules-read) of the *next* review picks up unresolved items.
 
-The plan is a *living* document — the user will return between phases to surface findings, pick options, and authorise commits. Update findings and action items inline as work lands; the [Phase 12.2](#122-final-scan-re-run) baseline-vs-final delta table lives inside the plan, not as a separate artifact.
+The plan is a *living* document — the user will return between phases to surface findings, pick options, and authorise commits. Update findings and action items inline as work lands; the [Phase 12.2](#closing-out-phase-12) baseline-vs-final delta table lives inside the plan, not as a separate artifact.
 
 ## File header
 
-```markdown
+```
 # {project} — Comprehensive Review Plan
 
 Goal: {one line — usually "catch problems early after a heavy build phase, no overengineering"}
@@ -65,22 +69,24 @@ Goal: {one line — usually "catch problems early after a heavy build phase, no 
 
 The 12 phases below cover most full-stack Python services. Skip irrelevant phases and add domain-specific ones (e.g. ML pipeline review, frontend audit) as needed. Number contiguously.
 
-| Phase | Topic | Why |
-|---|---|---|
-| 0 | Baseline & ground rules | Establish what "done" looks like before changing anything |
-| 1 | Documentation truth-up | Fix doc drift first so claims are anchors during code work |
-| 2 | Repository hygiene | Cheap mechanical cleanups (artifacts, tombstones, **comment & docstring drift**) so later phases see real signal |
-| 3 | Architecture & layering | Validate boundaries hold; produce a concept landscape map; audit pattern duplication and ADR supersession |
-| 4 | Configuration | Env vars / settings / defaults |
-| 5 | Security | SQL surface, web endpoints, auth, secrets, deps |
-| 6 | Database & persistence | Schema, repo invariants, retention, migrations |
-| 7..N | Domain-specific phases (one per critical subsystem) | One key module at a time — see "Domain phase count" note below |
-| N+1 | Errors & observability | Exception hygiene, structured logs, health |
-| N+2 | Tests & coverage | Coverage gaps, mirror discipline, slow tests |
-| N+3 | Operations & deployment | Docker, CI, backups, release |
-| N+4 | Final passes | Self-enforcing rules, doc sweep, close out |
+| Phase | Topic                                               | Why                                                                                                              |
+| ----- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 0     | Baseline & ground rules                             | Establish what "done" looks like before changing anything                                                        |
+| 1     | Documentation truth-up                              | Fix doc drift first so claims are anchors during code work                                                       |
+| 2     | Repository hygiene                                  | Cheap mechanical cleanups (artifacts, tombstones, **comment & docstring drift**) so later phases see real signal |
+| 3     | Architecture & layering                             | Validate boundaries hold; produce a concept landscape map; audit pattern duplication and ADR supersession        |
+| 4     | Configuration                                       | Env vars / settings / defaults                                                                                   |
+| 5     | Security                                            | SQL surface, web endpoints, auth, secrets, deps                                                                  |
+| 6     | Database & persistence                              | Schema, repo invariants, retention, migrations                                                                   |
+| 7..N  | Domain-specific phases (one per critical subsystem) | One key module at a time — see "Domain phase count" note below                                                   |
+| N+1   | Errors & observability                              | Exception hygiene, structured logs, health                                                                       |
+| N+2   | Tests & coverage                                    | Coverage gaps, mirror discipline, slow tests                                                                     |
+| N+3   | Operations & deployment                             | Docker, CI, backups, release                                                                                     |
+| N+4   | Final passes                                        | Self-enforcing rules, doc sweep, close out                                                                       |
 
 **Domain phase count.** The 7..N row expands to as many phases as the project has critical subsystems — typically 2–4. Two slots is fine for a small service. A richer service often needs 3–4 layers along the lines of: a *foundation* layer (external integrations, providers), an *orchestration* layer (pipelines, dispatchers), a *cross-cutting gate* (validation, safety, authz), and a *settlement* layer (anything with strict bookkeeping — billing, accounting, state machines). Translate these labels to your domain: an LLM service might hit all four; a Windows overlay might have only *capture* and *render*; a CLI tool might collapse to a single *commands* phase. What matters is that each layer with its own correctness logic gets a focused phase. When in doubt, give an orchestration layer or a strict-liability surface its own phase rather than folding it into a neighbour — both have subtle correctness logic that benefits from focused review. Order domain phases by execution flow (foundation → orchestration → gate → settlement) so each phase's findings are concrete by the time the dependent phase is picked up.
+
+**Phase numbers in this template.** The sub-check sections below carry the numbers of the default layout — exactly two domain phases, so security = 5, tests = 10, close-out = 12. If your table has more or fewer domain phases, renumber on use; the topics are canonical, not the numbers.
 
 ### Cross-phase working habits
 
@@ -96,6 +102,11 @@ Rules that apply throughout, not in any one phase.
 - **Don't recommend refactors *because* two files share a prefix or a word.** Architecture-driven layering produces false positives; verify before recommending.
 - **Findings get numbered per phase; action items get slugs.** A finding is `P3 #5` (phase + number — number resets each phase). An action item is a kebab-case slug like `` `cog-coverage` `` that is unique across the whole plan, memorable in conversation, greppable, and survives into commit messages and (when relevant) issue titles. Action items cite which findings they address (`Addresses P10 #3, #4`).
 - **Severity is a commitment.** Each label changes the default action — pick deliberately, don't default to `Drift` for everything.
+
+**Simplification.**
+
+- **Every phase closes with "what can go?"** Before marking a phase done, write a one-line answer: what did this phase reveal that can be deleted, collapsed, or made cheaper (dead config, single-caller abstractions, per-call work that could be per-process, N+1 queries, redundant test layers)? "Nothing" is a valid answer — but it must be written. Skipping the question is how bloat survives reviews.
+- **Prefer the diff that removes.** When a finding admits both an additive fix (wrap, guard, extend) and a subtractive one (delete, inline, collapse), recommend the subtractive shape by default; an additive recommendation needs a stated reason.
 
 **Pace.**
 
@@ -114,7 +125,7 @@ Capture the starting state mechanically and read the project's contract document
 
 Run and record results in the plan. These become the "Baseline" column of the Phase 12.2 delta table.
 
-```bash
+```
 # Lint
 ruff check . | tail -5
 ruff format --check . | tail -5
@@ -127,17 +138,21 @@ pytest --cov --cov-report=term | tail -5  # coverage
 # Repo size
 git ls-files | wc -l
 find packages apps -name "*.py" | xargs wc -l | tail -1
+
+# Top-10 largest source files — bloat radar, feeds Phase 3
+find packages apps -name "*.py" -printf "%s %p\n" | sort -rn | head -10
 ```
 
 Capture the numbers, not the full output. Standard table:
 
-| Metric | Baseline ({date}) |
-|---|---|
-| Ruff issues | 0 |
-| Pytest passed | 1369 |
-| Coverage | 86% |
-| Wall time | 40s |
-| Source lines (`packages/` + `apps/`) | 21,514 |
+| Metric                               | Baseline ({date}) |
+| ------------------------------------ | ----------------- |
+| Ruff issues                          | 0                 |
+| Pytest passed                        | 1369              |
+| Coverage                             | 86%               |
+| Wall time                            | 40s               |
+| Source lines (`packages/` + `apps/`) | 21,514            |
+| Direct dependencies (manifest)       | 14                |
 
 Add repo-specific rows (open issues, project-board state, deploy version) when they're useful evidence later.
 
@@ -158,14 +173,17 @@ Fix doc drift first so claims are anchors during the rest of the review. Code ca
 
 - **README claims vs `--help`.** Every command, flag, and example in the README should match the actual CLI / API. Run the examples.
 - **Env vars: `.env.example` vs source.** Grep the codebase for env reads; every key that influences behavior should be in `.env.example` with a one-line comment.
-  ```bash
-  grep -rEn "os\.environ|getenv|os\.getenv" packages apps --include="*.py"
-  ```
+
+```
+grep -rEn "os\.environ|getenv|os\.getenv" packages apps --include="*.py"
+```
+
 - **Version string single-source.** Grep for the version string; it should appear in exactly one place. Every reader (deploy workflow, health endpoint, Docker tags) should read from there, not duplicate.
 - **CHANGELOG vs git tags.** Every released tag should have a CHANGELOG section; every CHANGELOG section above the unreleased line should have a tag.
 - **ADR status accuracy.** Each ADR's Status (Proposed / Accepted / Superseded / Deprecated) should match reality. A "Proposed" ADR for a decision shipped six months ago is drift.
 - **Link rot.** Resolve every cross-link in `docs/`. Broken anchors are silent failures.
 - **Module / class docstrings claiming "this calls X" or "used by Y."** Drift candidates — spot-check the high-traffic modules.
+- **Frozen records are exempt.** `docs/reviews/*` and `docs/product/idea.md` are point-in-time; don't flag them for drift against current code.
 
 Severity is usually `Drift`. A wrong env-var name in the README, a `--help` example that crashes, or a CHANGELOG that omits a breaking change escalates to `Real bug`.
 
@@ -182,7 +200,7 @@ Most projects have rules like "comments explain *why*, not *what*" and "no PR-hi
 
 Grep starting points (Python, adjust for the language):
 
-```bash
+```
 # WHAT-comments — short single-line comments preceding obvious code
 grep -rEn "^\s*# [a-z]" packages/ apps/ --include="*.py"
 
@@ -201,9 +219,9 @@ After a heavy build phase the riskier questions aren't just "do the boundaries h
 
 #### 3.X Concept landscape map (do this first)
 
-Produce a one-page concept map *before* probing for issues. It makes the rest of Phase 3 — and the domain audits in Phases 7/8 — much faster, because you know what's load-bearing and what's incidental.
+Produce a one-page concept map *before* probing for issues. It makes the rest of Phase 3 — and the later domain-phase audits — much faster, because you know what's load-bearing and what's incidental.
 
-Delegate the architecture doc to an Explore agent (it's usually large; reading it in main context is wasteful). Ask for:
+Delegate the architecture doc to a read-only subagent (it's usually large; reading it in main context is wasteful). Ask for:
 
 - Subsystems with a one-line purpose
 - Cross-cutting patterns: handlers, registries, factories, decorators, value objects, services
@@ -227,10 +245,10 @@ For each load-bearing name in 3.X:
 - **Walk the ADR revisions and notable follow-up PRs.** A long Revisions trailer is a strong signal: every revision narrowed, removed, or substituted some part of the original. The justification is the *intersection* of what survived.
 - **Compare current shape against current justification.** If the shape is *strictly larger* than what the surviving justification demands — a per-call decorator when the check fires once per request, a request-scoped cache when only one verdict can occur per request, a ContextVar when the data can be passed directly — that excess is residue.
 - **Categorize each excess.** Adapt the pattern-duplication verdicts to this lens:
-  - *Load-bearing* — the shape really is justified by something the surviving rationale needs. Note it and move on; don't refactor for taste.
-  - *Defense-in-depth* — broader than strictly needed but cheap and guarding a real failure mode. Acceptable; document the failure mode in a comment if the docstring doesn't.
-  - *Residue from superseded assumption* — the shape outlived its reason. Severity: `Drift` (architectural). Action: surface the simplification with a decision-shape item so the maintainer picks the new boundary; don't unilaterally rewrite a load-bearing abstraction.
-  - *Coupled residue* — the residue can't be peeled off without restructuring (e.g. the cache and the decorator are bound together — removing the cache re-introduces the perf problem the cache was fixing). Treat as one action item, not two; the split is the wrong axis.
+  * *Load-bearing* — the shape really is justified by something the surviving rationale needs. Note it and move on; don't refactor for taste.
+  * *Defense-in-depth* — broader than strictly needed but cheap and guarding a real failure mode. Acceptable; document the failure mode in a comment if the docstring doesn't.
+  * *Residue from superseded assumption* — the shape outlived its reason. Severity: `Drift` (architectural). Action: surface the simplification with a decision-shape item so the maintainer picks the new boundary; don't unilaterally rewrite a load-bearing abstraction.
+  * *Coupled residue* — the residue can't be peeled off without restructuring (e.g. the cache and the decorator are bound together — removing the cache re-introduces the perf problem the cache was fixing). Treat as one action item, not two; the split is the wrong axis.
 
 A standing example (from a Discord LLM service — translate the shape to your domain): a moderation decorator was wired around every LLM call because the original design wanted to moderate every hop. Later revisions narrowed pre-check to one hop's worth of user intent and added a per-request cache to keep the decorator from re-moderating across hops. The surviving justification was "moderate user intent once per request", but the implementation was still "decorator at every hop + cache". The audit said: decorator + cache are coupled residue; the new shape is "single gate called once at request entry."
 
@@ -240,7 +258,7 @@ Findings shape: name the abstraction, quote the original justification, quote th
 
 #### 3.Y Pattern duplication audit
 
-Enumerate file-naming smells from the project tree, then probe each in parallel — one Explore agent per smell. This catches superseded patterns that still linger.
+Enumerate file-naming smells from the project tree, then probe each in parallel — one read-only subagent per smell. This catches superseded patterns that still linger.
 
 Smell candidates worth probing:
 
@@ -253,13 +271,13 @@ Smell candidates worth probing:
 
 For each smell, the agent's job is: read top-of-file docstrings, count external imports per candidate (`grep` the module path), check tests, look at git log when creation order matters. Ask for a one-line verdict per file from this set:
 
-| Verdict | Maps to severity | Action |
-|---|---|---|
-| **Live, distinct concern** | Acceptable | Don't touch; cite the ADR or layering rule that justifies the split |
-| **Stale leftover** | Cleanup | Delete; confirm no live importers |
-| **Thin shim** | Cleanup or Minor | Fold if the win is real (small file, single internal user); not urgent |
-| **Transitional** | Drift | Old + new both live — decide which way to finish |
-| **False alarm** | Acceptable | Same name, different concern. Note it so the next reviewer doesn't re-flag it |
+| Verdict                    | Maps to severity | Action                                                                        |
+| -------------------------- | ---------------- | ----------------------------------------------------------------------------- |
+| **Live, distinct concern** | Acceptable       | Don't touch; cite the ADR or layering rule that justifies the split           |
+| **Stale leftover**         | Cleanup          | Delete; confirm no live importers                                             |
+| **Thin shim**              | Cleanup or Minor | Fold if the win is real (small file, single internal user); not urgent        |
+| **Transitional**           | Drift            | Old + new both live — decide which way to finish                              |
+| **False alarm**            | Acceptable       | Same name, different concern. Note it so the next reviewer doesn't re-flag it |
 
 Most smells in a mature codebase resolve to *Live, distinct concern* — say so explicitly in the findings table so the user knows the pattern is intentionally not refactored.
 
@@ -278,6 +296,16 @@ In addition to the [cross-phase working habits](#cross-phase-working-habits) abo
 
 - **Don't merge classes whose split encapsulates per-instance state** (counter, lock, cache) just because one is only used by the other. The **file split** may be redundant; the **class split** usually isn't. A "primitive + router" pair where the primitive owns mutable per-instance state is almost always two classes pulling their weight — collapse the file, keep the classes.
 
+### Phase 4 sub-checks — configuration
+
+Config is a bloat magnet: keys outlive the features that read them, and "flexibility" settings spend years pinned to one value. The lens here is shrink-first.
+
+- **Dead keys.** Grep every key in `.env.example` and the settings module against actual reads. Defined-but-unread → delete the key, the doc line, and the plumbing (`Cleanup`).
+- **One-position switches.** Feature gates and mode flags that have held a single value since introduction: hardcode the value, delete the branch (`Drift` — the flexibility assumption eroded; cite git log as evidence).
+- **Default truth.** The default in code vs `.env.example` vs README — one value stated in three places is two bugs waiting (single-source check).
+- **Config-driven indirection with one configuration.** A setting that parameterizes behavior for exactly one caller with exactly one value ever used is the config flavor of a single-use abstraction — collapse it.
+- **Validation at the boundary.** Required config should fail fast at startup with the missing key's name; a service that boots half-configured and dies on first use is `Drift-prone`.
+
 ### Phase 5 sub-checks — security
 
 The smell here isn't subtle bugs; it's *quiet* exposure — secrets that leak in logs, endpoints that skip auth, deps with known CVEs. Walk the surface in this order; most repos have all five.
@@ -285,14 +313,19 @@ The smell here isn't subtle bugs; it's *quiet* exposure — secrets that leak in
 #### 5.1 Secrets
 
 - **Pre-commit secret scan over current state, not just diffs.**
-  ```bash
-  gitleaks detect --source . --no-banner
-  ```
+
+```
+gitleaks detect --source . --no-banner
+```
+
 - **Logging hygiene.** Grep for log calls that include known sensitive fields:
-  ```bash
-  grep -rEn "log\.(info|debug|warning|error).*\b(token|secret|key|password|api_key)\b" packages apps
-  ```
-  Log identifiers (key fingerprint, provider name), not values.
+
+```
+grep -rEn "log\.(info|debug|warning|error).*\b(token|secret|key|password|api_key)\b" packages apps
+```
+
+Log identifiers (key fingerprint, provider name), not values.
+
 - **`.env.example` cleanliness.** No real values, no copy-pasted production keys.
 
 #### 5.2 Dependencies
@@ -300,6 +333,7 @@ The smell here isn't subtle bugs; it's *quiet* exposure — secrets that leak in
 - **Known advisories.** Run the project's dep-audit tool (`pip-audit`, `npm audit`, `cargo audit`).
 - **Pinning policy.** Are majors pinned on security-sensitive deps (auth, crypto, web frameworks)?
 - **Transitive surface.** Spot-check the deepest deps; supply-chain risk lives there.
+- **Dependency diet.** Advisories aside: one line per direct dependency — what it does, and whether the stdlib or a smaller library now covers it. A dep with one call site (or none) is supply-chain surface and upgrade churn paid for nothing; collapse or drop. Feeds the 12.4 ledger.
 
 #### 5.3 Auth and authz
 
@@ -309,10 +343,13 @@ The smell here isn't subtle bugs; it's *quiet* exposure — secrets that leak in
 #### 5.4 Data surface
 
 - **SQL injection.** Grep for string-formatted SQL.
-  ```bash
-  grep -rEn 'f".*(SELECT|UPDATE|INSERT|DELETE)|format.*(SELECT|UPDATE|INSERT|DELETE)' packages apps
-  ```
-  Should be zero outside parameterized queries.
+
+```
+grep -rEn 'f".*(SELECT|UPDATE|INSERT|DELETE)|format.*(SELECT|UPDATE|INSERT|DELETE)' packages apps
+```
+
+Should be zero outside parameterized queries.
+
 - **Web endpoints.** Validate every input at the boundary; trust internal invariants. Spot-check for missing validation on user-controlled fields.
 - **Encryption boundaries.** Where does data become plaintext? Where does it stop being plaintext? Every transition is a checkpoint.
 
@@ -331,7 +368,7 @@ A passing suite with adequate coverage is necessary but not sufficient. Tests ac
 
 Mechanical counts that frame every later finding.
 
-```bash
+```
 # Test count (collection only — fast)
 pytest --collect-only -q | tail -5
 
@@ -353,7 +390,7 @@ Healthy ranges: test:source 0.8–1.5x for logic-heavy code; parametrize fan-out
 
 #### 10.B Coverage reality check (low *and* high)
 
-```bash
+```
 pytest --cov=packages --cov=apps --cov-report=term-missing
 ```
 
@@ -369,35 +406,42 @@ The highest line-count payoff of the phase. Each is a separate probe.
 
 - **Layered duplication.** Same code path tested in handler + pipeline + rendering + cog + e2e? The e2e is usually load-bearing; middle layers often re-assert the same thing with different mocks. Per layer, ask: *what does this assert that the layer above/below doesn't?* Verdicts: *Unique responsibility* (keep), *Overlapping with layer X* (trim to the unique cases), *Redundant* (delete).
 - **Mock-heavy fixtures.** A `MagicMock`-spawning helper driving N tests becomes brittle on every schema change.
-  ```bash
-  grep -rEn "MagicMock\(" tests/ --include="*.py" | cut -d: -f1 | sort | uniq -c | sort -rn | head -10
-  ```
-  Candidates to replace with typed builders or `SimpleNamespace`.
+
+```
+grep -rEn "MagicMock\(" tests/ --include="*.py" | cut -d: -f1 | sort | uniq -c | sort -rn | head -10
+```
+
+Candidates to replace with typed builders or `SimpleNamespace`.
+
 - **Trivial-assertion tests.** Tests that round-trip a getter, peek at private attributes (`obj._registry`), or assert framework validation. They lock implementation, not behavior.
 - **Excessive parametrize fan-out.** A single test with 50 cases on trivial variations. Healthy fan-outs sit under ~20 cases.
-  ```bash
-  grep -rEn "@pytest.mark.parametrize" tests/ --include="*.py" -A1
-  ```
+
+```
+grep -rEn "@pytest.mark.parametrize" tests/ --include="*.py" -A1
+```
+
 - **Snapshot / golden tests with no semantic value.** Tests that lock current output without claiming it's correct. Rename or replace with property-based assertions.
 
 #### 10.D Quality & rule signals
 
 - **Skip / xfail debt.** Each `pytest.mark.skip`, `xfail`, `skipif` is a TODO that pytest hides. Healthy projects have near-zero.
-  ```bash
-  grep -rEn "pytest\.mark\.(skip|xfail|skipif)" tests/ --include="*.py"
-  ```
+
+```
+grep -rEn "pytest\.mark\.(skip|xfail|skipif)" tests/ --include="*.py"
+```
+
 - **Smoke-only tests.** Test functions whose body has no `assert`. Either add a real assertion or delete.
 - **Project-rule violations.** Most projects have written or unwritten test rules — audit each one explicitly. Examples:
-  - "Don't mock the database in integration tests" → grep `MagicMock` / `mock.patch` inside integration test paths.
-  - "No `print()` in tests" → `grep -rEn "print\(" tests/`.
-  - "No external network in unit tests" → grep `requests.`, `httpx.`, `aiohttp.` outside fixtures.
+  * "Don't mock the database in integration tests" → grep `MagicMock` / `mock.patch` inside integration test paths.
+  * "No `print()` in tests" → `grep -rEn "print\(" tests/`.
+  * "No external network in unit tests" → grep `requests.`, `httpx.`, `aiohttp.` outside fixtures.
 - **Slowest tests.** From `pytest --durations=20`. A subprocess-heavy test at 1.5s is fine; a logic test at 0.5s usually has a heavy fixture or a real `sleep`.
 
 #### 10.E Mirror discipline
 
 If the project rule is `tests/` mirrors source 1:1:
 
-```bash
+```
 # Sketch — adapt for the actual layout
 comm -23 <(find packages apps -name "*.py" | sed 's|^|tests/|' | sort) \
          <(find tests -name "*.py" | sed 's|test_||' | sort)
@@ -415,9 +459,34 @@ A naive mirror script over-flags because nested packages can collapse into a sin
 - Coverage drops on prune are expected; coverage drops on *new code* are the real signal. Track separately in the Phase 12.2 delta table.
 - A passing suite with high coverage doesn't disprove bloat; that's exactly when bloat is hardest to spot.
 
+### Starter sub-checks — phases 6, N+1, N+3
+
+These phases don't get full sections; write their detail at pickup, seeded from the lists below and the 3.X landscape map.
+
+**Phase 6 — database & persistence:**
+
+- Schema vs models drift; unused tables and columns (grep for *writes*, not just reads).
+- Migrations replay cleanly on an empty database — the only test of migration health that counts.
+- Retention / cleanup jobs actually firing — check row timestamps, not the code.
+- Query count per canonical command: N+1s and per-call queries that could be batched or cached are simultaneously a perf finding and a simplification finding.
+
+**Phase N+1 — errors & observability:**
+
+- Bare and over-broad `except` sweeps; swallowed exceptions.
+- Exception hierarchy still single-rooted, and every subclass actually raised somewhere — unraised subclasses are dead code.
+- Log levels honest (errors that are warnings, info that is debug noise); re-run the 5.1 secrets grep over code added since.
+- `/health` truthful: it should fail when the service is unhealthy, not merely report that the process exists.
+
+**Phase N+3 — operations & deployment:**
+
+- Dockerfile against the kickstart essentials: pinned base, deps layer-cached from the lockfile, non-root, `HEALTHCHECK`.
+- CI workflows vs local hooks still running identical commands — the local==CI promise rots quietly.
+- Backup cron firing *and the restore tested* — a job that runs is not evidence the backup works.
+- Compose resource limits still sane against current memory reality.
+
 ## Per-phase format
 
-```markdown
+```
 ## Phase N — Topic
 
 [Optional 1-2 line "Why" if not obvious from the title]
@@ -452,21 +521,21 @@ Only include when the snapshot is itself useful evidence for findings.]
 
 Use exactly these labels — each carries an expectation:
 
-| Severity | Meaning | Default action |
-|---|---|---|
-| **Real bug** | Observable defect for users or operators | Fix this phase |
-| **Drift** | Code / docs out of sync with reality; not user-visible | Fix this phase if cheap; otherwise file follow-up |
-| **Drift-prone** | Pattern that will silently break in a known-future scenario (e.g. when multi-platform lands) | Document the trigger + plan; fix when activated |
-| **Cleanup** | Dead code, stale comments, unused exports | Fix this phase, mechanical |
-| **Minor** | Inconsistency, style, doc gap, log-level mismatch | Fix only if it's in the immediate diff |
-| **Acceptable** | Confirmed correct or appropriate trade-off | Leave; note for the record |
-| **Decision pending** | Needs maintainer's call (option A vs B vs C) | Surface to user with recommended option + rationale; don't act unilaterally |
+| Severity             | Meaning                                                                                      | Default action                                                              |
+| -------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| **Real bug**         | Observable defect for users or operators                                                     | Fix this phase                                                              |
+| **Drift**            | Code / docs out of sync with reality; not user-visible                                       | Fix this phase if cheap; otherwise file follow-up                           |
+| **Drift-prone**      | Pattern that will silently break in a known-future scenario (e.g. when multi-platform lands) | Document the trigger + plan; fix when activated                             |
+| **Cleanup**          | Dead code, stale comments, unused exports                                                    | Fix this phase, mechanical                                                  |
+| **Minor**            | Inconsistency, style, doc gap, log-level mismatch                                            | Fix only if it's in the immediate diff                                      |
+| **Acceptable**       | Confirmed correct or appropriate trade-off                                                   | Leave; note for the record                                                  |
+| **Decision pending** | Needs maintainer's call (option A vs B vs C)                                                 | Surface to user with recommended option + rationale; don't act unilaterally |
 
 ### Action-item lifecycle
 
 Each action item is a checkbox line keyed by a unique kebab-case slug. The slug is the action item's *name* — it stays the same as the item moves through Open / Done / Deferred and is the way you refer to it in conversation, commit messages, and (when issued) issue titles.
 
-```markdown
+```
 # Open
 - [ ] **`cog-coverage`** — Improve Discord cog test coverage. Addresses P10 #3, #4.
       Files / changes / tests.
@@ -503,7 +572,7 @@ The blocker note belongs in the *Action items* section of the blocking phase, no
 
 When an action item has more than one reasonable execution path, present them as letters with a recommendation:
 
-```markdown
+```
 - [ ] **`dep-pinning-policy`** — Decide on dependency pinning policy. Addresses #4. Three reasonable shapes:
   - **(A) Pin majors** — `discord.py>=2.3.2,<3.0.0`. One-time edit, no new tooling.
   - **(B) Lockfile via `pip-compile`** — reproducible, but ongoing bump churn.
@@ -515,7 +584,7 @@ The user picks; you implement. Don't act unilaterally on letter-shaped items.
 
 ## Closing out (Phase 12)
 
-```markdown
+```
 ### 12.1 Self-enforcing rules
 - Lock invariants noticed during the review as tests so they don't rot.
   Standard set: layer isolation, cross-transport import bans, single
@@ -529,12 +598,16 @@ The user picks; you implement. Don't act unilaterally on letter-shaped items.
 | Metric | Baseline ({date}) | Final ({date}) | Δ |
 |---|---|---|---|
 | Ruff issues | 0 | 0 | — |
-| Pytest passed | 1070 | 1117 | +47 |
-| Coverage | 92% | 84% | −8pt |
-| Wall time | 25.4s | 22.0s | −3s |
+| Pytest passed | 1369 | 1421 | +52 |
+| Coverage | 86% | 84% | −2pt |
+| Wall time | 40s | 36s | −4s |
+| Source lines | 21,514 | 20,818 | −696 |
+| Direct dependencies | 14 | 12 | −2 |
 
 Explain the deltas — coverage drops on real new code at <100% are
-expected and worth noting, not hiding.
+expected and worth noting, not hiding. For a maturing codebase, negative
+source-line and dependency deltas are a success signal, not an anomaly:
+the removal bias should be visible right here.
 
 ### 12.3 Doc + CHANGELOG sweep
 - For every commit landed during the review, confirm the relevant doc
@@ -546,8 +619,21 @@ expected and worth noting, not hiding.
   "as of #Y" before the review and now describe a state that has
   moved on.
 
-### 12.4 Close out
-- For every `[DEFERRED]` item, decide: does it meet the [issue-worthiness threshold](#action-item-lifecycle)? If yes, file as a GitHub issue with labels + project board, and update the line to `[DEFERRED → #N]`. If no, leave it as `[DEFERRED]` for the next review to pick up.
+### 12.4 Simplification ledger
+- Collect every removal / collapse action item from all phases into one
+  ranked table: slug, what it removes (lines / dep / abstraction / config
+  keys / test layers), status (Done / Deferred).
+- Surface the top deferred simplifications as decision shapes — the
+  maintainer should leave the review knowing the three biggest
+  simplification opportunities, even if none ship now.
+- An empty ledger means the review didn't look. If that's truly the state
+  of the codebase, write the sentence saying so — don't omit the section.
+
+### 12.5 Close out
+- For every `[DEFERRED]` item, decide: does it meet the issue-worthiness
+  threshold (see Action-item lifecycle)? If yes, file as a GitHub issue
+  with labels + project board, and update the line to `[DEFERRED → #N]`.
+  If no, leave it as `[DEFERRED]` for the next review to pick up.
 - The plan file stays in the repo as historical record. Don't delete it.
 ```
 
@@ -561,7 +647,9 @@ When updating the plan during a session, double-check:
 - [ ] Done action items have a one-line note about what shipped + commit ref.
 - [ ] Deferred items either have a GitHub issue number (`[DEFERRED → #N]`) — only for issue-worthy work — or are flagged `[DEFERRED]` to be picked up at the next review.
 - [ ] Cross-phase blocks are noted in the *blocking* phase, not the blocked one.
-- [ ] File / line references are markdown links: `[path:line](path#L123)`.
+- [ ] File / line references are markdown links: `[path:line](path#L123)`. Line anchors are fine here, unlike in ADRs — the plan is a point-in-time record; rot doesn't matter.
+- [ ] Every phase closed with a written one-line "what can go?" answer — even when the answer is "nothing".
+- [ ] Phase 12 includes the simplification ledger, with the top deferred simplifications surfaced as decision shapes.
 - [ ] Decision-shape items present options as `(A) / (B) / (C)` with a recommendation; don't act unilaterally on them.
 - [ ] Phase 2 covers comment & docstring hygiene against the project's "WHY not WHAT" rule, not just artifacts and tombstones.
 - [ ] Phase 3 produces a concept landscape map first (cite it in later phases), then runs the load-bearing assumption audit, pattern duplication, and ADR supersession against it.

@@ -2,7 +2,9 @@
 
 A language-agnostic, tech-agnostic recipe for standing up a new project that stays organized from day zero through its first few releases. Infrastructure opinions assume **Git + GitHub + Docker**; everything else (language, framework, test runner, package manager) is a drop-in choice.
 
-This playbook codifies the setup of [Murmur](https://github.com/orwir/murmur), a deployed production project. Everything described here has a living example in this repo you can point at.
+Everything here is extracted from deployed production projects, not theory. Keep one of your own as the living reference (see *Keep a living reference* at the end).
+
+Upstream of this playbook sits `idea_gauntlet.md` (mirrored alongside it): the gauntlet decides *whether* a project gets built, and its filled instance — `IDEA.md` at the folder root — is this playbook's input. This playbook starts once the gauntlet's answer is yes, and hands day-to-day operation to `AGENTS.md` and the issue board.
 
 ---
 
@@ -30,11 +32,11 @@ project/
 │   ├── pull_request_template.md
 │   ├── dependabot.yml
 │   └── SECURITY.md
-├── src/ (or apps/, packages/, cmd/, lib/, …)
+├── src/ (or apps/ + packages/ — see *Split transport from logic*)
 ├── tests/                      # mirrors src/ layout
 ├── docs/
 │   ├── README.md               # docs index
-│   ├── product/                # vision, requirements — the "what" and "why"
+│   ├── product/                # vision incl. CUJs; idea.md (frozen origins)
 │   ├── architecture/           # the "how" — components, data flow, design decisions
 │   ├── guides/                 # task-oriented howtos (deploy, extend, onboard)
 │   └── adr/                    # architecture decision records
@@ -46,7 +48,7 @@ project/
 ├── docker-compose.yml
 ├── README.md                   # entry point — what, install, use
 ├── CHANGELOG.md                # release history
-├── CONTRIBUTING.md              # how to work in this repo
+├── CONTRIBUTING.md             # how to work in this repo
 ├── LICENSE                     # or a proprietary notice
 └── <pkg manifest>              # pyproject.toml, package.json, go.mod, Cargo.toml, …
 ```
@@ -56,7 +58,7 @@ project/
 Before your first commit lands, wire up a local hook config that runs the same checks as CI. The principle (covered in depth in *Pre-commit: local == CI* later in this doc) is that identical commands run at every layer — editor, local git hook, CI — so a check passing locally means it passes CI. Two stages, distinct loops:
 
 - **Commit-stage (fast loop, changed files only):** linter, formatter, trailing-whitespace / config-file (YAML / TOML / JSON) sanity checks, large-file guard, **secret scan** (e.g. gitleaks). Should add no perceivable latency to `git commit`.
-- **Push-stage (CI-parity gate, full tree):** linter and formatter re-run on the **entire source tree** (not just changed files), the **full test suite**, and the **same coverage threshold CI enforces**. If a project skips the coverage threshold in the hook, the floor isn't actually enforced — CI catches it minutes later, after the push has already landed and the assistant has moved on.
+- **Push-stage (CI-parity gate, full tree):** linter and formatter re-run on the **entire source tree** (not just changed files), the type checker if the project uses one, the **full test suite**, and the **same coverage threshold CI enforces**. If a project skips the coverage threshold in the hook, the floor isn't actually enforced — CI catches it minutes later, after the push has already landed and the assistant has moved on.
 
 The exact tools depend on language (lint/format/test-runner names differ across Python, Go, Rust, TypeScript, Swift, etc.), but the *category list above* is constant. Get all of it in place before the first feature commit — retrofitting hooks after dozens of commits means a noisy "fix everything" pass, which discourages the cleanup that's the whole point.
 
@@ -79,18 +81,18 @@ If `src/llm/gemini.py` exists, `tests/llm/test_gemini.py` exists. No clever grou
 
 Every new project should have these on day zero. Each one has a single job; resist the urge to merge them.
 
-| File | Purpose | Single source of truth for |
-|---|---|---|
-| `README.md` | Entry point for anyone landing on the repo. What the project is, how to install, how to use, where to find more. | Project identity |
-| `CHANGELOG.md` | What changed between releases, grouped Added/Changed/Fixed/Removed. | Release history |
-| `CONTRIBUTING.md` | How to work in this repo: branching, local setup, release process, commit conventions. | Development workflow |
-| `LICENSE` | Legal terms of use. MIT/Apache-2.0/BSD for OSS, or an "All rights reserved" notice for closed-source. | Legal |
-| `.env.example` | Every environment variable the app reads, grouped Required/Optional, with inline comments on where to obtain each value. Never commit a real `.env`. | Runtime configuration shape |
-| `.gitignore` | What never enters git: secrets, build artifacts, venvs, caches, IDE config. | Repo hygiene |
-| Package manifest (`pyproject.toml`, `package.json`, `go.mod`, …) | Dependencies, tooling config, linter/formatter rules, **the version number**. | Build, deps, version |
-| `Dockerfile` | How to build a runnable container image. | Build recipe |
-| `docker-compose.yml` | How the container runs in context (volumes, network, sidecars, resource limits). | Runtime topology |
-| `.pre-commit-config.yaml` | Local hooks mirroring CI. | Local quality gate |
+| File                                                             | Purpose                                                                                                                                              | Single source of truth for  |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| `README.md`                                                      | Entry point for anyone landing on the repo. What the project is, how to install, how to use, where to find more.                                     | Project identity            |
+| `CHANGELOG.md`                                                   | What changed between releases, grouped Added/Changed/Fixed/Removed.                                                                                  | Release history             |
+| `CONTRIBUTING.md`                                                | How to work in this repo: branching, local setup, release process, commit conventions.                                                               | Development workflow        |
+| `LICENSE`                                                        | Legal terms of use. MIT/Apache-2.0/BSD for OSS, or an "All rights reserved" notice for closed-source.                                                | Legal                       |
+| `.env.example`                                                   | Every environment variable the app reads, grouped Required/Optional, with inline comments on where to obtain each value. Never commit a real `.env`. | Runtime configuration shape |
+| `.gitignore`                                                     | What never enters git: secrets, build artifacts, venvs, caches, IDE config.                                                                          | Repo hygiene                |
+| Package manifest (`pyproject.toml`, `package.json`, `go.mod`, …) | Dependencies, tooling config, linter/formatter rules, **the version number**.                                                                        | Build, deps, version        |
+| `Dockerfile`                                                     | How to build a runnable container image.                                                                                                             | Build recipe                |
+| `docker-compose.yml`                                             | How the container runs in context (volumes, network, sidecars, resource limits).                                                                     | Runtime topology            |
+| `.pre-commit-config.yaml`                                        | Local hooks mirroring CI.                                                                                                                            | Local quality gate          |
 
 ### The version number lives in exactly one file
 
@@ -119,7 +121,7 @@ The payoff: the `[Unreleased]` section stays short enough that a maintainer can 
 
 For long-running services, expose `GET /health` that returns JSON including the running version. This turns "did my deploy actually land?" from a guess into a single `curl`. One of the cheapest, highest-leverage habits you can adopt.
 
-```json
+```
 { "status": "ok", "version": "1.2.3", "uptime_seconds": 12847 }
 ```
 
@@ -134,6 +136,7 @@ Two branches are mandatory. Feature branches are optional and earn their keep on
 - **`master` (or `main`)** — production. Every commit here is deployed. Nobody pushes directly; merges only.
 - **`develop`** — integration branch. Default branch in GitHub. **The pre-push hook runs the same `ruff` + `pytest` gate as CI before any push lands**, so it is safe to commit directly here; CI itself re-runs on PRs as a backstop.
 - **feature branches** — optional, branched from `develop`, named `feat/…`, `fix/…`, `chore/…`, `docs/…`, `refactor/…`. Used only when the change warrants them (see below).
+- **Commit messages** — [Conventional Commits](https://www.conventionalcommits.org/) (`feat` / `fix` / `chore` / `docs` / `refactor` / `test` / `perf`), imperative subject under 72 characters, body for the *why* when it isn't obvious. `gh pr create --fill` and squash-merge titles inherit their quality from these.
 
 ### Pick the flow that matches the situation
 
@@ -141,18 +144,18 @@ Your default flow depends on team size and the nature of the work. For a **solo 
 
 Either way, feature branches remain the right call for specific kinds of work, and automating them brings the cost down to near zero.
 
-### Solo + AI-assisted flow (default for this project)
+### Solo + AI-assisted flow
 
 For everyday work — small features, fixes, docs, chores — commit directly to `develop`:
 
-```bash
+```
 git checkout develop
 git pull
 # ... work, commit ...
 git push
 ```
 
-The pre-push hook in [.pre-commit-config.yaml](.pre-commit-config.yaml) runs the identical `ruff check`, `ruff format --check`, and `pytest` (with coverage floor) that CI runs, so every push has already cleared the CI gate locally. CI itself re-runs on PRs as a backstop. Releases still go through a `develop → master` PR, so the auto-deploy gate on `master` stays intact. Broken commits on `develop` are a fix-forward or `git revert` problem, not a crisis — nothing is deployed.
+The pre-push hook in `.pre-commit-config.yaml` runs the identical `ruff check`, `ruff format --check`, and `pytest` (with coverage floor) that CI runs, so every push has already cleared the CI gate locally. CI itself re-runs on PRs as a backstop. Releases still go through a `develop → master` PR, so the auto-deploy gate on `master` stays intact. Broken commits on `develop` are a fix-forward or `git revert` problem, not a crisis — nothing is deployed.
 
 ### Feature-branch flow (escape hatch for riskier work)
 
@@ -166,7 +169,7 @@ Use a branch when the change is:
 
 When those apply, automate the flow end-to-end. The overhead is ~30 seconds per feature and AI assistants can drive all four commands:
 
-```bash
+```
 git checkout -b feat/my-thing
 # ... work, commit ...
 git push -u origin feat/my-thing
@@ -186,6 +189,7 @@ Once you have more than one contributor, invert the defaults: **feature branches
 ### Why not trunk-based?
 
 Trunk-based (single `main` branch, feature flags for in-progress work) is excellent once you have:
+
 - A test suite you trust to catch regressions immediately.
 - Feature flag infrastructure.
 - Observability to catch production issues fast.
@@ -230,14 +234,16 @@ For urgent fixes: branch from `master`, fix, PR back to `master`, bump patch, up
 
 Three workflows. Each has one job.
 
-### 1. `ci.yml` — run on every PR
+### 1. `ci.yml` — run on every PR and on `develop`
 
-Triggered by `pull_request` only (not `push` — pushing to feature branches fires the PR-triggered run, no duplicate).
+Triggered by `pull_request` plus `push` to `develop`. Feature-branch pushes already fire the PR-triggered run (no duplicates); the `develop` push trigger is the backstop for the solo direct-commit flow — without it nothing independently re-checks `develop` until the release PR, and a machine with stale or missing hooks goes unnoticed for weeks.
 
-```yaml
+```
 name: CI
 on:
   pull_request:
+  push:
+    branches: [develop]
   workflow_call:     # lets deploy.yml reuse this
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
@@ -250,7 +256,7 @@ Jobs: install deps, lint, format check, type check (if applicable), tests with a
 
 Triggered by `push` to `master`. Reuses `ci.yml` via `workflow_call`, then builds and deploys.
 
-```yaml
+```
 name: Deploy
 on:
   push:
@@ -285,9 +291,10 @@ jobs:
         # SSH into VPS, `docker compose pull && up -d`, wait for healthy, verify /health version
 ```
 
-Three image tags on every deploy: `latest`, the git SHA, and `v<version>`. SHA tags give you exact-commit rollback; version tags give you human-readable rollback.
+Three image tags on every deploy: `latest`, the git SHA, and `v<version>`. SHA tags give you exact-commit rollback; version tags give you human-readable rollback. Document the actual rollback procedure in the deploy guide and run it once before you need it — pin the previous tag (`IMAGE_TAG=<sha> docker compose up -d`) or revert the merge on `master` and let the pipeline redeploy.
 
 **Smoke check is not optional.** After `docker compose up -d`, the workflow should:
+
 1. Poll the container's health status until `healthy` or timeout.
 2. Call `/health` and assert the reported version matches the expected version.
 3. Fail the workflow (and the deploy) if either check fails.
@@ -296,7 +303,7 @@ A deploy that silently half-landed is worse than a deploy that obviously failed.
 
 ### 3. `codeql.yml` — security scanning (public repos only)
 
-CodeQL catches the "I accidentally introduced a SQL injection" class of bugs without you thinking about it. It's free for public repos and for organizations with GitHub Advanced Security. **On private personal repos it's not available** — the workflow will run but SARIF upload fails because code scanning is gated behind GHAS, which personal accounts can't buy. Skip this file on private personal projects; add it the day the repo goes public or moves to an org with GHAS.
+CodeQL catches the "I accidentally introduced a SQL injection" class of bugs without you thinking about it. It's free for public repos; on private repos it requires the paid GitHub Code Security add-on (the former GHAS), sold only on organization Team/Enterprise plans. **On private personal repos it's not available** — the workflow will run but SARIF upload fails. Skip this file on private personal projects; add it the day the repo goes public or moves to an org with Code Security.
 
 ---
 
@@ -306,10 +313,10 @@ Pre-commit hooks are wasted potential if they run different commands than CI. Ma
 
 Two stages:
 
-| Stage | What runs | Why |
-|---|---|---|
+| Stage                          | What runs                                                                                          | Why                                                                               |
+| ------------------------------ | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
 | `pre-commit` (on `git commit`) | Fast things: lint, format, trailing whitespace, YAML check, large-file check, **secret scanning**. | Keeps the commit loop snappy. Catches obvious problems before they enter history. |
-| `pre-push` (on `git push`) | Slow things: **full test suite with the same coverage floor as CI**. | CI should be a backstop, not the first time tests run. |
+| `pre-push` (on `git push`)     | Slow things: **full test suite with the same coverage floor as CI**.                               | CI should be a backstop, not the first time tests run.                            |
 
 **Secret scanning** (e.g. [gitleaks](https://github.com/gitleaks/gitleaks)) on `pre-commit` is the cheapest credential-leak prevention you can buy. Your `.env` is gitignored, but accidents happen — a secret pasted into a doc example, a config file with a real token committed because you forgot `.gitignore`. A 200ms hook catches all of them.
 
@@ -331,7 +338,9 @@ In order:
 4. **Enforce it in the agent contract, not just the doc.** Add a rule to `AGENTS.md` (mirrored in `CLAUDE.md`) that *any* UI edit conforms to the reference — reuse what ships, don't introduce a parallel variant. A doc is advisory to a model; a first-read MUST-rule holds the line. The only hard guarantee is a lint, usually over-engineering at this size.
 5. **Use a design/prototyping tool for new screens and restructures** where one exists (rich for web, thinner for TUI/CLI), then translate its output — treating the handoff as a strong draft, not a spec (reconcile invented data/backend assumptions, reuse your shipped primitives over its near-duplicates, drop embellishments). Small tweaks skip the tool.
 
-The worked example (web) lives in this repo: [design_workflow.md](design_workflow.md) (the how) and [design_language.md](design_language.md) (the what); the same shape applies to a Textual/ratatui TUI or a Qt/Tauri desktop app.
+Keep the worked example in your reference project as `docs/guides/design_workflow.md` (the how) and `docs/guides/design_language.md` (the what); the same shape applies to a Textual/ratatui TUI or a Qt/Tauri desktop app.
+
+Once shipped, the surface gets audited periodically against this foundation with `docs/guides/ux_review.md` — the surface counterpart of the codebase review.
 
 ---
 
@@ -339,15 +348,19 @@ The worked example (web) lives in this repo: [design_workflow.md](design_workflo
 
 Each document answers a different question. If two docs are answering the same question, merge them. If one doc is answering three questions, split it.
 
-| Layer | File(s) | Answers |
-|---|---|---|
-| **Entry** | `README.md` | "What is this? How do I install it? How do I use it?" |
-| **Contribution** | `CONTRIBUTING.md` | "How do I work in this repo?" — branching, setup, release, commit style |
-| **History** | `CHANGELOG.md` | "What changed between versions?" |
-| **Vision** | `docs/product/vision.md` | "What problem does this solve? Who is it for? What does success look like?" |
-| **Architecture** | `docs/architecture/*.md` | "How does the system work?" — components, data flow, design decisions, config reference |
-| **Guides** | `docs/guides/*.md` | "How do I do X?" — deploy, add a provider, extend a capability, onboard a contributor |
-| **Decisions** | `docs/adr/NNNN-title.md` | "Why did we do it this way?" — one ADR per significant choice, numbered, status-tracked |
+| Layer            | File(s)                  | Answers                                                                                 |
+| ---------------- | ------------------------ | --------------------------------------------------------------------------------------- |
+| **Entry**        | `README.md`              | "What is this? How do I install it? How do I use it?"                                   |
+| **Contribution** | `CONTRIBUTING.md`        | "How do I work in this repo?" — branching, setup, release, commit style                 |
+| **History**      | `CHANGELOG.md`           | "What changed between versions?"                                                        |
+| **Vision**       | `docs/product/vision.md` | "What problem does this solve? Who is it for? What does success look like?" — owns the CUJ inventory |
+| **Architecture** | `docs/architecture/architecture.md` | "How does the system work?" — components, data flow, how configuration is wired. One file until it outgrows itself |
+| **Guides**       | `docs/guides/*.md`       | "How do I do X?" — deploy, add a provider, extend a capability                          |
+| **Decisions**    | `docs/adr/NNNN-title.md` | "Why did we do it this way?" — one ADR per significant choice, numbered, status-tracked |
+
+### `vision.md` is seeded, not written
+
+It is seeded from the graduated `IDEA.md` (gauntlet Phase 4) — which itself freezes as `docs/product/idea.md`, the never-edited origins artifact — and grows a **CUJ inventory** at the first UX review (`ux_review.md` § CUJs). One living file owns product intent end-to-end; the frozen one remembers where it came from. Don't add a separate requirements doc — that's `roadmap.md` with a different name; tracked work lives in issues, scope history lives in milestones and the CHANGELOG.
 
 ### ADRs deserve a special note
 
@@ -379,35 +392,23 @@ A short index file in `docs/` that tables the other docs with a one-line "what's
 
 Documentation drift is the single most common way a well-organized project turns into an unreadable one. The cure is a rule, not discipline: **every code change that makes an existing doc wrong updates that doc in the same commit.** Deferred doc updates rot; a doc that lies is worse than a doc that's missing.
 
-Write down, in `CONTRIBUTING.md` and in your AI-agent instructions (see the next section), a **change → required doc** mapping so contributors and assistants don't have to guess:
-
-| Change | Must update |
-|---|---|
-| New user-facing command or argument | `README.md` |
-| New env var or changed default | `.env.example` + `README.md` + `docs/guides/deployment.md` if deploy-affecting |
-| New component, changed data flow | `docs/architecture/*.md` |
-| Non-obvious design decision | New ADR in `docs/adr/` |
-| Any user-visible change | `CHANGELOG.md` (Added / Changed / Fixed / Removed) |
-| New capability or extension point | `docs/guides/extension_guide.md` (or equivalent) |
-| Process / workflow change | `CONTRIBUTING.md` |
+Write the mapping down where it's read on every change: `AGENTS.md`. The template (`agents_template.md`) ships the standard **change → required doc** table pre-filled — that copy is the operative one; extend it there, not here. The shape, compressed: new env var → `.env.example` + `README.md`; new component or changed data flow → `docs/architecture/architecture.md`; non-obvious decision → new ADR; any user-visible change → `CHANGELOG.md`; reusable process change → `CONTRIBUTING.md` and this playbook.
 
 Before merging a PR or closing an issue, verify: relevant docs updated, CHANGELOG entry exists, new env vars / commands / config options are documented, non-obvious decisions have an ADR. If the task introduced a reusable *pattern* rather than local code, that pattern belongs in `project_kickstart.md` so future projects inherit it.
 
 ### AI agent instructions
 
-If you use AI assistants to write code (Claude, Gemini, GitHub Copilot, Cursor, OpenAI Codex CLI), codify the rules once in a file assistants will read. No single filename is universal yet — each vendor has its own:
+If you use AI assistants to write code (Claude Code, Codex, Cursor, Gemini CLI, Copilot), codify the rules once in a file assistants will read. `AGENTS.md` has become the cross-vendor standard; the notable holdout is Claude Code:
 
-| Tool | File it reads |
-|---|---|
-| Claude Code | `CLAUDE.md` (root; nested per-directory also supported) |
-| OpenAI Codex CLI / Cursor / newer tools | `AGENTS.md` (emerging cross-vendor convention) |
-| Gemini CLI | `GEMINI.md` |
-| GitHub Copilot | `.github/copilot-instructions.md` |
-| Aider | `CONVENTIONS.md` (passed via `--read`) |
+| Tool                                                          | File it reads                                  |
+| ------------------------------------------------------------- | ---------------------------------------------- |
+| OpenAI Codex / Cursor / Windsurf / Gemini CLI / Copilot / most newer tools | `AGENTS.md` (cross-vendor standard) |
+| Claude Code                                                   | `CLAUDE.md` (supports `@AGENTS.md` import)     |
+| Aider                                                         | `CONVENTIONS.md` (passed via `--read`)         |
 
-**Pattern:** put the canonical rules in one file at the repo root (`AGENTS.md` is the best bet for cross-vendor reach), then add thin vendor shims (`CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`) that either reference `AGENTS.md` or mirror its content. Symlinks don't work reliably on Windows, so keep them as real files.
+**Pattern:** put the canonical rules in `AGENTS.md` at the repo root, then add a thin real-file `CLAUDE.md` shim containing `@AGENTS.md` (Claude Code's import syntax) plus any Claude-specific addendum. Symlinks don't work reliably on Windows, so keep shims as real files. Tool support shifts quarterly — when adopting a new assistant, check its current docs for which file it reads.
 
-**What belongs in the rules file** (keep it under ~150 lines — longer files get ignored by humans and models alike):
+**What belongs in the rules file** (keep it under ~200 lines — longer files get ignored by humans and models alike):
 
 - Branching model and commit conventions
 - Code layout rule (transport vs logic split; what can import what)
@@ -420,7 +421,7 @@ If you use AI assistants to write code (Claude, Gemini, GitHub Copilot, Cursor, 
 
 **What to leave out:** long prose, justifications, history. The rules file is an operating contract; the rationale lives in `CONTRIBUTING.md` and this playbook.
 
-**Starting point:** [agents_template.md](agents_template.md) is a copy-and-fill skeleton with the cross-project essence of these rules pre-filled. Drop it in as your new repo's `AGENTS.md`, replace the `{{placeholders}}`, prune the project-type-specific lines, and you have a working operating contract in ten minutes.
+**Starting point:** `agents_template.md` (mirrored alongside this playbook in `docs/guides/`) is a copy-and-fill skeleton with the cross-project essence of these rules pre-filled. Drop it in as your new repo's `AGENTS.md`, replace the `{{placeholders}}`, prune the project-type-specific lines, and you have a working operating contract in ten minutes.
 
 ---
 
@@ -432,11 +433,11 @@ Issues and a project board are the single source of truth for *tracked work*. Th
 
 Three axes, orthogonal. Every issue gets exactly one from each (or none from priority, for backlog-aged items).
 
-| Axis | Labels | Purpose |
-|---|---|---|
-| **type/** | `type/feature`, `type/bug`, `type/refactor`, `type/docs`, `type/infra` | What kind of work? |
-| **area/** | `area/api`, `area/db`, `area/ui`, `area/deploy`, … (invent as needed) | Which part of the system? |
-| **priority/** | `priority/tier-1`, `priority/tier-2`, `priority/tier-3` | How urgent? |
+| Axis          | Labels                                                                 | Purpose                   |
+| ------------- | ----------------------------------------------------------------------- | ------------------------- |
+| **type/**     | `type/feature`, `type/bug`, `type/refactor`, `type/docs`, `type/infra` | What kind of work?        |
+| **area/**     | `area/api`, `area/db`, `area/ui`, `area/deploy`, … (invent as needed)  | Which part of the system? |
+| **priority/** | `priority/tier-1`, `priority/tier-2`, `priority/tier-3`                | How urgent?               |
 
 Avoid `good-first-issue`, `help-wanted`, `wontfix` noise until you have contributors who need them.
 
@@ -465,7 +466,7 @@ Markdown templates (rather than YAML issue forms) preserve the freeform prose + 
 
 ### Day-zero bootstrap commands
 
-```bash
+```
 # Labels
 gh label create "type/feature"   --color 0e8a16 --description "New capability"
 gh label create "type/bug"       --color b60205 --description "Defect or regression"
@@ -497,7 +498,7 @@ This section is shaped for a **long-running server-side service** (bot, API, web
 
 Whatever the artifact, the rules below still apply: tag with the version, smoke-check the output, fail loud, never deploy what didn't pass CI. Skip the Docker/VPS specifics that don't apply to your project.
 
-The target for this project: **push to `master` → container built → deployed to VPS → smoke-checked → done.** Under 5 minutes, fully automated.
+The target for a service: **push to `master` → container built → deployed to VPS → smoke-checked → done.** Under 5 minutes, fully automated.
 
 ### Building blocks
 
@@ -510,7 +511,8 @@ The target for this project: **push to `master` → container built → deployed
 ### Dockerfile essentials
 
 - **Start from a pinned base.** `python:3.13-slim-bookworm` is better than `python:3.13-slim` (OS version pinned). A full digest pin (`@sha256:…`) is best but needs a bot to keep it fresh.
-- **Layer-cache dependencies first.** Copy the manifest, install deps, *then* copy source. Changing a source file doesn't reinstall deps.
+- **Layer-cache dependencies first.** Copy the manifest + lockfile, install deps, *then* copy source. Changing a source file doesn't reinstall deps.
+- **Build from a committed lockfile.** The manifest declares intent; the lockfile pins reality. Without one, every image build resolves dependencies differently — the single-source-of-truth principle, applied to deps.
 - **Run as non-root.** `RUN useradd --create-home bot && USER bot`. Defense in depth against container escapes.
 - **Declare a `HEALTHCHECK`.** Docker and the deploy workflow both use it.
 - **One process per container.** Use a separate service for each long-running process.
@@ -526,6 +528,16 @@ The target for this project: **push to `master` → container built → deployed
 
 Document in `docs/guides/deployment.md`: for each secret (API keys, tokens, encryption keys), how to rotate it end-to-end. When you're being paged at 2am you do not want to improvise.
 
+### Backups
+
+- Anything you can't regenerate — the SQLite volume, uploaded files — gets an automated, scheduled, **off-host** backup: a cron job shipping `sqlite3 .backup` output or volume tarballs to object storage or another machine. The VPS dying must not be a data event.
+- **Test the restore once.** An untested backup is a hope, not a backup. Document the restore steps in `docs/guides/deployment.md`, next to rotation.
+- Put a dead-man switch on the backup cron (a healthchecks.io-style success ping). Silent backup failure is the default failure mode.
+
+### Uptime — you are the pager
+
+Solo projects have no on-call rotation; nothing notices a dead service except an annoyed user. Point a free external uptime monitor (UptimeRobot, healthchecks.io, Better Stack, …) at `/health` the day the service first deploys, with alerts going somewhere you actually look. Costs five minutes and pairs with the version probe — the same endpoint serves both.
+
 ---
 
 ## Security baseline
@@ -534,7 +546,7 @@ The minimum every project should have on day zero:
 
 1. **`SECURITY.md`** — how to report a vulnerability, expected response time, what's in scope. Even for solo projects. [GitHub Security Advisories](https://docs.github.com/en/code-security/security-advisories) provide a private disclosure channel for free.
 2. **Dependabot** (`.github/dependabot.yml`) — weekly PRs for dependency updates, grouped by ecosystem (pip/npm, actions, docker). Silent security updates become loud when a PR lands in your inbox.
-3. **CodeQL** (`.github/workflows/codeql.yml`) — scheduled + PR-triggered static analysis. Catches SQL injection, path traversal, hardcoded credentials, unsafe deserialization. Zero-config for most languages. **Public repos and GHAS-enabled orgs only**; not available on private personal repos (see section on `codeql.yml` above).
+3. **CodeQL** (`.github/workflows/codeql.yml`) — scheduled + PR-triggered static analysis. Catches SQL injection, path traversal, hardcoded credentials, unsafe deserialization. Zero-config for most languages. **Public repos and Code Security–enabled orgs only**; not available on private personal repos (see section on `codeql.yml` above).
 4. **Secret scanning** — pre-commit gitleaks hook (local) and GitHub's built-in push protection (server).
 5. **Non-root containers** — already covered above.
 6. **Least-privilege workflow permissions** — every job's `permissions:` block should enumerate only what it needs. Default is `read: all`, which is often too much.
@@ -545,33 +557,39 @@ The minimum every project should have on day zero:
 
 Copy-pasteable, in order.
 
-```bash
-# 1. Initialize repo
-mkdir my-project && cd my-project
-git init
-gh repo create --private --source=. --description "..."
+```
+# 1. Initialize on develop (or cd into the existing idea folder and init in place)
+mkdir -p my-project && cd my-project
+git init -b develop
 
-# 2. Default branch
-git checkout -b develop
-git push -u origin develop
-gh api repos/<owner>/<repo> -X PATCH -f default_branch=develop
-
-# 3. Create the scaffold (adjust for your language)
+# 2. Create the scaffold (adjust for your language)
 mkdir -p .github/{workflows,ISSUE_TEMPLATE} src tests docs/{product,architecture,guides,adr} scripts
 
-# 4. Source-of-truth files
+# 3. Source-of-truth files
 touch README.md CHANGELOG.md CONTRIBUTING.md LICENSE .env.example .gitignore
 touch Dockerfile docker-compose.yml .pre-commit-config.yaml
 touch .github/SECURITY.md .github/pull_request_template.md .github/dependabot.yml
 touch .github/ISSUE_TEMPLATE/{bug.md,task.md}
 touch .github/workflows/{ci.yml,deploy.yml}
-# Add codeql.yml only if the repo is public or the org has GHAS
+# Add codeql.yml only if the repo is public or the org has Code Security
 touch docs/README.md
 
-# 5. Labels + first milestone (see commands above)
-# 6. Project board (see commands above)
+# 4. First commit — nothing can be pushed before this exists
+git add .
+git commit -m "chore: initial scaffold"
 
-# 7. Branch protection on master (JSON body — nested fields don't work with -F)
+# 5. Create the remote and push develop (the first branch pushed becomes the default)
+gh repo create <owner>/<repo> --private --source=. --push --description "..."
+
+# 6. Create master from develop — the release-PR target must exist
+git branch master
+git push -u origin master
+
+# 7. Labels + first milestone (see commands above)
+# 8. Project board (see commands above)
+
+# 9. Branch protection on master (JSON body — nested fields don't work with -F)
+# "contexts" must match your CI job name exactly
 gh api -X PUT repos/<owner>/<repo>/branches/master/protection --input - <<'JSON'
 {
   "required_status_checks": { "strict": true, "contexts": ["CI / lint-and-test"] },
@@ -583,11 +601,6 @@ gh api -X PUT repos/<owner>/<repo>/branches/master/protection --input - <<'JSON'
   "allow_deletions": false
 }
 JSON
-
-# 8. First commit + push
-git add .
-git commit -m "chore: initial scaffold"
-git push -u origin develop
 ```
 
 After this checklist you have a repo that is wired end-to-end: CI runs on PRs, deploy runs on merge to master, docs have a home, issues have templates, contributions have a process, secrets are scanned.
@@ -598,16 +611,16 @@ After this checklist you have a repo that is wired end-to-end: CI runs on PRs, d
 
 Don't add these on day zero. Add them when the project earns them.
 
-| When to add | Thing | Why wait |
-|---|---|---|
-| When a second contributor joins | `CODEOWNERS` | Solo = pointless |
-| When you merge >10 PRs/week | `release-drafter` auto-changelog | Manual CHANGELOG is fine at low volume and keeps you thinking about what changed |
-| When you run >1 environment | GitHub Environments with protection rules | Single-env deploys don't need approval gates |
-| When you accept outside PRs | `CODE_OF_CONDUCT.md` | Solo projects don't need it; OSS projects do |
-| When you have >3 services in compose | Kubernetes / Nomad / Swarm | Docker Compose handles 1-5 services fine |
-| When deploys exceed 5 min | Build caching (BuildKit mounts, ccache, etc.) | Premature optimization |
-| When you hit a real perf problem | Benchmarks, flamegraphs, APM | Same |
-| When you get paged | Runbooks, on-call rotation, alerting | Same |
+| When to add                          | Thing                                         | Why wait                                                                         |
+| ------------------------------------ | --------------------------------------------- | --------------------------------------------------------------------------------- |
+| When a second contributor joins      | `CODEOWNERS`                                  | Solo = pointless                                                                 |
+| When you merge >10 PRs/week          | `release-drafter` auto-changelog              | Manual CHANGELOG is fine at low volume and keeps you thinking about what changed |
+| When you run >1 environment          | GitHub Environments with protection rules     | Single-env deploys don't need approval gates                                     |
+| When you accept outside PRs          | `CODE_OF_CONDUCT.md`                          | Solo projects don't need it; OSS projects do                                     |
+| When you have >3 services in compose | Kubernetes / Nomad / Swarm                    | Docker Compose handles 1-5 services fine                                         |
+| When deploys exceed 5 min            | Build caching (BuildKit mounts, ccache, etc.) | Premature optimization                                                           |
+| When you hit a real perf problem     | Benchmarks, flamegraphs, APM                  | Same                                                                             |
+| When you get paged                   | Runbooks, on-call rotation, alerting          | Same                                                                             |
 
 ---
 
@@ -625,20 +638,6 @@ Things that look like best practice but are overkill for small/solo projects. If
 
 ---
 
-## Where to look for the reference
+## Keep a living reference
 
-Every pattern in this doc has a living example in this repo:
-
-- Branching model, release process, commit conventions → [CONTRIBUTING.md](../../CONTRIBUTING.md)
-- Source-of-truth version → [packages/core/__init__.py](../../packages/core/__init__.py), read by [.github/workflows/deploy.yml](../../.github/workflows/deploy.yml)
-- CI/deploy workflows → [.github/workflows/](../../.github/workflows/)
-- Pre-commit mirrors CI → [.pre-commit-config.yaml](../../.pre-commit-config.yaml) vs [.github/workflows/ci.yml](../../.github/workflows/ci.yml)
-- Issue templates → [.github/ISSUE_TEMPLATE/](../../.github/ISSUE_TEMPLATE/)
-- PR template → [.github/pull_request_template.md](../../.github/pull_request_template.md)
-- Dependabot config → [.github/dependabot.yml](../../.github/dependabot.yml)
-- Security policy → [.github/SECURITY.md](../../.github/SECURITY.md)
-- Docs layering → [docs/README.md](../README.md) and the [docs/product/](../product/), [docs/architecture/](../architecture/), [docs/guides/](./), [docs/adr/](../adr/) subdirectories
-- Container pattern → [Dockerfile](../../Dockerfile), [docker-compose.yml](../../docker-compose.yml)
-- Deployment walkthrough → [docs/guides/deployment.md](./deployment.md)
-
-When in doubt, copy from here and adjust.
+A playbook stays honest only while it points at something running. Keep at least one deployed project that implements this playbook end-to-end, and when kickstarting a new repo, crib from it directly: `CONTRIBUTING.md` for the branching and release text, `.github/workflows/` for CI and deploy, `.pre-commit-config.yaml` for the local gate, the issue and PR templates, and `docs/` for the layering. When a newer project improves on the reference, it becomes the new reference — and the improvement gets folded back into this playbook so every future project inherits it.
