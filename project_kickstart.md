@@ -28,7 +28,7 @@ Minimum viable directory structure. Names are conventions, not requirements — 
 project/
 ├── .github/
 │   ├── workflows/              # CI, deploy, security scanning
-│   ├── ISSUE_TEMPLATE/         # bug.md, task.md
+│   ├── ISSUE_TEMPLATE/         # bug.md, task.md, config.yml
 │   ├── pull_request_template.md
 │   ├── dependabot.yml
 │   └── SECURITY.md
@@ -66,14 +66,14 @@ The exact tools depend on language (lint/format/test-runner names differ across 
 
 Whatever your language, separate **entry points** from **reusable logic**.
 
-- Entry points (`apps/`, `cmd/`, `bin/`) know about HTTP, Discord, CLI args, cron triggers. They're thin wrappers.
+- Entry points (`apps/`, `cmd/`, `bin/`) know about HTTP, chat-platform APIs, CLI args, cron triggers. They're thin wrappers.
 - Logic (`packages/`, `lib/`, `internal/`) is pure — no framework imports. You can test it without spinning up the transport, and you can add a new transport without touching the logic.
 
-The smell test: **can you add a Telegram bot alongside the Discord bot without changing anything in the logic layer?** If yes, the split is right.
+The smell test: **can you add a second transport — another chat platform, a CLI, an HTTP API — without changing anything in the logic layer?** If yes, the split is right.
 
 ### Mirror `tests/` on `src/`
 
-If `src/llm/gemini.py` exists, `tests/llm/test_gemini.py` exists. No clever grouping, no `tests/unit/` vs `tests/integration/` top-level split until you actually need it. One-to-one mirroring means you can find the test for any file in one jump.
+If `src/billing/invoices.py` exists, `tests/billing/test_invoices.py` exists. No clever grouping, no `tests/unit/` vs `tests/integration/` top-level split until you actually need it. One-to-one mirroring means you can find the test for any file in one jump.
 
 ---
 
@@ -134,13 +134,13 @@ For non-service projects, the equivalent is a `--version` flag (CLI), an About d
 Two branches are mandatory. Feature branches are optional and earn their keep only in specific situations.
 
 - **`master` (or `main`)** — production. Every commit here is deployed. Nobody pushes directly; merges only.
-- **`develop`** — integration branch. Default branch in GitHub. **The pre-push hook runs the same `ruff` + `pytest` gate as CI before any push lands**, so it is safe to commit directly here; CI itself re-runs on PRs as a backstop.
+- **`develop`** — integration branch. Default branch in GitHub. **The pre-push hook runs the same lint + test gate as CI before any push lands**, so it is safe to commit directly here; CI itself re-runs on PRs as a backstop.
 - **feature branches** — optional, branched from `develop`, named `feat/…`, `fix/…`, `chore/…`, `docs/…`, `refactor/…`. Used only when the change warrants them (see below).
 - **Commit messages** — [Conventional Commits](https://www.conventionalcommits.org/) (`feat` / `fix` / `chore` / `docs` / `refactor` / `test` / `perf`), imperative subject under 72 characters, body for the *why* when it isn't obvious. `gh pr create --fill` and squash-merge titles inherit their quality from these.
 
 ### Pick the flow that matches the situation
 
-Your default flow depends on team size and the nature of the work. For a **solo developer (especially one working through AI assistants)**, most work should land on `develop` directly — the PR ceremony is pure overhead when there's nobody else to review and the pre-push hook already runs the same `ruff` + `pytest` + coverage-floor gate as CI. For a **team or open-source project**, feature branches become the default because the PR *is* the review surface.
+Your default flow depends on team size and the nature of the work. For a **solo developer (especially one working through AI assistants)**, most work should land on `develop` directly — the PR ceremony is pure overhead when there's nobody else to review and the pre-push hook already runs the same lint + test + coverage-floor gate as CI. For a **team or open-source project**, feature branches become the default because the PR *is* the review surface.
 
 Either way, feature branches remain the right call for specific kinds of work, and automating them brings the cost down to near zero.
 
@@ -155,7 +155,7 @@ git pull
 git push
 ```
 
-The pre-push hook in `.pre-commit-config.yaml` runs the identical `ruff check`, `ruff format --check`, and `pytest` (with coverage floor) that CI runs, so every push has already cleared the CI gate locally. CI itself re-runs on PRs as a backstop. Releases still go through a `develop → master` PR, so the auto-deploy gate on `master` stays intact. Broken commits on `develop` are a fix-forward or `git revert` problem, not a crisis — nothing is deployed.
+The pre-push stage of the local hook config runs the identical lint, format-check, and test commands (with the coverage floor) that CI runs, so every push has already cleared the CI gate locally. CI itself re-runs on PRs as a backstop. Releases still go through a `develop → master` PR, so the auto-deploy gate on `master` stays intact. Broken commits on `develop` are a fix-forward or `git revert` problem, not a crisis — nothing is deployed.
 
 ### Feature-branch flow (escape hatch for riskier work)
 
@@ -179,6 +179,15 @@ gh pr merge --squash --auto --delete-branch
 
 - `gh pr create --fill` uses your commit messages as the PR title and body — so write good commit messages.
 - `gh pr merge --squash --auto --delete-branch` waits for CI to pass, squashes the branch into one commit on `develop`, and deletes the remote branch. You can close the terminal; the merge completes in the background.
+- `--delete-branch` removes only the **remote** copy. Once the merge lands, finish the job locally — stale merged branches are how `git branch` output turns into noise:
+
+  ```
+  git checkout develop && git pull
+  git branch -d feat/my-thing
+  git fetch --prune
+  ```
+
+  A branch listed by `git branch` is either active work or it shouldn't exist.
 
 **One-time setup:** enable auto-merge in the repo at `Settings → General → Pull Requests → Allow auto-merge`. `gh pr merge --auto` fails without it.
 
@@ -208,7 +217,7 @@ Use [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`. Each `MAJOR.
 
 1. **Pick the milestone.** Open `v<MAJOR.MINOR>` if it doesn't exist. Don't pre-create a dozen — create them as you commit to scope.
 2. **Triage.** Move issues from `Backlog` to `Ready` and assign them to the milestone. Reshuffling between milestones is free until release work starts.
-3. **Work the issues.** Branch from `develop`, reference the issue in the PR (`Closes #N`), merge to `develop`.
+3. **Work the issues.** Branch from `develop`, reference the issue in the PR (`Closes #N`), merge to `develop`, delete the merged branch — remote and local.
 4. **Confirm the milestone is ready.** All issues closed or moved out. `gh issue list --milestone v1.2 --state open` should be empty.
 
 ### Cutting the release
@@ -219,14 +228,15 @@ Use [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`. Each `MAJOR.
 8. **Merge after CI green.** The merge to `master` triggers the deploy workflow.
 9. **Tag the release** and push the tag.
 10. **Create a GitHub Release** from the tag (gh CLI or UI).
-11. **Close the milestone.**
-12. **Verify deployment** — curl `/health` and confirm it reports the new version.
+11. **Fast-forward `develop`** onto the release merge commit (`git merge --ff-only master`) so the branches don't diverge.
+12. **Close the milestone.**
+13. **Verify deployment** — curl `/health` and confirm it reports the new version.
 
 **AI assistant checkpoint.** Steps 8 and 9 are irreversible and deploy to production. If an AI agent is executing this release, it should draft the CHANGELOG, open the release PR, and then **stop and require explicit user approval** before running the merge or pushing the tag. Confirm each of the two steps individually — a prior "do the release" does not extend to them. Codify this rule in your agent-instructions file (see the *AI agent instructions* section below) so assistants apply it consistently.
 
 ### Hotfix variant
 
-For urgent fixes: branch from `master`, fix, PR back to `master`, bump patch, update CHANGELOG, merge (auto-deploy), tag, release. Then forward-merge `master → develop` so the patch isn't lost on the next regular release.
+For urgent fixes: branch from `master`, fix, PR back to `master`, bump patch, update CHANGELOG, merge (auto-deploy), tag, release. Then forward-merge `master → develop` so the patch isn't lost on the next regular release, and delete the hotfix branch — remote and local.
 
 ---
 
@@ -431,7 +441,7 @@ Issues and a project board are the single source of truth for *tracked work*. Th
 
 ### Label taxonomy
 
-Three axes, orthogonal. Every issue gets exactly one from each (or none from priority, for backlog-aged items).
+Three axes, orthogonal. Every issue gets one `type/…`, one `priority/…` (priority may be omitted for backlog-aged items), and one `area/…` when one fits — create the area label first if it's new.
 
 | Axis          | Labels                                                                 | Purpose                   |
 | ------------- | ----------------------------------------------------------------------- | ------------------------- |
@@ -447,22 +457,28 @@ One per `MAJOR.MINOR` version. Patch releases share the parent minor milestone. 
 
 ### Project board
 
-Use GitHub Projects v2 with a Status field: `Backlog → Ready → In Progress → In Review → Done`. Automations move issues through the board as PRs open, request review, and merge.
+Use GitHub Projects v2 with a Status field, standardized at four columns: `Backlog → Ready → In Progress → Done`. Backlog = captured, not committed; Ready = triaged into a milestone, free to pick up; In Progress = actively worked; Done = landed and closed. Review state lives on the PR itself, not the board — a separate `In Review` column just goes stale. Built-in automations can cover the mechanical edge (issue closed → Done); the other transitions are deliberate moves.
 
-If you're working with an AI coding assistant, give it explicit ownership of the transitions it's well-positioned to make: **Backlog** when it creates an issue on your behalf, **In Progress** as the first step when it picks one up (before any code reading or planning), **Done** as part of the same close-out batch that closes the issue. Codify this in your `AGENTS.md` so the rule survives across sessions. The board lies if the assistant writes code while the issue still says Backlog — and "No Status" is worse, because the item disappears from board views entirely.
+If you're working with an AI coding assistant, give it explicit ownership of the transitions it's well-positioned to make: **Backlog** when it creates an issue on your behalf, **In Progress** as the first step when it picks one up (before any code reading or planning), **Done** as part of the same close-out batch that closes the issue. Moving `Backlog → Ready` stays the maintainer's triage call. Codify this in your `AGENTS.md` so the rule survives across sessions. The board lies if the assistant writes code while the issue still says Backlog — and "No Status" is worse, because the item disappears from board views entirely.
 
 ### Issue templates
 
 Two markdown templates in `.github/ISSUE_TEMPLATE/`:
 
-- **`bug.md`** — sections: Goal, Status, Reproduction, Expected vs actual, Root cause (optional), Fix options (optional), Verification.
-- **`task.md`** — sections: Goal, Status, Technical details (with `[NEW]` / `[MODIFY]` / `[DONE]` markers), Options (optional), Verification, Related.
+- **`bug.md`** — sections: Goal, Context, Reproduction, Expected vs actual, Root cause (optional), Fix options (optional), Verification.
+- **`task.md`** — sections: Goal, Context, Technical details (file-path checkboxes with `[NEW]` / `[MODIFY]` / `[DELETE]` markers — the marker carries the change type, the checkbox carries progress), Options (optional), Verification, Related.
 
-Markdown templates (rather than YAML issue forms) preserve the freeform prose + file-path markers that make issues actually readable. Forms over-constrain technical details.
+Markdown templates (rather than YAML issue forms) preserve the freeform prose + file-path markers that make issues actually readable. Forms over-constrain technical details. Canonical copies ship with this doc set (`issue_template_bug.md`, `issue_template_task.md`) — install those rather than retyping the section lists.
+
+Add `config.yml` next to them so the two templates are the only entry path:
+
+```
+blank_issues_enabled: false
+```
 
 ### PR template
 
-`.github/pull_request_template.md` with sections: Summary, Related issue, Changes, Verification (checklist), Notes for reviewer. One-paragraph template, not a wall of text.
+`.github/pull_request_template.md` with sections: Summary, Related issue, Changes, Verification (checklist), Notes for reviewer. One-paragraph template, not a wall of text. Canonical copy: `pr_template.md` in this doc set.
 
 ### Day-zero bootstrap commands
 
@@ -483,7 +499,7 @@ gh api repos/<owner>/<repo>/milestones -X POST -f title=v0.1 -f description="Ini
 # Project board
 gh project create --owner <owner> --title "<project-name>"
 # Then configure Status field options via the GraphQL API or UI:
-# Backlog / Ready / In Progress / In Review / Done
+# Backlog / Ready / In Progress / Done
 ```
 
 ---
@@ -504,7 +520,7 @@ The target for a service: **push to `master` → container built → deployed to
 
 - **Container registry** — GHCR is free and integrates with GitHub Actions (`${{ secrets.GITHUB_TOKEN }}`). No separate account.
 - **Runtime host** — any VPS (Hetzner, DigitalOcean, Vultr, Linode). Ubuntu LTS, Docker + Compose installed.
-- **Reverse proxy** — [Caddy](https://caddyserver.com) as a compose sidecar handles TLS automatically via Let's Encrypt. One line of config (`your-domain.com { reverse_proxy bot:8080 }`).
+- **Reverse proxy** — [Caddy](https://caddyserver.com) as a compose sidecar handles TLS automatically via Let's Encrypt. One line of config (`your-domain.com { reverse_proxy app:8080 }`).
 - **Secrets** — live in `.env` on the VPS, loaded via `env_file:` in compose. Never in git, never in the image, never in workflow logs.
 - **Volumes** — persistent data (SQLite DB, uploaded files) in a named volume mounted into the container. Survives `docker compose up -d --remove-orphans`.
 
@@ -513,7 +529,7 @@ The target for a service: **push to `master` → container built → deployed to
 - **Start from a pinned base.** `python:3.13-slim-bookworm` is better than `python:3.13-slim` (OS version pinned). A full digest pin (`@sha256:…`) is best but needs a bot to keep it fresh.
 - **Layer-cache dependencies first.** Copy the manifest + lockfile, install deps, *then* copy source. Changing a source file doesn't reinstall deps.
 - **Build from a committed lockfile.** The manifest declares intent; the lockfile pins reality. Without one, every image build resolves dependencies differently — the single-source-of-truth principle, applied to deps.
-- **Run as non-root.** `RUN useradd --create-home bot && USER bot`. Defense in depth against container escapes.
+- **Run as non-root.** `RUN useradd --create-home app && USER app`. Defense in depth against container escapes.
 - **Declare a `HEALTHCHECK`.** Docker and the deploy workflow both use it.
 - **One process per container.** Use a separate service for each long-running process.
 
@@ -569,7 +585,7 @@ mkdir -p .github/{workflows,ISSUE_TEMPLATE} src tests docs/{product,architecture
 touch README.md CHANGELOG.md CONTRIBUTING.md LICENSE .env.example .gitignore
 touch Dockerfile docker-compose.yml .pre-commit-config.yaml
 touch .github/SECURITY.md .github/pull_request_template.md .github/dependabot.yml
-touch .github/ISSUE_TEMPLATE/{bug.md,task.md}
+touch .github/ISSUE_TEMPLATE/{bug.md,task.md,config.yml}
 touch .github/workflows/{ci.yml,deploy.yml}
 # Add codeql.yml only if the repo is public or the org has Code Security
 touch docs/README.md

@@ -65,6 +65,7 @@ These are the canonical invocations — the same ones the hooks and CI run. Don'
   gh pr merge --squash --auto --delete-branch
   ```
   Auto-merge must be enabled once in the repo's Settings → General → Pull Requests.
+  `--delete-branch` removes only the **remote** copy — once the merge lands, delete the local branch too: `git checkout {{INTEGRATION_BRANCH}} && git pull && git branch -d feat/my-thing && git fetch --prune`. A branch listed by `git branch` is either active work or it shouldn't exist.
 - Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/):
   * Allowed prefixes: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `perf`.
   * Optional scope in parentheses: `fix(parser): …`, `chore(deps): …`, `chore(ci): …`.
@@ -78,12 +79,12 @@ Every tracked task moves through three explicit phases. **Do not collapse them**
 
 1. **Clarify.** Read the ticket and/or description, ask for any missing detail, and surface scope or constraint conflicts *before* writing code. Move the board item to `In Progress` when you pick it up (skip the board steps for untracked micro-tasks; the approval gates still apply). Implementation does not begin until the details are clear — whether from the ticket, added clarification, or the discussion.
 2. **Implement & stop.** Do the work in full: code, tests, docs, fixtures. Run the local gate (lint + tests) — never report it as passed without having run it in this session, and say so explicitly if something couldn't be run. Then **stop and hand back for review**: on `{{INTEGRATION_BRANCH}}` leave the changes **uncommitted** in the working tree; on a feature branch intermediate WIP commits are fine (the gate is landing, not committing). If review turns up corrections, work them out here and stop again. Do **not** push, merge, or close anything in this phase.
-3. **Complete — on explicit approval only.** An explicit go-ahead ("complete the task", "lgtm", or equivalent) is the *only* trigger to commit the task work, push, close the ticket, and move the board item to `Done`. No approval → no commit, no push, no close. The same gate applies to `git push`, `gh pr create`, and `gh pr merge` — auto mode is permission to write code without re-asking, not permission to land it.
+3. **Complete — on explicit approval only.** An explicit go-ahead ("complete the task", "lgtm", or equivalent) is the *only* trigger to commit the task work, push, close the ticket, move the board item to `Done`, and — when the work rode a feature branch — delete the merged branch, remote and local. No approval → no commit, no push, no close. The same gate applies to `git push`, `gh pr create`, and `gh pr merge` — auto mode is permission to write code without re-asking, not permission to land it.
 
 ## Code layout
 
-- `{{ENTRY_DIR}}` ({{e.g., `apps/`, `cmd/`, `bin/`}}) contains transport / entry points. These are thin — they know about {{e.g., HTTP, Discord, CLI args, OS event loops, native UI frameworks}}.
-- `{{LOGIC_DIR}}` ({{e.g., `packages/`, `lib/`, `internal/`, `core/`}}) contains pure logic. **Never import transport libraries ({{e.g., `discord`, `fastapi`, `tauri`, `react-native`, `pyqt`, `cobra`}}) from `{{LOGIC_DIR}}`.** Logic must be testable without spinning up the transport.
+- `{{ENTRY_DIR}}` ({{e.g., `apps/`, `cmd/`, `bin/`}}) contains transport / entry points. These are thin — they know about {{e.g., HTTP, chat-platform APIs, CLI args, OS event loops, native UI frameworks}}.
+- `{{LOGIC_DIR}}` ({{e.g., `packages/`, `lib/`, `internal/`, `core/`}}) contains pure logic. **Never import transport libraries ({{e.g., `fastapi`, `express`, `tauri`, `react-native`, `pyqt`, `cobra`}}) from `{{LOGIC_DIR}}`.** Logic must be testable without spinning up the transport.
 - `tests/` mirrors the source tree 1:1. A new file `{{LOGIC_DIR}}/foo/bar.{{EXT}}` gets a new file `tests/{{LOGIC_DIR}}/foo/test_bar.{{EXT}}`. No clever grouping.
 - `migrations/` (if applicable) contains numbered schema files. Don't rewrite applied migrations — add a new one.
 - `scripts/` is for one-off tooling. Don't move runtime code here.
@@ -165,9 +166,9 @@ Only after this checklist passes should you report the task as done.
 - New issues use the templates in `.github/ISSUE_TEMPLATE/`:
   * `bug.md` for defects and regressions
   * `task.md` for features, refactors, docs, infra
-- Technical-details sections use `[NEW]` / `[MODIFY]` / `[DONE]` markers on concrete file paths so scope is scannable.
+- Technical-details sections use file-path checkboxes with `[NEW]` / `[MODIFY]` / `[DELETE]` markers — the marker carries the change type, the checkbox carries progress. Tick the box when the path lands; never edit prose to track progress.
 - After creating an issue, apply labels from all three axes: `type/…`, `area/…`, `priority/…`. Add it to the milestone if scoped, and add it to the project board with Status = **Backlog** (do not leave it in "No Status" — that hides it from the board views).
-- **Reflect work state on the project board.** Backlog → In Progress → Done is the full lifecycle. When you start working on an issue, move it to **In Progress** as the first step — before reading code, before planning, before writing anything. When the work lands, move it to **Done** as part of the same close-out flow that closes the issue.
+- **Reflect work state on the project board.** The board has four Status columns — `Backlog → Ready → In Progress → Done`. `Backlog → Ready` is the maintainer's triage call; the other transitions are yours. When you start working on an issue, move it to **In Progress** as the first step — before reading code, before planning, before writing anything. When the work lands, move it to **Done** as part of the same close-out flow that closes the issue.
 - **Position to top on every board write.** Projects v2 has no Created-date sort, so column order is raw position. After every `gh project item-add` and after every status change, call `updateProjectV2ItemPosition` with `afterId: null` so the just-touched item lands at the top of its new column.
 - PRs use `.github/pull_request_template.md`. Every PR has a Summary, a linked issue (`Closes #N`), and a concrete Verification section.
 - Reference issues in commit bodies and PR descriptions. Do not invent issue numbers — confirm they exist with `gh issue view <N>` first.
@@ -177,7 +178,7 @@ Only after this checklist passes should you report the task as done.
 
 - Never commit `.env`, credentials, API keys, signing certificates, provisioning profiles, or any file matching common secret patterns. A `gitleaks` (or equivalent) pre-commit hook should catch most of this — do not disable it.
 - Never log decrypted secrets, auth tokens, or payment data. Log identifiers (`provider`, `user_id`, `key_fingerprint`), not values.
-- Never print secret values into the conversation, command output, or debug dumps — not even to diagnose. Reference keys by name (`DISCORD_TOKEN is set/empty`), never by value.
+- Never print secret values into the conversation, command output, or debug dumps — not even to diagnose. Reference keys by name (`API_TOKEN is set/empty`), never by value.
 - Document secret rotation in `docs/guides/{{deploy_or_publish_guide}}.md` for every long-lived credential. When you're being paged at 2am you do not want to improvise.
 - All new CI/CD workflows declare least-privilege `permissions:` blocks, not inherit repo defaults.
 
@@ -189,7 +190,7 @@ Only after this checklist passes should you report the task as done.
 
 ## Executing actions
 
-- Carefully consider blast radius before destructive actions. Freely: edit files, run tests locally, create feature branches. Confirm first: `git reset --hard`, `git push --force`, force-pushing, deleting branches, dropping {{database/state-store}} tables, amending published commits, pushing to shared remotes, publishing to a registry, uploading a release artifact.
+- Carefully consider blast radius before destructive actions. Freely: edit files, run tests locally, create feature branches. Confirm first: `git reset --hard`, `git push --force`, force-pushing, deleting branches with unmerged work, dropping {{database/state-store}} tables, amending published commits, pushing to shared remotes, publishing to a registry, uploading a release artifact. (Deleting a just-merged feature branch is routine close-out, not a confirm item.)
 - Tool approval in one scope does not extend to other scopes (see the *Task workflow* and *Release workflow* sections for the per-workflow gates).
 - If you hit unfamiliar files, branches, or config, investigate before deleting — it may be the user's in-progress work.
 - When running into a failing check, diagnose the root cause. Do not bypass with `--no-verify`, test-skip markers, lint-suppress comments, or similar. Ask the user if you're stuck.
@@ -213,6 +214,7 @@ Only after this checklist passes should you report the task as done.
 - Do not push to `{{PRODUCTION_BRANCH}}`.
 - Do not duplicate the version string.
 - Do not `--no-verify`.
+- Do not leave a merged feature branch behind — delete it, remote and local, in the same close-out.
 - Do not commit `.env`, secrets, signing material, or generated credentials.
 - Do not recreate `roadmap.md` or any other ad-hoc tracking file.
 - Do not create documentation files unprompted.
@@ -244,8 +246,8 @@ Quick reference for each `{{token}}` used above.
 | `{{OWNER}}/{{REPO}}` | `acme/reader` | GitHub slug |
 | `{{SETUP_CMD}}` / `{{TEST_CMD}}` / `{{LINT_CMD}}` / `{{RUN_CMD}}` | `uv sync` / `pytest --cov` / `ruff check . && ruff format .` / `docker compose up` | The canonical invocations CI and hooks run |
 | `{{LANGUAGE}}` | "Python 3.13", "Rust 2024", "TypeScript / Node 22", "Swift 5.10" | Primary language and version |
-| `{{PROJECT_TYPE}}` | "async Discord bot", "macOS menu-bar app", "iOS app", "CLI tool", "library" | One-noun shape |
-| `{{ONE_LINE_DESCRIPTION}}` | "multi-provider LLM support, SQLite storage, Docker deployment" | Sub-30 words |
+| `{{PROJECT_TYPE}}` | "chat bot", "macOS menu-bar app", "iOS app", "CLI tool", "library" | One-noun shape |
+| `{{ONE_LINE_DESCRIPTION}}` | "REST API with SQLite storage, Docker deployment" | Sub-30 words |
 | `{{PRODUCTION_BRANCH}}` | `master`, `main`, `release` | Auto-deploy or publish target |
 | `{{INTEGRATION_BRANCH}}` | `develop`, `main`, `next` | Default branch, where work lands |
 | `{{ENTRY_DIR}}` / `{{LOGIC_DIR}}` | `apps/` + `packages/`; `cmd/` + `internal/`; `src/bin/` + `src/lib/` | Transport-vs-logic split |

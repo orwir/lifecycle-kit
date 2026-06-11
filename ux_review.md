@@ -2,7 +2,7 @@
 
 When the user asks for a UI/UX review (a structured pass over the user-facing surface to find friction, inconsistency, and bloat after a feature-heavy stretch), follow this template. It covers any surface a human drives — web, desktop GUI, TUI, CLI, and chat bots — and is optimised for the same context as the rest of the set: solo-maintained products, work-as-you-go execution, plan kept in `docs/reviews/`.
 
-Surface tags: `[web]`, `[desktop]`, `[tui]`, `[cli]`, `[bot]` (Discord / Telegram / Slack). Untagged checks apply to every surface.
+Surface tags: `[web]`, `[desktop]`, `[tui]`, `[cli]`, `[bot]` (chat-platform bots). Untagged checks apply to every surface.
 
 ## Shared machinery
 
@@ -80,12 +80,12 @@ Baseline table:
 
 ### Phase 1 sub-checks — CUJ walkthroughs
 
-- **Fresh environment, every time.** New browser profile / clean container / `[bot]` a new server joined with a non-admin account. Public docs only — no source, no memory of being the developer.
+- **Fresh environment, every time.** New browser profile / clean container / `[bot]` a fresh workspace joined with a non-admin account. Public docs only — no source, no memory of being the developer.
 - **Walk each CUJ twice:** cold (first-time user) and warm (returning user — different friction: re-finding things, re-auth, remembering syntax).
 - **Record per step:** what the user must already know, what they must decide or type, what the system shows, and every hesitation. **A hesitation is a finding** — yours comes with full context; a real user's would be worse.
 - **Count:** steps, required decisions, and time-to-success per CUJ. These feed the delta table.
 - **The README test:** a stranger completes CUJ-1 using only the README. Where they couldn't, either the surface or the doc is wrong — pick one and fix it (the surface twin of the codebase review's docs truth-up).
-- `[bot]` Run as a regular member, not the server owner: command discovery without prior knowledge, missing-permission behavior, response readability at mobile width.
+- `[bot]` Run as a regular member, not the workspace owner: command discovery without prior knowledge, missing-permission behavior, response readability at mobile width.
 - `[cli]` Walk `--help`-only: no man page, no README. Flags discoverable, errors name the flag at fault, exit codes honest.
 
 ### Phase 2 sub-checks — first-run & empty states
@@ -106,14 +106,14 @@ Baseline table:
 ### Phase 4 sub-checks — consistency, copy & design language
 
 - **Conformance audit** against the design-language reference: components, data rendering (timestamps, IDs, counts, money), the one-pattern-per-job inventory. Verdict per divergence: the surface is wrong (fix it) or the reference is stale (update it) — the same two directions as doc truth-up.
-- **Terminology:** one name per concept, everywhere — UI, docs, and error strings. `[bot]` "guild" vs "server" is the classic. Add a glossary table to the design reference if it lacks one.
+- **Terminology:** one name per concept, everywhere — UI, docs, and error strings. `[bot]` the platform API's internal term leaking into user-facing copy is the classic. Add a glossary table to the design reference if it lacks one.
 - **Copy pass:** one casing convention, one voice, jargon only where the audience owns it. Shorter is almost always better — word diet is part of the subtraction stance.
-- **i18n / locale** (if shipped): untranslated strings in the non-default locale, date / number formatting per locale, `[bot]` replies follow the configured guild / user locale rather than the developer's.
+- **i18n / locale** (if shipped): untranslated strings in the non-default locale, date / number formatting per locale, `[bot]` replies follow the configured workspace / user locale rather than the developer's.
 
 ### Phase 5 sub-checks — performance as UX
 
 - **Budgets by interaction class:** instant feel <100ms, in-flow <1s, anything longer owes visible progress. Assign every CUJ step a class; **measure, don't vibe** — p50/p95 from logs, or a stopwatch during the walkthrough.
-- **Acknowledge within ~100ms, always:** `[web]` pressed states, skeletons, optimistic updates; `[cli]` progress output for anything over a second; `[bot]` typing indicator or deferred reply inside the platform's ack window; stream long generations instead of batching them.
+- **Acknowledge within ~100ms, always:** `[web]` pressed states, skeletons, optimistic updates; `[cli]` progress output for anything over a second; `[bot]` typing indicator or deferred reply inside the platform's ack window; stream long responses instead of batching them.
 - **Cold start counts** where the user feels it: `[cli]` startup time is part of every single journey; `[desktop]` launch-to-usable.
 - Per-call work that could be per-process is a perf *and* a simplification finding — route it to the codebase review's 3.W lens.
 

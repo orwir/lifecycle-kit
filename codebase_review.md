@@ -84,7 +84,7 @@ The 12 phases below cover most full-stack Python services. Skip irrelevant phase
 | N+3   | Operations & deployment                             | Docker, CI, backups, release                                                                                     |
 | N+4   | Final passes                                        | Self-enforcing rules, doc sweep, close out                                                                       |
 
-**Domain phase count.** The 7..N row expands to as many phases as the project has critical subsystems — typically 2–4. Two slots is fine for a small service. A richer service often needs 3–4 layers along the lines of: a *foundation* layer (external integrations, providers), an *orchestration* layer (pipelines, dispatchers), a *cross-cutting gate* (validation, safety, authz), and a *settlement* layer (anything with strict bookkeeping — billing, accounting, state machines). Translate these labels to your domain: an LLM service might hit all four; a Windows overlay might have only *capture* and *render*; a CLI tool might collapse to a single *commands* phase. What matters is that each layer with its own correctness logic gets a focused phase. When in doubt, give an orchestration layer or a strict-liability surface its own phase rather than folding it into a neighbour — both have subtle correctness logic that benefits from focused review. Order domain phases by execution flow (foundation → orchestration → gate → settlement) so each phase's findings are concrete by the time the dependent phase is picked up.
+**Domain phase count.** The 7..N row expands to as many phases as the project has critical subsystems — typically 2–4. Two slots is fine for a small service. A richer service often needs 3–4 layers along the lines of: a *foundation* layer (external integrations, providers), an *orchestration* layer (pipelines, dispatchers), a *cross-cutting gate* (validation, safety, authz), and a *settlement* layer (anything with strict bookkeeping — billing, accounting, state machines). Translate these labels to your domain: a service with billing might hit all four; a screen-capture utility might have only *capture* and *render*; a CLI tool might collapse to a single *commands* phase. What matters is that each layer with its own correctness logic gets a focused phase. When in doubt, give an orchestration layer or a strict-liability surface its own phase rather than folding it into a neighbour — both have subtle correctness logic that benefits from focused review. Order domain phases by execution flow (foundation → orchestration → gate → settlement) so each phase's findings are concrete by the time the dependent phase is picked up.
 
 **Phase numbers in this template.** The sub-check sections below carry the numbers of the default layout — exactly two domain phases, so security = 5, tests = 10, close-out = 12. If your table has more or fewer domain phases, renumber on use; the topics are canonical, not the numbers.
 
@@ -100,7 +100,7 @@ Rules that apply throughout, not in any one phase.
 **Findings discipline.**
 
 - **Don't recommend refactors *because* two files share a prefix or a word.** Architecture-driven layering produces false positives; verify before recommending.
-- **Findings get numbered per phase; action items get slugs.** A finding is `P3 #5` (phase + number — number resets each phase). An action item is a kebab-case slug like `` `cog-coverage` `` that is unique across the whole plan, memorable in conversation, greppable, and survives into commit messages and (when relevant) issue titles. Action items cite which findings they address (`Addresses P10 #3, #4`).
+- **Findings get numbered per phase; action items get slugs.** A finding is `P3 #5` (phase + number — number resets each phase). An action item is a kebab-case slug like `` `handler-coverage` `` that is unique across the whole plan, memorable in conversation, greppable, and survives into commit messages and (when relevant) issue titles. Action items cite which findings they address (`Addresses P10 #3, #4`).
 - **Severity is a commitment.** Each label changes the default action — pick deliberately, don't default to `Drift` for everything.
 
 **Simplification.**
@@ -229,7 +229,7 @@ Delegate the architecture doc to a read-only subagent (it's usually large; readi
 - Configuration surface (env vars, tier config, feature gating)
 - Data flow for the canonical commands end-to-end
 - Storage model (tables, UoW, encryption boundaries)
-- **Load-bearing abstractions** — the 8–12 names touched by many files (responder protocol, error hierarchy, request context, single-chokepoint dispatcher, etc.)
+- **Load-bearing abstractions** — the 8–12 names touched by many files (handler protocol, error hierarchy, request context, single-chokepoint dispatcher, etc.)
 
 Output: a short markdown block at the top of Phase 3 with file:line refs throughout. Keep it for the rest of the review.
 
@@ -250,7 +250,7 @@ For each load-bearing name in 3.X:
   * *Residue from superseded assumption* — the shape outlived its reason. Severity: `Drift` (architectural). Action: surface the simplification with a decision-shape item so the maintainer picks the new boundary; don't unilaterally rewrite a load-bearing abstraction.
   * *Coupled residue* — the residue can't be peeled off without restructuring (e.g. the cache and the decorator are bound together — removing the cache re-introduces the perf problem the cache was fixing). Treat as one action item, not two; the split is the wrong axis.
 
-A standing example (from a Discord LLM service — translate the shape to your domain): a moderation decorator was wired around every LLM call because the original design wanted to moderate every hop. Later revisions narrowed pre-check to one hop's worth of user intent and added a per-request cache to keep the decorator from re-moderating across hops. The surviving justification was "moderate user intent once per request", but the implementation was still "decorator at every hop + cache". The audit said: decorator + cache are coupled residue; the new shape is "single gate called once at request entry."
+A standing example (hypothetical — translate the shape to your domain): an authorization decorator was wired around every storage call because the original design wanted to authorize each access independently. Later revisions narrowed the requirement to validating the caller once per request and added a per-request cache to keep the decorator from re-checking across calls. The surviving justification was "authorize the caller once per request", but the implementation was still "decorator at every call + cache". The audit said: decorator + cache are coupled residue; the new shape is "single gate called once at request entry."
 
 Do NOT pattern-match on superficial cues (long file, many imports, deeply nested logic). The signal is the *delta* between what the rationale needs now and what the implementation does. A short, simple file can still be residue; a long, complex one can still be load-bearing.
 
@@ -264,7 +264,7 @@ Smell candidates worth probing:
 
 - `<name>.py` next to `multi_<name>.py` or `<name>_v2.py`
 - `core/<topic>.py` next to a `<topic>/` package
-- Multiple files sharing a prefix (`i18n_*`, `developer_*`, `safety_*`) — old+new of one concept, or N distinct surfaces?
+- Multiple files sharing a prefix (`i18n_*`, `report_*`, `auth_*`) — old+new of one concept, or N distinct surfaces?
 - Empty `__init__.py` next to siblings that export real symbols
 - Local artifacts (`.mypy_cache/`, `build/`, `dist/`) for tools the project removed but the artifact survived
 - Modules mentioned only in older docs / older ADRs
@@ -396,7 +396,7 @@ pytest --cov=packages --cov=apps --cov-report=term-missing
 
 Both tails matter:
 
-- **Low coverage** is the known smell — usually clusters around transport (cogs, HTTP handlers, CLI entry points). Severity is usually `Drift-prone` or `Real bug`.
+- **Low coverage** is the known smell — usually clusters around transport (HTTP handlers, bot command handlers, CLI entry points). Severity is usually `Drift-prone` or `Real bug`.
 - **Suspiciously high coverage** is the inverse smell. A small module at 100% often has tests of framework behavior or trivial getters. Spot-check the last few covered lines for assertion value.
 - **Recently refactored modules at low coverage** are regression windows. Cross-reference `git log --since="30 days ago" --name-only` with the coverage report.
 
@@ -404,7 +404,7 @@ Both tails matter:
 
 The highest line-count payoff of the phase. Each is a separate probe.
 
-- **Layered duplication.** Same code path tested in handler + pipeline + rendering + cog + e2e? The e2e is usually load-bearing; middle layers often re-assert the same thing with different mocks. Per layer, ask: *what does this assert that the layer above/below doesn't?* Verdicts: *Unique responsibility* (keep), *Overlapping with layer X* (trim to the unique cases), *Redundant* (delete).
+- **Layered duplication.** Same code path tested in handler + pipeline + rendering + transport adapter + e2e? The e2e is usually load-bearing; middle layers often re-assert the same thing with different mocks. Per layer, ask: *what does this assert that the layer above/below doesn't?* Verdicts: *Unique responsibility* (keep), *Overlapping with layer X* (trim to the unique cases), *Redundant* (delete).
 - **Mock-heavy fixtures.** A `MagicMock`-spawning helper driving N tests becomes brittle on every schema change.
 
 ```
@@ -537,14 +537,14 @@ Each action item is a checkbox line keyed by a unique kebab-case slug. The slug 
 
 ```
 # Open
-- [ ] **`cog-coverage`** — Improve Discord cog test coverage. Addresses P10 #3, #4.
+- [ ] **`handler-coverage`** — Improve transport-handler test coverage. Addresses P10 #3, #4.
       Files / changes / tests.
 
 # Done — append a one-liner about what shipped + commit ref
-- [x] **`cog-coverage` [DONE]** — Improve Discord cog test coverage. (commit `abc1234`)
+- [x] **`handler-coverage` [DONE]** — Improve transport-handler test coverage. (commit `abc1234`)
 
 # Deferred — issue-worthy (see threshold below). Filed as a tracking issue.
-- [x] **`cog-coverage` [DEFERRED → #166]** — Filed with `type/refactor`, `area/cogs`, `priority/tier-2`.
+- [x] **`handler-coverage` [DEFERRED → #166]** — Filed with `type/refactor`, `area/api`, `priority/tier-2`.
 
 # Deferred — stays in this doc, picked up at next review
 - [ ] **`docstring-spotcheck` [DEFERRED]** — Skim high-traffic module docstrings for "used by X" / "calls Y" claims; not urgent. Carry to next review.
@@ -558,13 +558,13 @@ Each action item is a checkbox line keyed by a unique kebab-case slug. The slug 
 
 Otherwise the action stays in the doc. Trivial cleanups, single-PR refactors, and small follow-ups are *not* issue-worthy — issuing them inflates the tracker without adding signal. The next review's [Phase 0.2](#02-ground-rules-read) opens by skimming this doc for open `[ ]` items.
 
-**Commit references.** Use the slug in commit message bodies: `closes plan: cog-coverage`. The plan, the git log, and (when it exists) the issue all line up.
+**Commit references.** Use the slug in commit message bodies: `closes plan: handler-coverage`. The plan, the git log, and (when it exists) the issue all line up.
 
 ### Cross-phase blocks
 
 When one finding blocks another, note it inline rather than relying on the reader to spot it:
 
-> "Until `credits-writeback` lands, finding #2 (intent classifier in budget) cannot land cleanly — adding intent-call charging while the writeback is broken just moves the bug, doesn't fix it."
+> "Until `session-store-fix` lands, finding #2 (retry on stale session) cannot land cleanly — adding retries while the store returns stale rows just moves the bug, doesn't fix it."
 
 The blocker note belongs in the *Action items* section of the blocking phase, not buried in Findings.
 
@@ -574,7 +574,7 @@ When an action item has more than one reasonable execution path, present them as
 
 ```
 - [ ] **`dep-pinning-policy`** — Decide on dependency pinning policy. Addresses #4. Three reasonable shapes:
-  - **(A) Pin majors** — `discord.py>=2.3.2,<3.0.0`. One-time edit, no new tooling.
+  - **(A) Pin majors** — `httpx>=0.27,<1.0`. One-time edit, no new tooling.
   - **(B) Lockfile via `pip-compile`** — reproducible, but ongoing bump churn.
   - **(C) Accept current looseness with rationale** — cheapest, footgun.
   - **Recommended: (A).** Catches the actual risk (surprise major bump at next build) without the lockfile maintenance burden.

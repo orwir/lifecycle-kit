@@ -15,6 +15,13 @@ here, then re-sync the mirrors.
   user-facing-surface foundation, what to grow / what to skip).
 - **`agents_template.md`** — copy-and-fill skeleton for a new repo's `AGENTS.md`
   (the operating contract AI assistants read).
+- **`contributing_template.md`** — copy-and-fill skeleton for a new repo's
+  `CONTRIBUTING.md`: branching with branch-deletion hygiene, quality gates, the
+  four-column board lifecycle, the release checklist.
+- **`issue_template_bug.md`** / **`issue_template_task.md`** — copy-and-fill issue
+  templates; install to `.github/ISSUE_TEMPLATE/` as `bug.md` / `task.md`.
+- **`pr_template.md`** — copy-and-fill PR template; install to
+  `.github/pull_request_template.md`.
 - **`codebase_review.md`** — comprehensive-review template (12 phases in the default
   layout) for solo-maintained Python repos. Run after a heavy build phase to catch
   drift, dead code, and quiet bugs; plan lives in `docs/reviews/` as a permanent
@@ -32,6 +39,10 @@ base=https://gist.githubusercontent.com/orwir/d288ef4ec7dcb37a4cd3e9ae2019c037/r
 curl -sL "$base/idea_gauntlet.md"     -o docs/guides/idea_gauntlet.md
 curl -sL "$base/project_kickstart.md" -o docs/guides/project_kickstart.md
 curl -sL "$base/agents_template.md"   -o docs/guides/agents_template.md
+curl -sL "$base/contributing_template.md" -o docs/guides/contributing_template.md
+curl -sL "$base/issue_template_bug.md"    -o docs/guides/issue_template_bug.md
+curl -sL "$base/issue_template_task.md"   -o docs/guides/issue_template_task.md
+curl -sL "$base/pr_template.md"           -o docs/guides/pr_template.md
 curl -sL "$base/codebase_review.md"   -o docs/guides/codebase_review.md
 curl -sL "$base/ux_review.md"         -o docs/guides/ux_review.md
 ```
@@ -66,4 +77,4 @@ handoff.
 When a project discovers a reusable pattern (not project-specific), fold it back
 into the relevant file *here* so every project inherits it on the next sync.
 A new file here needs the same justification as a new dependency — prefer
-extending an existing doc over adding a seventh.
+extending an existing doc over adding another file.
