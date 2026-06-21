@@ -1,0 +1,113 @@
+# Design workflow
+
+The **how** of design work across a project's life — the companion to `design_language.md`
+(the **what**: tokens, components, patterns). This doc owns *when* design happens and *how*
+it's run; the language doc owns the resolved system; `design_review.md` is the runnable pass
+that produces and evolves it.
+
+Sits downstream of `project_kickstart.md` § *User-facing surface foundation*, which says set
+the foundation before screen 2 and hands the detail here. Surface-agnostic: applies to any
+surface a human drives — web, desktop GUI, TUI, and even a plain CLI (which has a design
+language too: verb/flag naming, output modes, color-and-symbol scheme, error + exit-code
+shape). Skip only a truly headless service.
+
+## Principle: the language is built and evolved, not just audited
+
+A surface accretes screens faster than it accretes consistency. Left alone, every screen
+invents its own spacing, its own button, its own empty state — and by the time the drift is
+*felt*, retrofitting consistency across a dozen screens costs a dozen times what setting it up
+once would have. The cure is to treat the design language as a thing with a lifecycle: **found**
+it before the second screen, **codify** every design-tool handoff back into it, and **evolve**
+it on a trigger — not when the pain finally surfaces.
+
+The three moments below are that lifecycle. Most projects skip straight to "build screens" and
+discover the gap mid-flight; the trigger table exists so the evolve step fires on a schedule,
+not on frustration.
+
+## The three moments
+
+### 1. Found — before screen 2
+
+Conventions cascade; screens don't. Set the foundation while there's one screen to conform, not
+twelve. In order:
+
+1. **Pick the framework + a component/widget vocabulary** so you inherit accessible, themeable
+   primitives instead of hand-rolling them. Record the choice in an ADR. (Web → a component
+   library; desktop → a widget toolkit; TUI → Textual / Bubble Tea / ratatui; CLI → an arg
+   parser + an output/formatting helper.)
+2. **Set the tokens once, centrally**, in one theme/config file so a change cascades. The token
+   set, by surface:
+   - *Web / desktop / TUI:* two font families at most (one UI, one mono for ids/numerics),
+     **semantic** color tokens only (no raw hex), a spacing rhythm, a radius scale, an
+     elevation/depth model, and motion (duration/easing) tokens — from day one.
+   - *Plain CLI:* consistent verb/flag naming, a small fixed set of output modes (human ·
+     `--json` · `--quiet`), one color-and-symbol scheme, a uniform error + exit-code convention.
+3. **Write the one-page `design_language.md`** (the *what*): the component/output inventory, how
+   each kind of data renders (ids, timestamps, money, counts, status), and the one canonical
+   pattern per job (destructive confirm, empty state, status indicator, pagination/scroll).
+4. **Enforce it in the agent contract**, not just the doc: a rule in `AGENTS.md` that *any* UI
+   edit conforms to the reference — reuse what ships, don't fork a parallel variant. A doc is
+   advisory to a model; a first-read MUST-rule holds the line. A lint (raw-hex ban outside the
+   token file) is the only hard guarantee, usually worth adding the day a second surface appears.
+
+**Don't build a design system here.** At a handful of screens and one maintainer, a token
+package / Storybook / style crate costs more than it returns. The one-page reference + the
+enforced contract *is* the system until the evolve trigger fires.
+
+### 2. Handoff — per new screen or restructure
+
+Where a design/prototyping tool exists (rich for web, thinner for TUI/CLI), use it for new
+screens and restructures, then translate its output. The loop:
+
+1. **Brief.** Write a specialized prompt: the mission, the *fixed* functional constraints
+   (fidelity guarantees, platform conventions, the accessibility floor, the stack it must build
+   in), the *open* axes, a faithful digest of the current language, the deliverables, and what's
+   explicitly out of scope. A grounded brief beats a generic one — hand the tool your real tokens
+   and primitives, not adjectives.
+2. **Generate.** Let the tool explore. Ask for the target look *and* the foundations behind it
+   (a states/components gallery), not just hero screens.
+3. **Reconcile.** Treat the handoff as a **strong draft, not a spec**: reconcile invented data
+   and backend assumptions, reuse your *shipped* primitives over its near-duplicates, and drop
+   embellishments that fight the product. The tool proposes; the language disposes.
+4. **Codify.** Fold the surviving deltas (a new token, a new pattern) back into
+   `design_language.md` so the next screen inherits them — never let a screen carry private
+   styling the reference doesn't know about. That codification is what keeps moment 2 from
+   silently re-opening the drift moment 1 closed.
+
+Small tweaks skip the tool — a one-control change doesn't need a brief.
+
+### 3. Evolve — when the trigger fires
+
+When the foundation strains, run a **`design_review.md`** pass: the structured, multi-phase
+process that re-characterizes the current language, sets a north-star, systematizes the
+foundations (type · color · shape · surface · spacing · sizing · motion), unifies the component
+& state vocabulary, audits every surface for conformance, and re-codifies `design_language.md`.
+The pass is both the first-time establishment (if *Found* was skipped — and it usually was) and
+the periodic evolution.
+
+## Triggers — when to run a pass
+
+| Run a `design_review` pass when…                                                        | Why                                                                                                                              |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| The screen/surface count has roughly **doubled** since the language was last set         | Conventions set for 3 screens fray at 12; the doubling is the cheapest schedulable proxy for "enough drift to be worth a pass"   |
+| A **second surface or platform** appears (web + desktop, CLI + TUI)                      | Two surfaces sharing one product need one language; the moment the second lands is when the shared vocabulary must go explicit   |
+| **Pre-release polish**, before opening to strangers                                      | Pair it with a `ux_review`: the UX review finds journey friction, the design pass finds systemic incoherence — same release gate |
+| A **felt inconsistency a single PR can't fix** — "this one function looks different in three places" | Systemic drift is a language problem, not a screen problem; patching screens one at a time re-grows it               |
+
+**Don't run a pass for:** mid-build churn on a single screen, or a *single* divergence from the
+reference — that's a direct conformance fix (or a `ux_review` Phase 4 finding), not a rebuild of
+the language. A pass reviews a reasonably stable target; don't run one in the middle of an active
+redesign of the same surface.
+
+## The doc map
+
+| Doc                          | Answers                                                         | Cadence                               |
+| ---------------------------- | -------------------------------------------------------------- | ------------------------------------- |
+| `design_workflow.md` (this)  | *When and how* does design happen?                             | Read at founding; re-read at each trigger |
+| `design_language.md`         | *What* is the resolved system — tokens, components, patterns?  | Living; updated on every handoff and pass |
+| `design_review.md`           | The runnable *pass* that establishes/evolves the language      | Run on a trigger                      |
+| `ux_review.md`               | Do the *journeys* work — friction, bloat, usability?           | Per minor release / quarterly         |
+
+`design_language.md` is **this project's own** artifact (its real tokens); the other three are
+reusable templates. Keep the same shape for a TUI or a desktop app — the tokens differ, the
+lifecycle doesn't.
