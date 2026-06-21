@@ -348,9 +348,9 @@ In order:
 4. **Enforce it in the agent contract, not just the doc.** Add a rule to `AGENTS.md` (mirrored in `CLAUDE.md`) that *any* UI edit conforms to the reference — reuse what ships, don't introduce a parallel variant. A doc is advisory to a model; a first-read MUST-rule holds the line. The only hard guarantee is a lint, usually over-engineering at this size.
 5. **Use a design/prototyping tool for new screens and restructures** where one exists (rich for web, thinner for TUI/CLI), then translate its output — treating the handoff as a strong draft, not a spec (reconcile invented data/backend assumptions, reuse your shipped primitives over its near-duplicates, drop embellishments). Small tweaks skip the tool.
 
-Keep the worked example in your reference project as `docs/guides/design_workflow.md` (the how) and `docs/guides/design_language.md` (the what); the same shape applies to a Textual/ratatui TUI or a Qt/Tauri desktop app.
+The design language has a lifecycle, not just a document. Keep `docs/guides/design_workflow.md` (the *how* — found the foundation before screen 2, codify every design-tool handoff back into it, evolve it on a trigger) alongside `docs/guides/design_language.md` (the *what* — the resolved tokens, components, and patterns). The same shape applies to a Textual/ratatui TUI or a Qt/Tauri desktop app.
 
-Once shipped, the surface gets audited periodically against this foundation with `docs/guides/ux_review.md` — the surface counterpart of the codebase review.
+Once shipped, the surface gets audited periodically against this foundation by two complementary passes: `docs/guides/ux_review.md` walks the journeys for friction and bloat, and `docs/guides/design_review.md` — the runnable pass `design_workflow.md` triggers — establishes or evolves the visual system itself when the surface has outgrown the foundation set here.
 
 ---
 
@@ -617,9 +617,14 @@ gh api -X PUT repos/<owner>/<repo>/branches/master/protection --input - <<'JSON'
   "allow_deletions": false
 }
 JSON
+
+# 10. Design foundation — before screen 2, for any human-driven surface (see guides/design_workflow.md)
+#   pick the component vocabulary (record in an ADR) · set tokens once, centrally (fonts, semantic
+#   colors, spacing, radius, elevation, motion) · write docs/guides/design_language.md · add the
+#   "every UI edit conforms to the reference" rule to AGENTS.md
 ```
 
-After this checklist you have a repo that is wired end-to-end: CI runs on PRs, deploy runs on merge to master, docs have a home, issues have templates, contributions have a process, secrets are scanned.
+After this checklist you have a repo that is wired end-to-end: CI runs on PRs, deploy runs on merge to master, docs have a home, issues have templates, contributions have a process, secrets are scanned, and the design foundation is set before the second screen.
 
 ---
 
