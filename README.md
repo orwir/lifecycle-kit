@@ -29,6 +29,14 @@ here, then re-sync the mirrors.
 - **`ux_review.md`** — CUJ-driven review of the user-facing surface (web, desktop,
   TUI, CLI, chat bot): journey walkthroughs, error paths, consistency, latency,
   accessibility floor, surface diet. Shares the codebase review's machinery.
+- **`design_workflow.md`** — the design lifecycle (the *how*): found the foundation
+  before screen 2, codify every design-tool handoff back into it, and evolve it on a
+  trigger. Companion to each project's own `design_language.md` (the *what* — tokens,
+  components, patterns), which is project-specific and not mirrored here.
+- **`design_review.md`** — the runnable design-language pass: establish or evolve the
+  visual system (baseline → north-star → foundations → components & states →
+  conformance audit → codify). The design counterpart of the code and UX reviews;
+  shares the codebase review's machinery.
 
 ## Use in a project
 
@@ -45,6 +53,8 @@ curl -sL "$base/issue_template_task.md"   -o docs/guides/issue_template_task.md
 curl -sL "$base/pr_template.md"           -o docs/guides/pr_template.md
 curl -sL "$base/codebase_review.md"   -o docs/guides/codebase_review.md
 curl -sL "$base/ux_review.md"         -o docs/guides/ux_review.md
+curl -sL "$base/design_workflow.md"   -o docs/guides/design_workflow.md
+curl -sL "$base/design_review.md"     -o docs/guides/design_review.md
 ```
 
 Re-run the same lines to pull the latest after editing the canonical here.
