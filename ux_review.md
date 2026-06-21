@@ -20,6 +20,7 @@ Don't run it:
 
 - Pre-v0.1 — polish before the gauntlet's done-statement ships is procrastination with extra steps.
 - Mid-redesign — review a stable target.
+- To establish or evolve the design system itself — that's a `design_review.md` pass (it builds the language; this review audits a settled surface for friction).
 - On a headless service or library — no surface, no review (an API's "UX" is its docs, covered by the codebase review's truth-up phase).
 
 **Minimum viable review.** Phase 0 → Phase 1 → Phase 8: inventory the journeys, walk them cold, write the deltas and the ledger. Everything else sharpens what the walkthroughs find.
@@ -105,7 +106,7 @@ Baseline table:
 
 ### Phase 4 sub-checks — consistency, copy & design language
 
-- **Conformance audit** against the design-language reference: components, data rendering (timestamps, IDs, counts, money), the one-pattern-per-job inventory. Verdict per divergence: the surface is wrong (fix it) or the reference is stale (update it) — the same two directions as doc truth-up.
+- **Conformance audit** against the design-language reference: components, data rendering (timestamps, IDs, counts, money), the one-pattern-per-job inventory. Verdict per divergence: the surface is wrong (fix it) or the reference is stale (update it) — the same two directions as doc truth-up. When the divergence is *systemic* — the same function rendered differently across many surfaces, or the reference itself thin or self-contradictory — it's not a per-surface fix: route it to a `design_review.md` pass, which rebuilds the language rather than patching screens.
 - **Terminology:** one name per concept, everywhere — UI, docs, and error strings. `[bot]` the platform API's internal term leaking into user-facing copy is the classic. Add a glossary table to the design reference if it lacks one.
 - **Copy pass:** one casing convention, one voice, jargon only where the audience owns it. Shorter is almost always better — word diet is part of the subtraction stance.
 - **i18n / locale** (if shipped): untranslated strings in the non-default locale, date / number formatting per locale, `[bot]` replies follow the configured workspace / user locale rather than the developer's.
