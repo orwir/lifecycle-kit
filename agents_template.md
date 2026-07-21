@@ -220,7 +220,6 @@ Only after this checklist passes should you report the task as done.
 - Do not create documentation files unprompted.
 - Do not introduce competing lint/format/type tools when one already covers the role.
 - Do not use emojis in code or docs unless the user explicitly asks.
-- Do not add AI-attribution footers or promotional trailers to commit messages or PRs.
 - Do not mock the {{primary-side-effect target}} in integration tests.
 - Do not add `print()` / `console.log` / `println!` for debugging — use the project's structured logger.
 - Do not add dependencies casually. New dependencies need a reason that justifies the supply-chain surface.
