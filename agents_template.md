@@ -259,7 +259,7 @@ Quick reference for each `{{token}}` used above.
 | `{{VERSION_FILE}}` | `packages/core/__init__.py`, `package.json`, `Cargo.toml`, `pubspec.yaml` | Single source of truth |
 | `{{TEST_RUNNER}}` | `pytest`, `vitest`, `jest`, `go test`, `cargo test`, `xctest`, `flutter test` | One command, one runner |
 | `{{COVERAGE_FLOOR}}` | `55`, `70`, `80` | Pick something you can defend |
-| `{{COMMENT_BLOCK_BUDGET}}` / `{{DOC_COMMENT_BUDGET}}` / `{{FILE_HEADER_BUDGET}}` | `8` / `15` / `20` | **Derive, don't copy** — `codebase_review.md` § Phase 2 has the procedure. The doc-comment number is the larger of the first two: a doc comment is also an API contract |
+| `{{COMMENT_BLOCK_BUDGET}}` / `{{DOC_COMMENT_BUDGET}}` / `{{FILE_HEADER_BUDGET}}` | `8` / `20` / `25` | **Derive, don't copy** — `codebase_review.md` § Phase 2 has the procedure. The doc-comment number is the larger of the first two: a doc comment is also an API contract |
 | `{{LINT_TOOL}}` | `ruff`, `eslint` + `prettier`, `golangci-lint`, `clippy` + `rustfmt`, `swiftlint` | One per role |
 | `{{PKG_MANIFEST}}` | `pyproject.toml`, `package.json`, `go.mod`, `Cargo.toml` | Where tool config lives |
 | `{{deploy_or_publish_guide}}` | `deployment`, `publishing`, `release`, `distribution` | Filename of the shipping guide |
