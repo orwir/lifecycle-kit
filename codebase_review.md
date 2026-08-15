@@ -187,6 +187,30 @@ grep -rEn "os\.environ|getenv|os\.getenv" packages apps --include="*.py"
 
 Severity is usually `Drift`. A wrong env-var name in the README, a `--help` example that crashes, or a CHANGELOG that omits a breaking change escalates to `Real bug`.
 
+#### Phase 1.B — how the docs are *written*, not whether they are true
+
+Truth-up asks whether a claim matches the code. This asks whether a reader can find it. A doc can be perfectly accurate and still cost every reader a re-read, and that failure is invisible to every check above. Run it as a second sweep over the same files:
+
+- **Orientation.** Does each doc open with what it covers, who it is for, and what it excludes — *before* the first `##`? A doc that opens `# Title` → subtitle → `---` → `## 1. …` has told the reader nothing. This is the highest-value fix in the phase and the cheapest: one paragraph per file.
+- **Buried conclusions.** Sample paragraphs and check whether the point is in the first sentence or the last. Reasoning-then-verdict reads fine to the author, who already knows the verdict.
+- **Paragraph density.** Flag paragraphs past ~700 characters; count them per file. Two shapes dominate — how-to steps that grew into essays, and table cells holding paragraphs.
+- **List duplication.** Any list that appears in two documents. Diff them; the copies will already have drifted, and the drift is the finding.
+- **Name and cross-reference consistency.** Count the variants (`ADR-0007` vs `ADR 0007`, an old product name vs the current one). Both forms being live means neither reads as intentional, and it costs a model a retrieval match.
+- **Narrative accretion.** The [Phase 2](#phase-2-sub-checks--comment--docstring-hygiene) disease in prose form: docs that grew one paragraph per issue until they read as a lab notebook. Same test — is a past-tense sentence recording what was tried, or stating what holds?
+
+Mechanical counts to start from (adjust the doc root):
+
+```
+# paragraphs over ~700 chars, worst files first
+awk 'BEGIN{RS="";FS="\n"} {n=length($0); if (n>700) print n"\t"FILENAME}' \
+    $(git ls-files "docs/**.md" "*.md") | sort -rn | head -20
+
+# cross-reference form split
+grep -rhoE "ADR[- ]0[0-9]{3}" --include="*.md" . | grep -oE "ADR." | sort | uniq -c
+```
+
+Severity is `Minor` for a single dense paragraph and `Drift` for a duplicated list or a name the project has outgrown. Report the paragraph-over-700 count as a before/after number — like prose share in Phase 2, it is the one writing metric that moves visibly.
+
 ### Phase 2 sub-checks — comment & docstring hygiene
 
 Most projects have rules like "comments explain *why*, not *what*" and "no PR-history references in code." These rules rot quickly because nobody runs a linter for them. Bundle the audit into Phase 2 alongside artifact and tombstone cleanups:
