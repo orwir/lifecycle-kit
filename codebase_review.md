@@ -197,7 +197,18 @@ Most projects have rules like "comments explain *why*, not *what*" and "no PR-hi
 - **Multi-paragraph docstrings on small functions** — usually copy-pasted boilerplate. One line is almost always enough.
 - **Workaround comments without a "Why:"** — `# hack to avoid X` is not enough. Add the bug / constraint that forces the workaround so a future reader can decide whether it still applies.
 - **Module docstrings carrying rationale that belongs in an ADR** — long "we chose X because Y" prose at the top of a module should live in a numbered ADR; the module docstring points at it.
-- **Oversized comments — the one that hides from every other check.** A "why, not what" rule bounds the *kind* of comment and never its *volume*, so a file accretes one legitimate rationale paragraph per issue that touches it and no individual line ever looks wrong. Measure it: **prose share per file** (comment + docstring lines ÷ non-blank lines) and **the longest run of consecutive comment lines**. Anything past 8 lines in a comment block, 15 in a docstring, 20 in a file header, or ~35% prose in a non-test source file is a finding. Calibrate those caps against the repo first — histogram the docstring lengths and put the cap where the long tail starts. A cap set by taste rather than by the distribution flags ordinary API contracts: on the repo this check came from, an 8-line docstring cap flagged 30% of all docstrings while a 15-line cap flagged 8% and caught exactly the bloated files. The content is rarely wrong — it is discovery narrative (runs, variants tried, regressions, dates, issue-by-issue history) that should move to the ADR or the issue and be cited in one line.
+- **Oversized comments — the one that hides from every other check.** A "why, not what" rule bounds the *kind* of comment and never its *volume*, so a file accretes one legitimate rationale paragraph per issue that touches it and no individual line ever looks wrong. Measure **prose share per file** (comment + doc-comment lines ÷ non-blank lines) and **the longest run of consecutive comment lines**. The content is rarely wrong — it is discovery narrative (runs, variants tried, regressions, dates, issue-by-issue history) that should move to the ADR or the issue and be cited in one line. Derive the caps before applying them, per the procedure below.
+
+#### Deriving the comment-length budget
+
+The budget belongs in `AGENTS.md` as three concrete numbers, because a rule an assistant can't check mechanically is a rule it will argue with. But the numbers are a property of the codebase, not of good taste — derive them once, record them, and re-derive when the codebase changes shape:
+
+1. **Extract every comment block, doc comment, and file header with its line count.** Use the language's own parser or tokenizer where there is one; a scan for the comment prefix is adequate otherwise. Count doc comments separately from ordinary comment blocks — a doc comment is also an API contract, so it legitimately runs longer.
+2. **Histogram the lengths and find where the cumulative curve flattens** — usually somewhere in the 90th–95th percentile.
+3. **Read a sample from just above and just below that line.** The cap belongs where the *character* of the content changes, not at a round number: constraints and API contracts below it, narrative above. If the items above still read as contracts, move it up; if the ones below are already essays, move it down. This step is the one that matters — the percentile only finds the candidate.
+4. **Write the three numbers into `AGENTS.md`** with the date and the sample size, so the next audit can tell genuine drift from a re-derivation.
+
+A worked example, from the repo this check came from: 70% of doc comments fit in 8 lines, 91% in 15, and everything past 15 was narrative — so the doc-comment cap landed at 15 while the comment-block cap stayed at 8. Adopting a single 8 for both would have flagged 30% of all doc comments, most of them ordinary API documentation. **Numbers that transfer between repos are a coincidence; the procedure is what transfers.**
 
 Grep starting points (Python, adjust for the language):
 
@@ -211,9 +222,12 @@ grep -rEn "added (for|in)|removed in|used by|see issue|fix(es|ed) (#|issue)|intr
 # TODO / FIXME / XXX accumulation — should be near zero, otherwise they belong in issues
 grep -rEn "(TODO|FIXME|XXX)\b" packages/ apps/ --include="*.py"
 
-# Oversized blocks — runs of 8+ consecutive comment lines, longest first
-awk '/^[[:space:]]*#/ {if(!n)s=FNR; n++; next}
-     {if(n>=8) print n"\t"FILENAME":"s; n=0}' $(git ls-files "*.py") | sort -rn
+# Oversized blocks — runs of N+ consecutive comment lines, longest first.
+# Substitute the language's line-comment prefix for `#` (`//`, `--`, `;`, `%`)
+# and the glob for the language's extension. Block comments (/* … */) and doc
+# comments need the parser route from the derivation procedure above.
+awk -v n=8 '/^[[:space:]]*#/ {if(!c)s=FNR; c++; next}
+            {if(c>=n) print c"\t"FILENAME":"s; c=0}' $(git ls-files "*.py") | sort -rn
 ```
 
 **Do not try to detect oversized comments by wording.** Measured on a repo with the problem, keyword greps for history markers ("used to", "was tried", "regressed") matched 7% of the bloated lines and missed 84% entirely — hard-wrapped prose scatters its own tells across fragments, so no per-line pattern sees the paragraph. Length is the only signal that survives wrapping, which is also why the prevention rule is stated as a line budget rather than a style guideline.
