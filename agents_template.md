@@ -129,6 +129,17 @@ Releases run in three explicit phases too, mirroring the task workflow. Full mec
 - Avoid `#L123` line anchors in long-lived docs (ADRs especially). Line numbers rot on every refactor — keep the file ref, drop the line.
 - When writing an ADR, use the four-section format: Status / Context / Decision / Consequences. Number it sequentially.
 
+### How a doc is written
+
+The comment budget governs prose *inside* code; these govern prose in `docs/` and the root markdown. Same instinct — the reader is looking for something, and every line they read before finding it is a line you charged them.
+
+- **Open with orientation: what this covers, who it is for, and what it deliberately does not cover.** Two or three sentences, before the first `##`. A reader who is in the wrong document must be able to leave inside five seconds. Never open with a bare heading and a horizontal rule.
+- **Conclusion first, evidence under it.** State what is true, then why — never a paragraph of reasoning that arrives at its point in the last sentence. This is what makes a doc skimmable by a human and retrievable in fragments by a model.
+- **One claim per paragraph, and keep a paragraph under ~700 characters.** Past that, split it or demote the detail to sub-bullets. A numbered step in a how-to is a *step*: if it needs three caveats, they are sub-bullets under it, not more sentences inside it.
+- **Tables scan; prose explains.** A table cell that needs a paragraph is content in the wrong container — put the sentence in the cell and the paragraph below the table.
+- **One name for one thing.** `{{PROJECT_NAME}}` everywhere, never an older or longer name the project has outgrown. Cross-references use one form (`ADR-0007`, not `ADR 0007`). A concept keeps the same word in every doc that mentions it — a synonym is a retrieval miss for a model and a re-read for a human.
+- **A list lives in exactly one place.** Where a full list exists (an ADR index, a command reference), other docs link to it and may quote a handful with a stated reason for the selection. Two copies of a list is two things to update, and one of them will be stale.
+
 ## Keep documentation in sync with code
 
 Documentation is a first-class deliverable. **Before you commit any change, check whether any existing doc becomes wrong, incomplete, or misleading because of it. If yes, update the doc in the same commit.** Do not defer doc updates to "later" — drift compounds, and a doc that lies is worse than a doc that's missing.
