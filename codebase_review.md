@@ -197,6 +197,7 @@ Most projects have rules like "comments explain *why*, not *what*" and "no PR-hi
 - **Multi-paragraph docstrings on small functions** — usually copy-pasted boilerplate. One line is almost always enough.
 - **Workaround comments without a "Why:"** — `# hack to avoid X` is not enough. Add the bug / constraint that forces the workaround so a future reader can decide whether it still applies.
 - **Module docstrings carrying rationale that belongs in an ADR** — long "we chose X because Y" prose at the top of a module should live in a numbered ADR; the module docstring points at it.
+- **Oversized comments — the one that hides from every other check.** A "why, not what" rule bounds the *kind* of comment and never its *volume*, so a file accretes one legitimate rationale paragraph per issue that touches it and no individual line ever looks wrong. Measure it: **prose share per file** (comment + docstring lines ÷ non-blank lines) and **the longest run of consecutive comment lines**. Anything past 8 lines in a block, 20 in a file header, or ~35% prose in a non-test source file is a finding. The content is rarely wrong — it is discovery narrative (runs, variants tried, regressions, dates, issue-by-issue history) that should move to the ADR or the issue and be cited in one line.
 
 Grep starting points (Python, adjust for the language):
 
@@ -209,9 +210,15 @@ grep -rEn "added (for|in)|removed in|used by|see issue|fix(es|ed) (#|issue)|intr
 
 # TODO / FIXME / XXX accumulation — should be near zero, otherwise they belong in issues
 grep -rEn "(TODO|FIXME|XXX)\b" packages/ apps/ --include="*.py"
+
+# Oversized blocks — runs of 8+ consecutive comment lines, longest first
+awk '/^[[:space:]]*#/ {if(!n)s=FNR; n++; next}
+     {if(n>=8) print n"\t"FILENAME":"s; n=0}' $(git ls-files "*.py") | sort -rn
 ```
 
-Surface findings in the standard table; severity is usually `Cleanup` (delete) or `Drift` (stale claim). Bulk fixes land as one commit per file or per concern, not one per comment.
+**Do not try to detect oversized comments by wording.** Measured on a repo with the problem, keyword greps for history markers ("used to", "was tried", "regressed") matched 7% of the bloated lines and missed 84% entirely — hard-wrapped prose scatters its own tells across fragments, so no per-line pattern sees the paragraph. Length is the only signal that survives wrapping, which is also why the prevention rule is stated as a line budget rather than a style guideline.
+
+Surface findings in the standard table; severity is usually `Cleanup` (delete) or `Drift` (stale claim). Bulk fixes land as one commit per file or per concern, not one per comment. Report prose share as a before/after number — it is the one comment metric that moves visibly.
 
 ### Phase 3 sub-checks — concept landscape, assumption residue, pattern duplication, ADR supersession
 
