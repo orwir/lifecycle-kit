@@ -328,6 +328,8 @@ Two stages:
 | `pre-commit` (on `git commit`) | Fast things: lint, format, trailing whitespace, YAML check, large-file check, **secret scanning**. | Keeps the commit loop snappy. Catches obvious problems before they enter history. |
 | `pre-push` (on `git push`)     | Slow things: **full test suite with the same coverage floor as CI**.                               | CI should be a backstop, not the first time tests run.                            |
 
+**Pin the same tool version at both layers, not just the same command.** A hook manager that pins its own tool version — pre-commit's `rev:`, a lockfile under husky/lefthook — is a second pin, independent of whatever CI installs. The two start equal and drift on the next bump, and the failure reads as a broken CI rather than version skew: the commit hook reformats a file one way, CI's `--check` rejects it. Keep them level two ways — add the hook manager to Dependabot's ecosystems (`pre-commit` is a supported one) so both pins get bumped, and assert the two agree in a test, which then runs in whichever gates already run tests.
+
 **Secret scanning** (e.g. [gitleaks](https://github.com/gitleaks/gitleaks)) on `pre-commit` is the cheapest credential-leak prevention you can buy. Your `.env` is gitignored, but accidents happen — a secret pasted into a doc example, a config file with a real token committed because you forgot `.gitignore`. A 200ms hook catches all of them.
 
 ---
@@ -561,7 +563,7 @@ Solo projects have no on-call rotation; nothing notices a dead service except an
 The minimum every project should have on day zero:
 
 1. **`SECURITY.md`** — how to report a vulnerability, expected response time, what's in scope. Even for solo projects. [GitHub Security Advisories](https://docs.github.com/en/code-security/security-advisories) provide a private disclosure channel for free.
-2. **Dependabot** (`.github/dependabot.yml`) — weekly PRs for dependency updates, grouped by ecosystem (pip/npm, actions, docker). Silent security updates become loud when a PR lands in your inbox.
+2. **Dependabot** (`.github/dependabot.yml`) — weekly PRs for dependency updates, grouped by ecosystem (pip/npm, actions, docker, pre-commit). Silent security updates become loud when a PR lands in your inbox. Don't omit the hook manager — its pins are the ones with no other bump path.
 3. **CodeQL** (`.github/workflows/codeql.yml`) — scheduled + PR-triggered static analysis. Catches SQL injection, path traversal, hardcoded credentials, unsafe deserialization. Zero-config for most languages. **Public repos and Code Security–enabled orgs only**; not available on private personal repos (see section on `codeql.yml` above).
 4. **Secret scanning** — pre-commit gitleaks hook (local) and GitHub's built-in push protection (server).
 5. **Non-root containers** — already covered above.
