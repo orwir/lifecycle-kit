@@ -93,7 +93,7 @@ Every tracked task moves through three explicit phases. **Do not collapse them**
 ## Versioning and release
 
 - The version string lives in exactly one place: `{{VERSION_FILE}}` ({{e.g., `packages/core/__init__.py` → `__version__`, `package.json` → `"version"`, `Cargo.toml` → `version`, `pubspec.yaml` → `version`}}). Every other consumer ({{e.g., deploy workflow, `/health` endpoint, About dialog, `--version` flag, image tags, installer name}}) reads from it. **Do not duplicate the version string anywhere else.**
-- Update `CHANGELOG.md` for any user-visible change: one line per entry, grouped Added / Changed / Fixed / Removed once per version, referencing the issue/PR (`- Fix X (#42)`), no rationale prose. Full style spec: [docs/guides/project_kickstart.md § CHANGELOG style](docs/guides/project_kickstart.md).
+- Update `CHANGELOG.md` for any user-visible change: **one claim per entry, at most 120 characters before the `(#N)`** — a semicolon or dash welding a second claim means two entries, not a longer one. Grouped Added / Changed / Fixed / Removed once per version, referencing the issue/PR (`- Fix X (#42)`), no rationale prose. Full style spec: [docs/guides/project_kickstart.md § CHANGELOG style](docs/guides/project_kickstart.md).
 - The release process is documented as a numbered checklist in [CONTRIBUTING.md § Releasing](CONTRIBUTING.md). Do not invent shortcuts.
 
 ## Release workflow — three phases
