@@ -105,17 +105,18 @@ Pick one file as the version source of truth. Every other place (CHANGELOG, Dock
 
 Your CI reads from it. Your runtime `/health` endpoint reads from it. When you bump the version, you bump *one file*, not four.
 
-### CHANGELOG style: one line per entry, user-visible only
+### CHANGELOG style: one claim per entry, user-visible only
 
 `CHANGELOG.md` is for humans scanning what changed between versions, not a commit log or a release-notes draft. Keep it scannable or it becomes noise nobody reads.
 
-- **One line per entry.** If it needs a paragraph, the paragraph belongs in the linked issue/PR, not the CHANGELOG.
+- **One claim per entry, at most 120 characters before the `(#N)`.** "One line" is a format rule and constrains nothing, so give it a number. A semicolon or dash welding a second claim means two entries sharing the issue ref, not a longer one — split, never trim until it fits. If it needs a paragraph, the paragraph belongs in the linked issue/PR, not the CHANGELOG.
+- **Derive the cap from your own history rather than adopting 120.** Measure entry length excluding the trailing `(#N)`, and split the corpus on whether an entry welds a second clause. In the project this was derived from, 80% of 686 shipped entries carried no `;` or dash and sat at a median of 104 characters; the welded fifth ran 30-45 longer, and every entry that read as "too long" was in it. The cap is a detector for the welding — set it just above where your single-claim population already lives.
 - **User/operator-visible only.** New command, new env var, changed default, observable behaviour, user-visible fix — yes. Internal refactors, renames, new log fields nobody consumes — no. The diff and the commit log already cover those.
 - **Reference the issue/PR** (`- Fix X (#42)`). Details, rationale, and migration prose live there.
 - **Group under Added / Changed / Fixed / Removed once per version.** Collapse adjacent `### Changed` blocks — one per section per release.
 - **No rationale prose.** "In production this lands at…" and "we did this because…" belong in the commit message, PR description, or deployment guide.
 
-The payoff: the `[Unreleased]` section stays short enough that a maintainer can read it in ten seconds when cutting a release, and release notes on GitHub are something users actually skim.
+The payoff: the `[Unreleased]` section stays short enough that a maintainer can read it in ten seconds when cutting a release, and release notes on GitHub are something users actually skim. Expect the entry count to rise when you adopt the cap — splitting welded entries trades fewer, denser lines for more lines that each scan, which is the whole point.
 
 ### Expose a version probe
 
