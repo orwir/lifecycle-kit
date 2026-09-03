@@ -22,7 +22,7 @@ here, then re-sync the mirrors.
   templates; install to `.github/ISSUE_TEMPLATE/` as `bug.md` / `task.md`.
 - **`pr_template.md`** — copy-and-fill PR template; install to
   `.github/pull_request_template.md`.
-- **`codebase_review.md`** — comprehensive-review template (12 phases in the default
+- **`codebase_review.md`** — comprehensive-review template (13 phases, 0–12, in the default
   layout) for solo-maintained Python repos. Run after a heavy build phase to catch
   drift, dead code, and quiet bugs; plan lives in `docs/reviews/` as a permanent
   record.

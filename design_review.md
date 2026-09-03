@@ -18,7 +18,7 @@ Process is inherited from `codebase_review.md` and applies unchanged: the pass s
 per-phase context discipline, the working-document pattern (`docs/reviews/YYYY-MM-design-review.md`,
 a permanent record feeding the next pass), the findings tables and per-phase format, the
 seven-label severity vocabulary (translated for the visual system at the end), action-item slugs
-and lifecycle, the issue-worthiness threshold, decision shapes, and cross-phase blocks. The
+and lifecycle, the issue-worthiness threshold, decision shapes, cross-phase blocks, the per-phase Checks-run block, and the Decision register as the plan's last section. The
 per-phase **"what can go?"** habit applies with force here — a design pass that only *adds* tokens
 and never *collapses* a forked variant didn't look hard enough.
 
@@ -220,6 +220,8 @@ breached.
 - **Simplification ledger**, same rules as the codebase review's: every collapse across phases in
   one ranked table (forked variants killed, off-grid values normalized, dead tokens removed). An
   empty ledger means the pass didn't look.
+- **Decision register** — the plan's last section, per the shared machinery: competing directions
+  the maintainer hasn't picked are rows there, not prose under a heading of the pass's own invention.
 - **File issues** for deferred surface-conformance work per the issue-worthiness threshold; the
   plan stays in `docs/reviews/` permanently as the record the next pass picks up from.
 

@@ -6,7 +6,7 @@ Surface tags: `[web]`, `[desktop]`, `[tui]`, `[cli]`, `[bot]` (chat-platform bot
 
 ## Shared machinery
 
-Process is inherited from `codebase_review.md` and applies unchanged: the pass structure (skeleton → per-phase analysis → execution → close-out, each phase picked up cold from the plan), per-phase context discipline, the working document pattern (`docs/reviews/YYYY-MM-ux-review.md`, permanent record feeding the next review), findings tables and the per-phase format, the seven-label severity vocabulary, action-item slugs and lifecycle, the issue-worthiness threshold, decision shapes, and cross-phase blocks. The per-phase **"what can go?"** habit applies here too — a written one-line answer before any phase closes.
+Process is inherited from `codebase_review.md` and applies unchanged: the pass structure (skeleton → per-phase analysis → execution → close-out, each phase picked up cold from the plan), per-phase context discipline, the working document pattern (`docs/reviews/YYYY-MM-ux-review.md`, permanent record feeding the next review), findings tables and the per-phase format, the seven-label severity vocabulary, action-item slugs and lifecycle, the issue-worthiness threshold, decision shapes, cross-phase blocks, the per-phase Checks-run block, and the Decision register as the plan's last section. The per-phase **"what can go?"** habit applies here too — a written one-line answer before any phase closes.
 
 This doc defines only what differs: the stance, the CUJ backbone, the phases, and the severity translation at the end.
 
@@ -65,7 +65,7 @@ Canonical home: `docs/product/vision.md` § Critical user journeys. The review p
 
 - **CUJ inventory** — read it from `docs/product/vision.md` § Critical user journeys; on the first review, create that section there (format above). Then pull the support / feedback / "how do I" questions since the last review — each maps to a CUJ or exposes a missing one.
 - **Surface counts**, mechanically: screens / commands / flags, user-facing settings, distinct user-facing error messages. These are the bloat radar and the delta denominators.
-- **Ground-rules read:** `docs/product/vision.md` (who this is for), the design-language reference, and the previous UX review's open `[ ]` items.
+- **Ground-rules read:** `docs/product/vision.md` (who this is for), the design-language reference, and — from the latest review of each kind, not only the last UX one — the open `[ ]` items and the Decision register's Open and untriggered Accepted-risk rows.
 - **Instrumentation check:** can you tell from logs which commands / screens / flags are actually used, and where journeys abandon? If not, that's the first finding — Phase 7 runs on this evidence.
 
 Baseline table:
@@ -152,6 +152,7 @@ The subtraction phase. Evidence first: the usage data from Phase 0's instrumenta
 | p95 latency, primary interaction | 1.8s     | 0.9s    | −0.9s      |
 
 - **Simplification ledger**, same rules as the codebase review's 12.4: every removal across phases in one ranked table, top deferred items surfaced as decision shapes.
+- **Decision register** — the plan's last section, per the shared machinery: every `Decision pending` finding and letter-shaped item has a row; a feature kept with a reason that is really a risk gets a revisit trigger.
 - **Update the design-language reference** with every pattern decision the review made — the reference is what holds the line afterward, since `AGENTS.md` enforces it on every future UI edit, including the AI-driven ones.
 - **Write CUJ changes back into `vision.md`** — journeys added, retired, or re-scoped. The next review starts from there, not from scratch.
 - **Self-enforcing rules where cheap, one assertion each:** `[bot]` help output lists every registered command; `[cli]` snapshot of `--json` output; `[web]` lint forbidding raw hex outside the token file.

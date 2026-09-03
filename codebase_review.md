@@ -9,7 +9,7 @@ Run this template when accumulated drift is felt but hard to name — typically 
 - Hot-path bug fixes — too slow; do the fix first, file follow-ups for adjacent drift.
 - Sub-week projects — the payback isn't there.
 - Active feature work on the same surface — the codebase is moving; reviews need a stable target.
-- Pre-launch hardening — that's a security review (Phase 5 alone), not a 12-phase walk.
+- Pre-launch hardening — that's a security review (Phase 5 alone), not a 13-phase walk.
 
 **Minimum viable review.** When a full pass is too heavy right now, run Phase 0 → Phase 1 → Phase 3 → close-out and skip the rest deliberately: baseline, doc truth-up, the architecture/simplification audit, delta + ledger. That loop catches the highest-value drift; an abandoned full template catches nothing.
 
@@ -32,12 +32,12 @@ This stance is operationalised in the phase sub-checks and the cross-phase habit
 
 ## How this template runs
 
-A 12-phase review is not a single sitting. Run it in passes — each phase is its own context-bounded unit, picked up cold from the plan file when you start it.
+A 13-phase review is not a single sitting. Run it in passes — each phase is its own context-bounded unit, picked up cold from the plan file when you start it.
 
 1. **Pass 1 — Skeleton.** One session. Fill in the phase table (skip irrelevant phases; customise the domain phases for the project), capture Phase 0 baseline metrics, write the file header. Don't try to write sub-check detail for phases beyond 0 yet — the template's sub-checks and starter lists are enough; project-specific domain-phase detail gets written when those phases are picked up, not now.
 2. **Pass 2 — Per-phase analysis.** One session per phase (or per tight cluster). Pick up the plan, re-read it end-to-end, run the phase's sub-checks, produce findings and proposed action items, and surface them to the user. Once the user authorizes, execute the cheap action items in the same session and defer the rest to a follow-up session.
 3. **Pass 3 — Execution and revisits.** Action items often span sessions; the lifecycle markers (`Open` / `Done` / `Deferred → #issue`) keep the plan honest across resumptions.
-4. **Pass 4 — Close-out.** The final phase (12 in the default layout). Re-run the baseline, populate the delta table, compile the simplification ledger, file issues for the issue-worthy deferred items and leave the rest `[DEFERRED]` for the next review. The plan file stays in `docs/reviews/` permanently — don't delete it (see [Phase 12.5](#closing-out-phase-12)).
+4. **Pass 4 — Close-out.** The final phase (12 in the default layout). Re-run the baseline, populate the delta table, compile the simplification ledger, fill the [Decision register](#decision-register), file issues for the issue-worthy deferred items and leave the rest `[DEFERRED]` for the next review. The plan file stays in `docs/reviews/` permanently — don't delete it (see [Phase 12.5](#closing-out-phase-12)).
 
 **Per-phase context discipline.** When you pick up a phase you should be able to start from: the plan file + the Phase 0 baseline + the project's contract docs. Don't depend on prior-session conversation memory — write findings and decisions into the plan, not into the chat.
 
@@ -55,6 +55,8 @@ The plan is a *living* document — the user will return between phases to surfa
 # {project} — Comprehensive Review Plan
 
 Goal: {one line — usually "catch problems early after a heavy build phase, no overengineering"}
+Scope: {surfaces / source roots in}. Out: {what is deliberately not reviewed, and why}.
+Phases skipped deliberately: {list, or "none"}.
 
 **How to use this file**
 
@@ -67,7 +69,7 @@ Goal: {one line — usually "catch problems early after a heavy build phase, no 
 
 ## Default phase structure
 
-The 12 phases below cover most full-stack Python services. Skip irrelevant phases and add domain-specific ones (e.g. ML pipeline review, frontend audit) as needed. Number contiguously.
+The 13 phases below cover most full-stack Python services. Skip irrelevant phases and add domain-specific ones (e.g. ML pipeline review, frontend audit) as needed. Number contiguously.
 
 | Phase | Topic                                               | Why                                                                                                              |
 | ----- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
@@ -84,9 +86,16 @@ The 12 phases below cover most full-stack Python services. Skip irrelevant phase
 | N+3   | Operations & deployment                             | Docker, CI, backups, release                                                                                     |
 | N+4   | Final passes                                        | Self-enforcing rules, doc sweep, close out                                                                       |
 
-**Domain phase count.** The 7..N row expands to as many phases as the project has critical subsystems — typically 2–4. Two slots is fine for a small service. A richer service often needs 3–4 layers along the lines of: a *foundation* layer (external integrations, providers), an *orchestration* layer (pipelines, dispatchers), a *cross-cutting gate* (validation, safety, authz), and a *settlement* layer (anything with strict bookkeeping — billing, accounting, state machines). Translate these labels to your domain: a service with billing might hit all four; a screen-capture utility might have only *capture* and *render*; a CLI tool might collapse to a single *commands* phase. What matters is that each layer with its own correctness logic gets a focused phase. When in doubt, give an orchestration layer or a strict-liability surface its own phase rather than folding it into a neighbour — both have subtle correctness logic that benefits from focused review. Order domain phases by execution flow (foundation → orchestration → gate → settlement) so each phase's findings are concrete by the time the dependent phase is picked up.
+**Domain phase count.** The 7..N row expands to as many phases as the project has critical subsystems — typically 2–4. Two slots is fine for a small service; a richer one usually needs 3–4 layers:
 
-**Phase numbers in this template.** The sub-check sections below carry the numbers of the default layout — exactly two domain phases, so security = 5, tests = 10, close-out = 12. If your table has more or fewer domain phases, renumber on use; the topics are canonical, not the numbers.
+- a *foundation* layer (external integrations, providers);
+- an *orchestration* layer (pipelines, dispatchers);
+- a *cross-cutting gate* (validation, safety, authz);
+- a *settlement* layer (anything with strict bookkeeping — billing, accounting, state machines).
+
+Translate the labels to your domain: a service with billing might hit all four; a screen-capture utility might have only *capture* and *render*; a CLI tool might collapse to a single *commands* phase. What matters is that each layer with its own correctness logic gets a focused phase — when in doubt, give an orchestration layer or a strict-liability surface its own phase rather than folding it into a neighbour. Order domain phases by execution flow (foundation → orchestration → gate → settlement) so each phase's findings are concrete by the time the dependent phase is picked up. The checks every domain phase runs first are under [Starter sub-checks](#starter-sub-checks--the-remaining-phases).
+
+**Phase numbers in this template.** The sub-check sections below carry the numbers of the default layout — exactly two domain phases, so security = 5, tests = 10, close-out = 12. If your table has more or fewer domain phases, renumber on use; the topics are canonical, not the numbers. Cross-references in the prose (12.2, 12.4, Phase 10) use the default numbers too — read them as *close-out § delta table*, *close-out § ledger*, *tests*.
 
 ### Cross-phase working habits
 
@@ -102,6 +111,7 @@ Rules that apply throughout, not in any one phase.
 - **Don't recommend refactors *because* two files share a prefix or a word.** Architecture-driven layering produces false positives; verify before recommending.
 - **Findings get numbered per phase; action items get slugs.** A finding is `P3 #5` (phase + number — number resets each phase). An action item is a kebab-case slug like `` `handler-coverage` `` that is unique across the whole plan, memorable in conversation, greppable, and survives into commit messages and (when relevant) issue titles. Action items cite which findings they address (`Addresses P10 #3, #4`).
 - **Severity is a commitment.** Each label changes the default action — pick deliberately, don't default to `Drift` for everything.
+- **Unrun is not passed.** A check that couldn't run this session (tool missing, credentials absent, service down) goes into the phase's Checks-run block as *unrun* with the reason — never rolled into a clean phase. "Not checked" and "checked, clean" look identical in a findings table; the Checks-run block is what tells them apart.
 
 **Simplification.**
 
@@ -163,7 +173,7 @@ Read these end-to-end before changing anything:
 - `CLAUDE.md` / `AGENTS.md` / `CONTRIBUTING.md` — the operating contract.
 - `README.md` — what the project claims to do.
 - `docs/architecture/` (or equivalent) — load-bearing diagrams and decision records.
-- `docs/reviews/` (or equivalent) — past review docs. Skim the most recent one for any unresolved `[ ]` action items and carry them into this review's plan as starting findings.
+- `docs/reviews/` (or equivalent) — past review docs. Read the latest review *of each kind* (code, UX, design): carry its unresolved `[ ]` action items in as starting findings, and every Open or untriggered Accepted-risk row of its [Decision register](#decision-register) into this plan's register, origin pointing back.
 
 The output of 0.2 is *internal alignment*, not a written artifact. If a rule surprises you, that's a finding for Phase 1 (docs truth-up).
 
@@ -193,7 +203,7 @@ Truth-up asks whether a claim matches the code. This asks whether a reader can f
 
 - **Orientation.** Does each doc open with what it covers, who it is for, and what it excludes — *before* the first `##`? A doc that opens `# Title` → subtitle → `---` → `## 1. …` has told the reader nothing. This is the highest-value fix in the phase and the cheapest: one paragraph per file.
 - **Buried conclusions.** Sample paragraphs and check whether the point is in the first sentence or the last. Reasoning-then-verdict reads fine to the author, who already knows the verdict.
-- **Paragraph density.** Flag paragraphs past ~700 characters; count them per file. Two shapes dominate — how-to steps that grew into essays, and table cells holding paragraphs.
+- **Paragraph density.** Flag paragraphs past ~700 characters; count them per file. Two shapes dominate — how-to steps that grew into essays, and table cells holding paragraphs. The awk below counts a whole table or list as one paragraph — skip those hits; eight short bullets are not an essay.
 - **List duplication.** Any list that appears in two documents. Diff them; the copies will already have drifted, and the drift is the finding.
 - **Name and cross-reference consistency.** Count the variants (`ADR-0007` vs `ADR 0007`, an old product name vs the current one). Both forms being live means neither reads as intentional, and it costs a model a retrieval match.
 - **Narrative accretion.** The [Phase 2](#phase-2-sub-checks--comment--docstring-hygiene) disease in prose form: docs that grew one paragraph per issue until they read as a lab notebook. Same test — is a past-tense sentence recording what was tried, or stating what holds?
@@ -227,7 +237,12 @@ Most projects have rules like "comments explain *why*, not *what*" and "no PR-hi
 
 The budget belongs in `AGENTS.md` as three concrete numbers, because a rule an assistant can't check mechanically is a rule it will argue with. But the numbers are a property of the codebase, not of good taste — derive them once, record them, and re-derive when the codebase changes shape:
 
-1. **Extract every comment block, doc comment, and file header with its line count.** Use the language's own parser or tokenizer where there is one; a scan for the comment prefix is adequate otherwise. Count doc comments separately from ordinary comment blocks — a doc comment is also an API contract, so it legitimately runs longer. Classify by *role*, not by syntax: a run of Python `#:` lines, a JSDoc block above a constant, or a Rust `///` run are all doc comments even though they use comment markers, and counting them against the inline-comment budget flags documentation for being documentation. **Measure prose only:** stop counting at the first structured section header (`Args:`, `Returns:`, `@param`, `# Arguments`, `<param>`). A 34-line doc comment that is two lines of prose and 31 of parameter entries is documentation working as intended, and a checker that flags it will be ignored — along with everything true it also reports.
+1. **Extract every comment block, doc comment, and file header with its line count.** Use the language's own parser or tokenizer where there is one; a scan for the comment prefix is adequate otherwise. Count doc comments separately from ordinary comment blocks — a doc comment is also an API contract, so it legitimately runs longer.
+
+   Classify by *role*, not by syntax: a run of Python `#:` lines, a JSDoc block above a constant, or a Rust `///` run are all doc comments even though they use comment markers, and counting them against the inline-comment budget flags documentation for being documentation.
+
+   **Measure prose only:** stop counting at the first structured section header (`Args:`, `Returns:`, `@param`, `# Arguments`, `<param>`). A 34-line doc comment that is two lines of prose and 31 of parameter entries is documentation working as intended, and a checker that flags it will be ignored — along with everything true it also reports.
+
 2. **Histogram the lengths and find where the cumulative curve flattens** — usually somewhere in the 90th–95th percentile.
 3. **Read a sample from just above and just below that line.** The cap belongs where the *character* of the content changes, not at a round number: constraints and API contracts below it, narrative above. If the items above still read as contracts, move it up; if the ones below are already essays, move it down. This step is the one that matters — the percentile only finds the candidate.
    **Sample the boundary, not the extreme tail.** The 200-line monsters are obviously narrative and prove nothing about where the line goes; reading them instead of the items a few lines over the candidate is how a cap ends up far too tight, mandating cuts to documentation that was working. If a cleanup pass starts feeling like line-shaving with no reader benefit, the cap is wrong — stop and re-derive rather than grinding through it.
@@ -354,57 +369,99 @@ Config is a bloat magnet: keys outlive the features that read them, and "flexibi
 
 ### Phase 5 sub-checks — security
 
-The smell here isn't subtle bugs; it's *quiet* exposure — secrets that leak in logs, endpoints that skip auth, deps with known CVEs. Walk the surface in this order; most repos have all five.
+The smell isn't subtle bugs; it's *quiet* exposure — secrets that leak in logs, an endpoint that skips a check, a dependency whose fix the pins forbid. The phase's own failure mode is quiet too: a surface that was never walked reads exactly like one walked and found clean. So two rules bind harder here than elsewhere. Every sub-check ends **clean / finding / unrun (why) / n/a** in the Checks-run block. And a deliberate "leave it" is never an `Acceptable` finding — it is a [Decision register](#decision-register) row with a revisit trigger.
+
+Surface tags as in `ux_review.md`: `[web]` a browser-facing surface, `[bot]` a chat-platform bot, `[llm]` anything that sends text to a model, `[web-service]` a deployed container or daemon. Untagged checks apply everywhere; a tagged block the project lacks is recorded as *n/a*, not skipped silently.
+
+Start by re-verifying the kickstart's security baseline (`project_kickstart.md` § Security baseline): `SECURITY.md`, the dependency-update bot config, secret scanning at both layers, least-privilege workflows, the rotation runbook, static analysis where available. Kickstart wires them once; the review is where they get re-checked.
 
 #### 5.1 Secrets
 
-- **Pre-commit secret scan over current state, not just diffs.**
+- **Scan the current state, not just diffs.**
 
 ```
 gitleaks detect --source . --no-banner
 ```
 
-- **Logging hygiene.** Grep for log calls that include known sensitive fields:
+- **Logging hygiene.** Grep log calls for sensitive names — credentials *and* personal data:
 
 ```
-grep -rEn "log\.(info|debug|warning|error).*\b(token|secret|key|password|api_key)\b" packages apps
+grep -rEn "log\.(info|debug|warning|error).*\b(token|secret|key|password|api_key|pepper|salt|email|ip|content|body)\b" packages apps
 ```
 
-Log identifiers (key fingerprint, provider name), not values.
+Log identifiers (key fingerprint, provider name, record id), not values. Message content is data, not a log field.
 
 - **`.env.example` cleanliness.** No real values, no copy-pasted production keys.
+- **Rotation runbook.** One exists for every long-lived credential, and it still matches the code that reads the credential.
 
 #### 5.2 Dependencies
 
 - **Known advisories.** Run the project's dep-audit tool (`pip-audit`, `npm audit`, `cargo audit`).
-- **Pinning policy.** Are majors pinned on security-sensitive deps (auth, crypto, web frameworks)?
+- **The advisory path is a process, not a snapshot.** Where does the *next* advisory land — CI, the pre-push hook, a bot PR? And can the fix ship: a version ceiling that excludes the patched release turns the audit into a notification. Check the ceilings on crypto / auth / web deps against their latest release.
+- **Security-sensitive deps declare what they need.** A session or crypto library that works only because another dependency happens to pull its backend in (a missing `[secure]`-style extra) is `Drift-prone`: the coincidence ends on the next diet pass.
+- **Pinning policy.** Majors pinned on security-sensitive deps (auth, crypto, web frameworks)?
 - **Transitive surface.** Spot-check the deepest deps; supply-chain risk lives there.
-- **Dependency diet.** Advisories aside: one line per direct dependency — what it does, and whether the stdlib or a smaller library now covers it. A dep with one call site (or none) is supply-chain surface and upgrade churn paid for nothing; collapse or drop. Feeds the 12.4 ledger.
+- **Dependency diet.** One line per direct dependency — what it does, and whether the stdlib or a smaller library now covers it. A dep with one call site (or none) is supply-chain surface and upgrade churn paid for nothing; collapse or drop. Feeds the 12.4 ledger.
 
 #### 5.3 Auth and authz
 
-- **Every endpoint enumerated.** List all routes / commands / handlers; for each, what's the auth requirement? Per-endpoint `if user.is_admin` is a smell — centralized check is healthier.
-- **Privilege boundary tests.** Are there tests that assert a non-admin *cannot* reach an admin path? If not, file a follow-up.
+- **Every entry point enumerated** — routes, commands, handlers, scheduled jobs — with its auth requirement next to it. Per-endpoint `if user.is_admin` is a smell; one gate at the entry is healthier.
+- **Object-level authorization.** Every handler that takes an id resolves it against the caller's grants; the id in the URL, the command argument, or the payload is never trusted on its own. This is the check IDOR hides from.
+- **Destructive actions guarded server-side.** Purge, ban, delete, key removal: the arm / confirm step is verified by the handler, not only rendered by the UI. A confirmation the client never sends is a purge with no guard.
+- **Privilege-boundary tests.** One asserts a non-admin *cannot* reach an admin path; one asserts user A cannot read user B's object. Absent → follow-up.
 
-#### 5.4 Data surface
+#### 5.4 `[web]` Sessions, CSRF, and the browser
 
-- **SQL injection.** Grep for string-formatted SQL.
+- **Cookie flags** — `Secure`, `HttpOnly`, `SameSite`, a bounded max-age — on *every* cookie the app sets, not just the session.
+- **CSRF on every unsafe method**, and no state change behind a safe one (a `GET` logout is a state change). The exemption list matches the mounted paths exactly — an exemption for a path that isn't mounted is a dead path today and a hole after the next refactor.
+- **OAuth / SSO callback.** Fresh `state` per attempt, compared timing-safe, consumed once; the code exchanged server-side; the upstream token kept no longer than needed and never logged.
+- **Open redirects.** Any `next` / `return_to` parameter is validated against an allowlist.
+- **Output escaping.** Autoescape on; count the `| safe` (or equivalent) sites and justify each.
+- **Error responses don't enumerate.** A resource the caller may not see answers the same whether it exists or not.
+
+#### 5.5 Boundary and data surface
+
+- **SQL injection.** Grep for string-formatted SQL; should be zero outside constant fragments.
 
 ```
 grep -rEn 'f".*(SELECT|UPDATE|INSERT|DELETE)|format.*(SELECT|UPDATE|INSERT|DELETE)' packages apps
 ```
 
-Should be zero outside parameterized queries.
+- **Input validation at the boundary, including size.** A length cap on every free-text field that reaches storage, a model, or a log. Validate at the edge; trust internal invariants.
+- **Reverse-proxy trust.** The app believes `X-Forwarded-*` from exactly one hop, or from none. Secure cookies, client IP, and every per-IP limit depend on this line.
+- **Unauthenticated entry points inventory** — webhooks, callbacks, health, public forms. Each has signature verification where a signer exists, an idempotency / replay guard, and a rate or size limit. `/health` says the service is healthy, not how it is built.
+- **Timing-safe comparison** for every secret, signature, and token compare.
+- **Encryption boundaries.** Where does data become plaintext, where does it stop? Every transition is a checkpoint. Backups included: what is in them (ciphertext, with the key elsewhere) and who can read them.
 
-- **Web endpoints.** Validate every input at the boundary; trust internal invariants. Spot-check for missing validation on user-controlled fields.
-- **Encryption boundaries.** Where does data become plaintext? Where does it stop being plaintext? Every transition is a checkpoint.
+#### 5.6 Multi-tenant isolation
 
-#### 5.5 Workflows and CI
+- **Every query on a tenant-scoped table carries the tenant predicate** — grep the writes as well as the reads. One test proves tenant A's id cannot read tenant B's row.
+- **Background jobs and operator surfaces** run without a request context and are where the predicate goes missing. Walk them separately.
+
+Single-tenant project: record *n/a* and move on.
+
+#### 5.7 `[llm]` Model and tool surface
+
+- **Untrusted content is framed as data.** Fetched messages, documents, search results, and tool output ride the prompt as *content*, never as instructions — and the framing is enforced at the seam in code, not only asserted in the prompt text.
+- **Tool authority.** A tool call carries the *caller's* authority, never the bot's or the operator's; cross-channel, cross-tenant, and cross-user reads are gated at the tool boundary. A tool that takes a model-supplied id applies 5.3's object-level check.
+- **Model output is untrusted on the way out.** Rendered into markdown / HTML / embeds → escaped; passed to a tool or a query → validated like user input; never executed.
+- **Cost amplification is a denial of service.** Per-request caps on tokens, tool calls, and loop iterations; a timeout on every provider call; the cap fails closed.
+- **Customer-supplied provider keys** are used only for their owner's calls and never appear in a shared cache key, a log line, or an error message.
+
+#### 5.8 Privacy and data lifecycle
+
+- **Personal-data inventory.** Which tables, logs, exports, and backups hold it — a short table in the plan.
+- **Erasure and export walked end-to-end** against a real database; retention carve-outs match the stated policy, and the policy is written somewhere a user can read it.
+- **Every audit record that is written has a read surface.** A compliance record nobody can consult is a liability, not a control.
+
+#### 5.9 Workflows, CI, and the runtime
 
 - **Least-privilege `permissions:` blocks** on every workflow file. No inheriting repo defaults.
 - **Secret usage in CI.** Secrets used only in trusted contexts, never on PRs from forks.
+- `[web-service]` **Image:** pinned base, non-root user, no secrets baked in, scanned if the registry offers it.
+- `[bot]` **Least privilege on the platform:** privileged intents / scopes / permissions are the minimum the shipped features need; the invite link asks for nothing more.
 
-Severity vocabulary: `Real bug` for an actively exploitable issue; `Drift-prone` for "this will become exploitable when X happens"; `Cleanup` for stale config.
+Severity vocabulary: `Real bug` for an actively exploitable issue; `Drift-prone` for "this will become exploitable when X happens"; `Cleanup` for stale config. A deliberate leave-it is an **Accepted risk** row in the Decision register with its trigger — not an `Acceptable` finding to be re-found next review.
 
 ### Phase 10 sub-checks — test suite health
 
@@ -432,7 +489,7 @@ find tests -name "*.py" -printf "%s %p\n" | sort -rn | head -10
 pytest --durations=20
 ```
 
-Healthy ranges: test:source 0.8–1.5x for logic-heavy code; parametrize fan-out under ~20% of total count; no single test file over ~800 lines without a clear reason.
+Starting heuristics, not derived caps — calibrate per repo the way the comment budget is: test:source 0.8–1.5x for logic-heavy code; parametrize fan-out under ~20% of total count; no single test file over ~800 lines without a clear reason.
 
 #### 10.B Coverage reality check (low *and* high)
 
@@ -505,9 +562,9 @@ A naive mirror script over-flags because nested packages can collapse into a sin
 - Coverage drops on prune are expected; coverage drops on *new code* are the real signal. Track separately in the Phase 12.2 delta table.
 - A passing suite with high coverage doesn't disprove bloat; that's exactly when bloat is hardest to spot.
 
-### Starter sub-checks — phases 6, N+1, N+3
+### Starter sub-checks — the remaining phases
 
-These phases don't get full sections; write their detail at pickup, seeded from the lists below and the 3.X landscape map.
+Phases 6, 7..N, N+1 and N+3 don't get full sections; write their detail at pickup, seeded from the lists below and the 3.X landscape map.
 
 **Phase 6 — database & persistence:**
 
@@ -515,6 +572,16 @@ These phases don't get full sections; write their detail at pickup, seeded from 
 - Migrations replay cleanly on an empty database — the only test of migration health that counts.
 - Retention / cleanup jobs actually firing — check row timestamps, not the code.
 - Query count per canonical command: N+1s and per-call queries that could be batched or cached are simultaneously a perf finding and a simplification finding.
+
+**Phases 7..N — domain phases.** Each subsystem writes its own checks at pickup; these apply to every one of them and go first:
+
+- **Boundary contract.** What enters, what leaves, who validates. Validate at the edge, trust internal invariants — a re-validation deep inside is either dead or hiding a hole at the edge.
+- **Every external call** has a timeout, a bounded retry, and an idempotency story; anything retried is safe to repeat.
+- **Authority is decided once** at the entry and travels with the request. Anything downstream that re-derives it from ambient state (a global, a ContextVar, a cache) is a 3.W candidate and a 5.3 candidate at once.
+- **Cost per canonical command** — external calls, tokens, queries, per-call work that could be per-process. A number per command; feeds the 12.4 ledger.
+- **Failure modes** — dependency down, slow, partial. Fail-open vs fail-closed is a written decision (a register row or an ADR), never an accident of exception handling.
+- **Runtime hygiene** (async / concurrent code) — no blocking I/O on the event loop, no unawaited tasks, shutdown cancels what it started, shared mutable state has an owner.
+- **The seam a test can hold** — one fake per external dependency at the boundary; a mock forest means the boundary is in the wrong place (feeds 10.C).
 
 **Phase N+1 — errors & observability:**
 
@@ -545,6 +612,11 @@ These phases don't get full sections; write their detail at pickup, seeded from 
 ### N.2 Subsection name
 - ...
 
+#### Checks run (Phase N)
+- One line per sub-check, ending in exactly one of: clean · finding → #k ·
+  unrun (why) · n/a. Clean surfaces are recorded here, not omitted — this
+  block is how the next reviewer knows the surface was walked.
+
 #### Snapshot (Phase N)
 [Optional — current-state inventory: line counts, decision tables, env-var inventories.
 Only include when the snapshot is itself useful evidence for findings.]
@@ -571,11 +643,13 @@ Use exactly these labels — each carries an expectation:
 | -------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | **Real bug**         | Observable defect for users or operators                                                     | Fix this phase                                                              |
 | **Drift**            | Code / docs out of sync with reality; not user-visible                                       | Fix this phase if cheap; otherwise file follow-up                           |
-| **Drift-prone**      | Pattern that will silently break in a known-future scenario (e.g. when multi-platform lands) | Document the trigger + plan; fix when activated                             |
+| **Drift-prone**      | Pattern that will silently break in a known-future scenario (e.g. when a second transport lands) | Document the trigger + plan; fix when activated                             |
 | **Cleanup**          | Dead code, stale comments, unused exports                                                    | Fix this phase, mechanical                                                  |
 | **Minor**            | Inconsistency, style, doc gap, log-level mismatch                                            | Fix only if it's in the immediate diff                                      |
 | **Acceptable**       | Confirmed correct or appropriate trade-off                                                   | Leave; note for the record                                                  |
-| **Decision pending** | Needs maintainer's call (option A vs B vs C)                                                 | Surface to user with recommended option + rationale; don't act unilaterally |
+| **Decision pending** | Needs maintainer's call (option A vs B vs C)                                                 | Surface with recommended option + rationale; add a register row; don't act unilaterally |
+
+An accepted *risk* is not an `Acceptable` finding — it is a [Decision register](#decision-register) row with a revisit trigger, so the next review re-checks the trigger instead of re-finding the issue.
 
 ### Action-item lifecycle
 
@@ -626,7 +700,7 @@ When an action item has more than one reasonable execution path, present them as
   - **Recommended: (A).** Catches the actual risk (surprise major bump at next build) without the lockfile maintenance burden.
 ```
 
-The user picks; you implement. Don't act unilaterally on letter-shaped items.
+The user picks; you implement. Don't act unilaterally on letter-shaped items. Every letter-shaped item has a [Decision register](#decision-register) row that links here by slug — the options prose lives here, not in the row.
 
 ## Closing out (Phase 12)
 
@@ -669,8 +743,8 @@ the removal bias should be visible right here.
 - Collect every removal / collapse action item from all phases into one
   ranked table: slug, what it removes (lines / dep / abstraction / config
   keys / test layers), status (Done / Deferred).
-- Surface the top deferred simplifications as decision shapes — the
-  maintainer should leave the review knowing the three biggest
+- Surface the top deferred simplifications as decision shapes, each
+  with a Decision-register row — the maintainer should leave the review knowing the three biggest
   simplification opportunities, even if none ship now.
 - An empty ledger means the review didn't look. If that's truly the state
   of the codebase, write the sentence saying so — don't omit the section.
@@ -680,8 +754,37 @@ the removal bias should be visible right here.
   threshold (see Action-item lifecycle)? If yes, file as a GitHub issue
   with labels + project board, and update the line to `[DEFERRED → #N]`.
   If no, leave it as `[DEFERRED]` for the next review to pick up.
+- Fill the Decision register — the plan's last section: every
+  Decision-pending finding and every letter-shaped action item has a
+  row; Open rows carry to the next review.
 - The plan file stays in the repo as historical record. Don't delete it.
 ```
+
+## Decision register
+
+The last section of every review plan. One table, a snapshot as of close-out: every `Decision pending` finding and every letter-shaped action item has a row here, and nothing else does. The register is an *index* — the options and the rationale stay in the phase that raised them; the row says what was asked, what was chosen, and where that choice is recorded.
+
+Heading in the plan: `## Decision register`. Columns:
+
+| Slug                 | Question                                                    | Options → recommended                                             | Origin                       | Status                                                             | Recorded at |
+| -------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------ | ----------- |
+| `dep-pinning-policy` | Pin majors, lockfile, or accept looseness?                  | (A) majors · (B) lockfile · (C) accept → **A**                    | P5 #4                        | Decided (A) 2026-06-14                                             | ADR-0021    |
+| `logout-post`        | Should logout stay a `GET`?                                 | (A) POST + CSRF · (B) leave → **B**                               | P5 #6, carried from 2026-03  | Accepted risk — revisit when the session carries more than identity | this row    |
+| `single-dispatcher`  | Keep one dispatcher when the second transport bypasses it?  | (A) collapse · (B) second transport adopts it · (C) keep → **A**  | P3 #4                        | Open                                                               | —           |
+
+Status vocabulary — exactly these four:
+
+- **Open** — surfaced, not yet chosen.
+- **Decided (X) YYYY-MM-DD** — the maintainer picked. `Recorded at` names where the rationale lives: an ADR when the choice changes an architecture claim, the issue when it schedules work, *this row* otherwise. The register is never the only copy of a significant decision.
+- **Accepted risk — revisit when <trigger>** — a deliberate "leave it" is a decision, not an `Acceptable` finding. The trigger (a release, an event, a date) is what the next review re-checks, instead of re-discovering the finding and re-arguing it.
+- **Dropped (why)** — the question stopped mattering. One clause of why, so it isn't re-raised.
+
+Rules:
+
+- **Carry-forward.** [Phase 0.2](#02-ground-rules-read) copies every Open row, and every Accepted-risk row whose trigger has not fired, from the latest review *of each kind* (code, UX, design) into the new plan's register, origin pointing back. A fired trigger reopens the row. A decision parked in a UX review must be visible to the next codebase review, and vice versa.
+- **Third-review rule.** A row entering its third review is decided in that review's Phase 0 — by the maintainer, or by default to the recommendation. Carrying a question costs a re-read every time; three carries means the answer is the recommendation, or the question is dropped.
+- **Close-out block.** No action item is `[DONE]` while an Open row it depends on is still Open. Note the block in the action item, per [Cross-phase blocks](#cross-phase-blocks).
+- **Decision shapes stay put.** The `(A) / (B) / (C)` block lives in the phase's action items; the register links to it by slug and never repeats the options prose.
 
 ## Conventions checklist
 
@@ -697,6 +800,9 @@ When updating the plan during a session, double-check:
 - [ ] Every phase closed with a written one-line "what can go?" answer — even when the answer is "nothing".
 - [ ] Phase 12 includes the simplification ledger, with the top deferred simplifications surfaced as decision shapes.
 - [ ] Decision-shape items present options as `(A) / (B) / (C)` with a recommendation; don't act unilaterally on them.
+- [ ] Decision register is the plan's last section; every Decision-pending finding and every letter-shaped action item has a row; carried rows name their origin; accepted risks carry a revisit trigger.
+- [ ] Every sub-check has a Checks-run line — clean, finding, unrun with the reason, or n/a for a tagged block the project lacks. Clean is recorded, not omitted.
+- [ ] File header states scope (in / out) and the phases deliberately skipped.
 - [ ] Phase 2 covers comment & docstring hygiene against the project's "WHY not WHAT" rule, not just artifacts and tombstones.
 - [ ] Phase 3 produces a concept landscape map first (cite it in later phases), then runs the load-bearing assumption audit, pattern duplication, and ADR supersession against it.
 - [ ] Phase 3.W (load-bearing assumption audit) ran for every name in the concept map, with the surviving justification and any excess called out per row.
