@@ -78,7 +78,8 @@ These are the canonical invocations — the same ones the hooks and CI run. Don'
 Every tracked task moves through three explicit phases. **Do not collapse them** — each gate is the user's, not yours to assume.
 
 1. **Clarify.** Read the ticket and/or description, ask for any missing detail, and surface scope or constraint conflicts *before* writing code. Move the board item to `In Progress` when you pick it up (skip the board steps for untracked micro-tasks; the approval gates still apply). Implementation does not begin until the details are clear — whether from the ticket, added clarification, or the discussion.
-2. **Implement & stop.** Do the work in full: code, tests, docs, fixtures. Run the local gate (lint + tests) — never report it as passed without having run it in this session, and say so explicitly if something couldn't be run. Then **stop and hand back for review**: on `{{INTEGRATION_BRANCH}}` leave the changes **uncommitted** in the working tree; on a feature branch intermediate WIP commits are fine (the gate is landing, not committing). If review turns up corrections, work them out here and stop again. Do **not** push, merge, or close anything in this phase.
+2. **Implement & stop.** Do the work in full: code, tests, docs, fixtures. Run the local gate (lint + tests) — never report it as passed without having run it in this session, and say so explicitly if something couldn't be run. Run the task review round, then **stop and hand back for review** with the hand-off packet, the return packet and your reply per finding: on `{{INTEGRATION_BRANCH}}` leave the changes **uncommitted** in the working tree; on a feature branch intermediate WIP commits are fine (the gate is landing, not committing). If the maintainer's review turns up corrections, work them out here and stop again. Do **not** push, merge, or close anything in this phase.
+   - The round is [docs/guides/task_review.md](docs/guides/task_review.md): a hand-off packet to a reviewer session with no author context, its return packet, your reply per finding. An untracked micro-task skips it, and the hand-back says so.
 3. **Complete — on explicit approval only.** An explicit go-ahead ("complete the task", "lgtm", or equivalent) is the *only* trigger to commit the task work, push, close the ticket, move the board item to `Done`, and — when the work rode a feature branch — delete the merged branch, remote and local. No approval → no commit, no push, no close. The same gate applies to `git push`, `gh pr create`, and `gh pr merge` — auto mode is permission to write code without re-asking, not permission to land it.
 
 ## Code layout
@@ -239,7 +240,7 @@ Only after this checklist passes should you report the task as done.
 - Do not mock the {{primary-side-effect target}} in integration tests.
 - Do not add `print()` / `console.log` / `println!` for debugging — use the project's structured logger.
 - Do not add dependencies casually. New dependencies need a reason that justifies the supply-chain surface.
-- Do not improvise a review process — comprehensive code reviews follow `docs/guides/codebase_review.md`, UI/UX reviews follow `docs/guides/ux_review.md`.
+- Do not improvise a review process — a task's review round follows `docs/guides/task_review.md`, comprehensive code reviews follow `docs/guides/codebase_review.md`, UI/UX reviews follow `docs/guides/ux_review.md`.
 
 ## When in doubt
 
