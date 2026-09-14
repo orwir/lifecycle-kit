@@ -58,6 +58,17 @@ rationale that don't fit there. Reusable cross-project patterns live in
   full `{{TEST_RUNNER}}` suite, coverage floor `{{COVERAGE_FLOOR}}%`. What passes
   the push passes CI; if it doesn't, the hook config has drifted — fix the hook.
 
+## Task review
+
+A task is read twice before it lands: once by a reviewer session with no author
+context, then by the maintainer. The first read is the round in
+`docs/guides/task_review.md` — the developer session renders a hand-off packet,
+a fresh session reviews the tree against it and renders the return packet, and
+the developer replies per finding. All three come to the maintainer with the
+hand-back, in chat, in both flows; on a feature branch they reach the PR at
+completion, as its body and a comment. The maintainer settles the disputed
+finding ids and the `Decision pending` rows; the rest is already checked.
+
 ## Issue and board lifecycle
 
 Work is tracked on GitHub issues and the project board. Four Status columns,
