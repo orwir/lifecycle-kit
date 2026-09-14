@@ -64,11 +64,11 @@ A task is read twice before it lands: once by a reviewer session with no author
 context, then by the maintainer. The first read is the round in
 `docs/guides/task_review.md` — the developer session renders a hand-off packet,
 a fresh session reviews the tree against it and renders the return packet, and
-the developer replies per finding. All three come to the maintainer under a
-hand-back brief, in chat, in both flows; on a feature branch the packets reach
-the PR at completion, as its body and a comment. The maintainer answers the
-brief's pending rows — the disputed finding ids and the `Decision pending` rows;
-the rest is already checked.
+the developer replies per finding. The maintainer reads a hand-back brief
+rendered from all three, in both flows; the packets stay in the chat history
+and, on a feature branch, reach the PR at completion as its body and a comment.
+The maintainer answers the brief's pending rows — the disputed finding ids and
+the `Decision pending` rows; the rest is already checked.
 
 ## Issue and board lifecycle
 
