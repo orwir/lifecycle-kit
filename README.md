@@ -22,6 +22,10 @@ here, then re-sync the mirrors.
   templates; install to `.github/ISSUE_TEMPLATE/` as `bug.md` / `task.md`.
 - **`pr_template.md`** — copy-and-fill PR template; install to
   `.github/pull_request_template.md`.
+- **`task_review.md`** — the review round between a task's implementation and its
+  hand-back: a developer session hands a packet to a reviewer session with no author
+  context, which hands a packet back. Two plain-prompt packets plus each role's rules;
+  the same round whether the work rides a PR or lands on the integration branch.
 - **`codebase_review.md`** — comprehensive-review template (13 phases, 0–12, in the default
   layout) for solo-maintained Python repos. Run after a heavy build phase to catch
   drift, dead code, and quiet bugs; plan lives in `docs/reviews/` as a permanent
@@ -51,6 +55,7 @@ curl -sL "$base/contributing_template.md" -o docs/guides/contributing_template.m
 curl -sL "$base/issue_template_bug.md"    -o docs/guides/issue_template_bug.md
 curl -sL "$base/issue_template_task.md"   -o docs/guides/issue_template_task.md
 curl -sL "$base/pr_template.md"           -o docs/guides/pr_template.md
+curl -sL "$base/task_review.md"       -o docs/guides/task_review.md
 curl -sL "$base/codebase_review.md"   -o docs/guides/codebase_review.md
 curl -sL "$base/ux_review.md"         -o docs/guides/ux_review.md
 curl -sL "$base/design_workflow.md"   -o docs/guides/design_workflow.md
