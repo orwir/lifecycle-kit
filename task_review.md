@@ -1,6 +1,6 @@
 # Task review
 
-The review round between a task's *Implement & stop* phase and its hand-back to the maintainer: the developer session hands a **hand-off packet** to a reviewer session that has no author context, the reviewer reads the tree against it and hands a **return packet** back, and the developer's reply per finding rides with both under a **hand-back brief** written for the maintainer. Written for the two AI roles and for the maintainer who reads the result. The packets are plain prompts and the brief plain text, so any assistant can carry them; in Claude Code `/handoff`, `/review` and `/handback` (`.claude/commands/`) render them.
+The review round between a task's *Implement & stop* phase and its hand-back to the maintainer: the developer session hands a **hand-off packet** to a reviewer session that has no author context, the reviewer reads the tree against it and hands a **return packet** back, and the developer replies per finding and renders a **hand-back brief** for the maintainer. Written for the two AI roles and for the maintainer who reads the result. The packets are plain prompts and the brief plain text, so any assistant can carry them; in Claude Code `/handoff`, `/review` and `/handback` (`.claude/commands/`) render them.
 
 It does not cover the maintainer's own read of the diff, the comprehensive passes (`codebase_review.md`, `ux_review.md`, `design_review.md`), or a release gate.
 
@@ -17,7 +17,7 @@ The round answers what the gate cannot. Lint, format, the suite and the coverage
 1. **Developer** — `/handoff <issue or PR number>` in the session that did the work renders the hand-off packet. Paste it into a fresh session.
 2. **Reviewer** — `/review <packet>` in that fresh session. The reviewer reads the ticket and the tree, verifies every claim, and renders the return packet. Paste it back.
 3. **Developer** — act on every finding the return marks required, then reply per finding id: `fixed <how>` / `disputed <why>` / `deferred #N`.
-4. **Hand-back** — `/handback` in the developer session renders the brief, and the hand-off, the return and the reply ride under it as evidence. The brief is what the maintainer reads at the gate before *Complete*: its *Decisions pending* rows — every `Decision pending` and every disputed id — are the maintainer's part, the rest is already settled, and the packets are opened on demand.
+4. **Hand-back** — `/handback` in the developer session renders the brief; the hand-off, the return and the reply stay in the chat history where the round produced them. The brief is what the maintainer reads at the gate before *Complete*: its *Decisions pending* rows — every `Decision pending` and every disputed id — are the maintainer's part, and the rest is already settled.
 
 ## Hand-off packet
 
@@ -67,7 +67,7 @@ Developer: act on Real bug and Drift; reply per id — fixed <how> | disputed <w
 
 ## Hand-back brief
 
-What the maintainer reads: a reader who saw neither packet nor the conversation, and who answers or vetoes from the brief alone. What must be answered is separated from what may be vetoed, every row stands on its own, and a finding id cites at the end of a row — it is never the subject, because "R3" carries nothing to this reader. The packets ride under it, in order, as evidence.
+What the maintainer reads: a reader who saw neither packet nor the conversation, and who answers or vetoes from the brief alone. What must be answered is separated from what may be vetoed, every row stands on its own, and a finding id cites at the end of a row — it is never the subject, because "R3" carries nothing to this reader. The packets are not repeated: they are already in the chat history — the hand-off as rendered, the return as it came back, the reply as sent.
 
 ```
 Hand-back: #<N> <title> | untracked: <one line of intent>      Flow: direct on develop, uncommitted (base <sha>) | branch <name> | PR #<M>
@@ -75,12 +75,13 @@ Verdict: approve | corrections, <k> rounds | split: <what lands now, what is fil
 
 In the tree: <2-4 lines: what a user or operator sees differently, what changed under it, what was removed>
 
-Decisions pending — the maintainer's; each row answerable without opening anything:
-1. <the question, one sentence>
-   A <option — consequence> / B <option — consequence>. Recommended A: <why>.
-   Tree now: <untouched — A is <size> here, B is <…> | already A — B is a <size> revert>. (R3)
-   (a disputed finding is a row too: A the reviewer's claim, B the developer's, and why)
-   — or: none
+Decisions pending — the maintainer's; each answerable without opening anything:
+D1. <the question, one sentence> (R3)
+    A <option> — <consequence>
+    B <option> — <consequence>
+    Recommended: A — <why>. Tree now: <untouched — A is <size> here, B is <…> | already A — B is a <size> revert>.
+    (a disputed finding is a decision too: A the reviewer's claim, B the developer's, and why)
+  — or: none
 
 Decisions taken alone — veto by saying so:
 - <what> — <why>. (implementation | R8 fixed)
@@ -92,9 +93,7 @@ Decisions taken alone — veto by saying so:
 Verified: <N passed, coverage X%, lint clean>; fails without the change: <test ids>. NOT RUN: <what, why> | nothing.
 Round: <k> findings — <n> fixed, <n> deferred (#…), <n> recorded, <n> pending above; disputed: <ids> | none — or: skipped, untracked micro-task
 
-Next: answer 1 | nothing pending — then "complete" / "lgtm" → commit, push develop | push the branch and open the PR; close #<N>, Done on the board | untracked: nothing to close.
-
-Packets, in order: hand-off · return 1 · reply 1 · return 2 — or: none, round skipped
+Next: answer D1 | nothing pending — then "complete" / "lgtm" → commit, push develop | push the branch and open the PR; close #<N>, Done on the board | untracked: nothing to close.
 ```
 
 ## Developer rules
@@ -106,7 +105,7 @@ Packets, in order: hand-off · return 1 · reply 1 · return 2 — or: none, rou
 - Reply per id, and a disputed finding stays disputed in the hand-back. It is the maintainer's call, not a second argument to the reviewer.
 - The brief is for a reader who saw neither packet nor the conversation. A pending row carries the question, the options with their consequence, the recommended option with its reason, and what the tree does now; a taken-alone row carries what, why and where (an issue number or a coordinate), so a veto is one sentence.
 - Nothing in the brief that is not in a packet or the tree, and no new argument: the brief condenses, the packets prove.
-- About twenty lines before the packets. Past that, the task wants a split, not a longer brief.
+- About twenty lines. Past that, the task wants a split, not a longer brief.
 
 ## Reviewer rules
 
