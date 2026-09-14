@@ -158,6 +158,8 @@ git push
 
 The pre-push stage of the local hook config runs the identical lint, format-check, and test commands (with the coverage floor) that CI runs, so every push has already cleared the CI gate locally. CI itself re-runs on PRs as a backstop. Releases still go through a `develop → master` PR, so the auto-deploy gate on `master` stays intact. Broken commits on `develop` are a fix-forward or `git revert` problem, not a crisis — nothing is deployed.
 
+The hook is the mechanical gate; the read is `task_review.md` (mirrored alongside this playbook). Before a task is handed back, the developer session hands a packet to a reviewer session with no author context and folds its return packet into what the maintainer reads — two plain-prompt packets, so any assistant can carry them, and the same round whether the work rides a PR or lands on `develop` directly. The maintainer reads the diff after the round, with what a gate cannot check (scope, decisions, invariants, prose, docs) already read by a reviewer the author could not steer.
+
 ### Feature-branch flow (escape hatch for riskier work)
 
 Use a branch when the change is:
