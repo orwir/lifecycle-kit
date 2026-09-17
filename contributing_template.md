@@ -60,15 +60,14 @@ rationale that don't fit there. Reusable cross-project patterns live in
 
 ## Task review
 
-A task is read twice before it lands: once by a reviewer session with no author
+A task is read twice before it lands: once by a reviewer with no author
 context, then by the maintainer. The first read is the round in
 `docs/guides/task_review.md` — the developer session renders a hand-off packet,
-a fresh session reviews the tree against it and renders the return packet, and
-the developer replies per finding. The maintainer reads a hand-back brief
-rendered from all three, in both flows; the packets stay in the chat history
-and, on a feature branch, reach the PR at completion as its body and a comment.
-The maintainer answers the brief's pending rows — the disputed finding ids and
-the `Decision pending` rows; the rest is already checked.
+launches a reviewer agent with it, acts on the return packet and renders the
+hand-back brief, in both flows. The packets pass between the two agents and, on
+a feature branch, reach the PR at completion as its body and a comment; the
+maintainer reads the brief alone and answers its pending rows. The rest is
+already checked.
 
 ## Issue and board lifecycle
 
