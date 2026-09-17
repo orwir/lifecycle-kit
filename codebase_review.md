@@ -1,6 +1,6 @@
 # Codebase review template
 
-When the user asks for a comprehensive codebase review (multi-phase walk through every layer to catch drift, dead code, over-engineering, and quiet bugs after a heavy build phase), follow this template. Optimised for: solo-maintained Python repos, work-as-you-go execution, plan kept in `docs/reviews/` as historical record with selective GitHub issues for cross-cutting follow-ups.
+When the user asks for a comprehensive codebase review (multi-phase walk through every layer to catch drift, dead code, over-engineering, and quiet bugs after a heavy build phase), follow this template. Optimised for: solo-maintained repos, work-as-you-go execution, plan kept in `docs/reviews/` as historical record with selective GitHub issues for cross-cutting follow-ups. The method is language-agnostic; the shell recipes are shown for a Python project, and [Project layout](#cross-phase-working-habits) says how to substitute your own toolchain.
 
 ## When to use this template
 
@@ -69,7 +69,7 @@ Phases skipped deliberately: {list, or "none"}.
 
 ## Default phase structure
 
-The 13 phases below cover most full-stack Python services. Skip irrelevant phases and add domain-specific ones (e.g. ML pipeline review, frontend audit) as needed. Number contiguously.
+The 13 phases below cover most full-stack services. Skip irrelevant phases and add domain-specific ones (e.g. ML pipeline review, frontend audit) as needed. Number contiguously.
 
 | Phase | Topic                                               | Why                                                                                                              |
 | ----- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
@@ -126,6 +126,7 @@ Rules that apply throughout, not in any one phase.
 **Project layout.**
 
 - **Substitute `packages apps` with your project's source roots** throughout the grep / find / coverage recipes below. The template uses `packages apps` as a stand-in (a common Python monorepo layout); your project may use `src/`, `lib/`, `internal/`, `cmd/`, or a single nested package. Decide the substitution once at the start of Phase 0 and apply it consistently — the commands won't run as-written on a layout that doesn't have a top-level `packages/`.
+- **Substitute the toolchain the same way.** The recipes name `ruff`, `pytest`, `MagicMock` and `*.py` because they are shown for a Python project. Read them as *the linter*, *the test runner*, *the mocking library* and *the source glob*, and swap in your stack's at the same moment. What each recipe measures is the point; the command is one way to get the number.
 
 ### Phase 0 sub-checks — baseline & ground rules
 
@@ -133,7 +134,7 @@ Capture the starting state mechanically and read the project's contract document
 
 #### 0.1 Baseline scan
 
-Run and record results in the plan. These become the "Baseline" column of the Phase 12.2 delta table.
+Run and record results in the plan (Python toolchain shown; substitute yours). These become the "Baseline" column of the Phase 12.2 delta table.
 
 ```
 # Lint
@@ -157,8 +158,8 @@ Capture the numbers, not the full output. Standard table:
 
 | Metric                               | Baseline ({date}) |
 | ------------------------------------ | ----------------- |
-| Ruff issues                          | 0                 |
-| Pytest passed                        | 1369              |
+| Lint issues                          | 0                 |
+| Tests passed                         | 1369              |
 | Coverage                             | 86%               |
 | Wall time                            | 40s               |
 | Source lines (`packages/` + `apps/`) | 21,514            |
@@ -321,7 +322,7 @@ Findings shape: name the abstraction, quote the original justification, quote th
 
 Enumerate file-naming smells from the project tree, then probe each in parallel — one read-only subagent per smell. This catches superseded patterns that still linger.
 
-Smell candidates worth probing:
+Smell candidates worth probing (Python names shown; the shapes transfer):
 
 - `<name>.py` next to `multi_<name>.py` or `<name>_v2.py`
 - `core/<topic>.py` next to a `<topic>/` package
@@ -469,7 +470,7 @@ A passing suite with adequate coverage is necessary but not sufficient. Tests ac
 
 #### 10.A Scale & runtime snapshot
 
-Mechanical counts that frame every later finding.
+Mechanical counts that frame every later finding. Python toolchain shown, here and through 10.E; substitute yours.
 
 ```
 # Test count (collection only — fast)
@@ -717,8 +718,8 @@ The user picks; you implement. Don't act unilaterally on letter-shaped items. Ev
 
 | Metric | Baseline ({date}) | Final ({date}) | Δ |
 |---|---|---|---|
-| Ruff issues | 0 | 0 | — |
-| Pytest passed | 1369 | 1421 | +52 |
+| Lint issues | 0 | 0 | — |
+| Tests passed | 1369 | 1421 | +52 |
 | Coverage | 86% | 84% | −2pt |
 | Wall time | 40s | 36s | −4s |
 | Source lines | 21,514 | 20,818 | −696 |
