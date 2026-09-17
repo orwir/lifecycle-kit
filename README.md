@@ -23,10 +23,12 @@ here, then re-sync the mirrors.
 - **`pr_template.md`** — copy-and-fill PR template; install to
   `.github/pull_request_template.md`.
 - **`task_review.md`** — the review round between a task's implementation and its
-  hand-back: a developer session hands a packet to a reviewer session with no author
-  context, which hands a packet back, and a hand-back brief the maintainer reads. Two
-  plain-prompt packets, the brief, and each role's rules; the same round whether the
-  work rides a PR or lands on the integration branch.
+  hand-back: the developer session hands a packet to a reviewer agent with no author
+  context (a subagent, where the assistant can launch one), acts on the packet it gets
+  back, and renders the
+  hand-back brief — the one thing the maintainer reads. Two packets between the
+  agents, the brief, and each role's rules; the same round whether the work rides a PR
+  or lands on the integration branch.
 - **`codebase_review.md`** — comprehensive-review template (13 phases, 0–12, in the default
   layout) for solo-maintained Python repos. Run after a heavy build phase to catch
   drift, dead code, and quiet bugs; plan lives in `docs/reviews/` as a permanent
