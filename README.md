@@ -30,7 +30,8 @@ here, then re-sync the mirrors.
   agents, the brief, and each role's rules; the same round whether the work rides a PR
   or lands on the integration branch.
 - **`codebase_review.md`** — comprehensive-review template (13 phases, 0–12, in the default
-  layout) for solo-maintained Python repos. Run after a heavy build phase to catch
+  layout) for solo-maintained repos; the method is language-agnostic and the shell
+  recipes are shown for Python. Run after a heavy build phase to catch
   drift, dead code, and quiet bugs; plan lives in `docs/reviews/` as a permanent
   record.
 - **`ux_review.md`** — CUJ-driven review of the user-facing surface (web, desktop,
