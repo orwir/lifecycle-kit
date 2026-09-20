@@ -72,9 +72,31 @@ screens and restructures, then translate its output. The loop:
 4. **Codify.** Fold the surviving deltas (a new token, a new pattern) back into
    `design_language.md` so the next screen inherits them — never let a screen carry private
    styling the reference doesn't know about. That codification is what keeps moment 2 from
-   silently re-opening the drift moment 1 closed.
+   silently re-opening the drift moment 1 closed. **Record the pairing too** — one row per
+   shipped screen naming the design file that draws it and the source files that decide what
+   it draws. Two checks over that table are worth a test: every shipped screen has a row, so
+   a screen cannot ship undrawn, and no two rows claim the same screen.
 
 Small tweaks skip the tool — a one-control change doesn't need a brief.
+
+**One surface, one design file.** The second check above is the rule made mechanical, and it
+is worth the machinery because the alternative is seductive. When a change touches one region
+of a large screen, drawing that region as its own file keeps a single review small — so it
+gets done, and the surrounding regions get stubbed. The file is then a claim about a screen
+that does not exist: a reader opens two files to learn one, and the stubbed regions are
+reviewed again when the two are finally merged. Scope belongs in the brief that names the
+region, not in a file boundary. Two exceptions expire on their own — competing variants of
+one screen under review at the same time, which collapse when the maintainer picks, and a
+spec for unshipped work, which cannot merge into a file claiming to be the current state
+without making it lie, and folds in when the work ships.
+
+**A pairing with a stamp tells you when it went stale.** Hash each row's sources into the
+row; a script that recomputes the hash then names the design files that have fallen behind
+the code, and the reading is free and repeatable. Without it, drift is discovered by audit —
+which is to say, long after the cheapest moment to fix it. Prefer reporting to failing the
+build: on most projects the code under a screen moves far more often than what the screen
+looks like, and a hard gate spends a round-trip with the design tool on changes that never
+altered the design. Read it on a trigger that already exists, such as release prep.
 
 ### 3. Evolve — when the trigger fires
 
