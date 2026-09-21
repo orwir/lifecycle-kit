@@ -63,7 +63,10 @@ screens and restructures, then translate its output. The loop:
    (fidelity guarantees, platform conventions, the accessibility floor, the stack it must build
    in), the *open* axes, a faithful digest of the current language, the deliverables, and what's
    explicitly out of scope. A grounded brief beats a generic one — hand the tool your real tokens
-   and primitives, not adjectives.
+   and primitives, not adjectives. Say what the tool cannot see, too — usually the issue
+   tracker: from inside the tool, a gap already filed, even one whose issue rejected the fix it
+   would propose, looks like a gap nobody filed. Have it raise a gap as a question for you to
+   check rather than draft the ticket.
 2. **Generate.** Let the tool explore. Ask for the target look *and* the foundations behind it
    (a states/components gallery), not just hero screens.
 3. **Reconcile.** Treat the handoff as a **strong draft, not a spec**: reconcile invented data
