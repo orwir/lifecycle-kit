@@ -155,7 +155,7 @@ Decided: <each fork and the unsettled question: the answer> | none
 Files: <design file> stays the screen's one file — fold <files> into it; delete <files>; keep <a spec whose work is still open> | every other file you hold for this screen, each folded, deleted or kept by the same rule | nothing beside it
 Notes: <what the shipped state settles, retires or changes> | unchanged
 Foundation: <each proposal: shipped as <name> | replaced by <existing name> | dropped> | none
-Styles: <the tool's copy of the shipped stylesheet is stale since <commit>; it is replaced, never edited> | unchanged
+Styles: <the tool's copy of the shipped stylesheet is stale since <commit>: replace it with a file copy of the shipped one — never an edit or a retype — and confirm its size> | unchanged
 ```
 
 The **closed line** — the tool's answer, one per design file:
