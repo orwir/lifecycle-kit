@@ -68,10 +68,13 @@ screens and restructures, then translate its output. The loop:
    would propose, looks like a gap nobody filed. Have it raise a gap as a question for you to
    check rather than draft the ticket.
 2. **Generate.** Let the tool explore. Ask for the target look *and* the foundations behind it
-   (a states/components gallery), not just hero screens.
+   (a states/components gallery), not just hero screens. Its last message is the **handoff
+   block** below — a map of what it changed, read before the design itself.
 3. **Reconcile.** Treat the handoff as a **strong draft, not a spec**: reconcile invented data
    and backend assumptions, reuse your *shipped* primitives over its near-duplicates, and drop
-   embellishments that fight the product. The tool proposes; the language disposes.
+   embellishments that fight the product. The tool proposes; the language disposes. Keep a
+   **ledger** as you go — every place the build departs from the design, and why — because
+   the close-out is written from it.
 4. **Codify.** Fold the surviving deltas (a new token, a new pattern) back into
    `design_language.md` so the next screen inherits them — never let a screen carry private
    styling the reference doesn't know about. That codification is what keeps moment 2 from
@@ -79,8 +82,22 @@ screens and restructures, then translate its output. The loop:
    shipped screen naming the design file that draws it and the source files that decide what
    it draws. Two checks over that table are worth a test: every shipped screen has a row, so
    a screen cannot ship undrawn, and no two rows claim the same screen.
+5. **Close.** Once the change has shipped, send the tool the **close-out**, and have it bring
+   the design file to what shipped: each delta from the ledger redrawn, each decided fork
+   collapsed, every other file the round made folded in or deleted (a spec for work still
+   open stays until it ships), the notes brought up to date. The design file claims to be the
+   current screen, so a delta the tool never hears about is drift on the day it ships — and
+   the next brief for the screen starts from it. The tool answers with the **closed line**,
+   and only that line re-stamps the pairing.
 
 Small tweaks skip the tool — a one-control change doesn't need a brief.
+
+**Close after the change lands, not before.** A close-out sent from an unmerged change asks
+the tool to redraw from a list of deltas somebody wrote, and the one left off the list stays
+drift under a fresh stamp. Sent after, it points at the shipped files and the list is only a
+guide to them. The same message closes a screen whose code moved without a design round —
+its deltas come from the diff rather than a ledger — which is how a stale reading at release
+prep gets acted on.
 
 **One surface, one design file.** The second check above is the rule made mechanical, and it
 is worth the machinery because the alternative is seductive. When a change touches one region
@@ -100,6 +117,60 @@ which is to say, long after the cheapest moment to fix it. Prefer reporting to f
 build: on most projects the code under a screen moves far more often than what the screen
 looks like, and a hard gate spends a round-trip with the design tool on changes that never
 altered the design. Read it on a trigger that already exists, such as release prep.
+
+#### The exchange — three messages
+
+Each crossing between the tool and the codebase is one message in a fixed shape, so nobody
+reconstructs a round from a transcript. All three stay in the conversation they belong to,
+never a file beside the designs: a handoff kept as a file is one more file to fold at the
+close. Alternatives are separated by `|`.
+
+The **handoff block** — the tool's last message of a round, read before the design:
+
+```
+Handoff: <screen> — <design file> | for: <issue, or one line of intent>
+Changed: <the regions this round redrew> | the whole screen
+Other files: <each file beside the screen's own, and which exception it is> | none
+Foundation: <each proposed token or component, by name> | none
+Copy: <strings added or changed> | none
+Forks: <region — A or B, recommending A: the tradeoff> | none
+Unsettled: <the one question whose answer changes what ships> | none
+Gaps: <what looks like it wants an issue, to check against the tracker> | none
+Not verified: <what the tool could not check from where it sits: real limits, real data, the longest locale> | nothing
+```
+
+- A file under *Other files* that is neither exception above — competing variants, a spec
+  for unshipped work — is a clone: ask before building from it.
+- Build the recommended side of each fork and put the other to the maintainer. An
+  *Unsettled* question with no recommendation is answered before its region is built.
+
+The **close-out** — sent to the tool once the change has shipped; pointers, not payload:
+
+```
+Close-out: <screen> — <design file> | for: <issue, or one line of intent>
+Shipped: <commit> on <branch> — <the files that decide what the screen draws>
+Deltas (redraw each from the shipped files):
+- <region> — dropped | changed | added: <what shipped>, because <why>
+Decided: <each fork and the unsettled question: the answer> | none
+Files: <design file> stays the screen's one file — fold <files> into it; delete <files>; keep <a spec whose work is still open> | every other file you hold for this screen, each folded, deleted or kept by the same rule | nothing beside it
+Notes: <what the shipped state settles, retires or changes> | unchanged
+Foundation: <each proposal: shipped as <name> | replaced by <existing name> | dropped> | none
+Styles: <the tool's copy of the shipped stylesheet is stale since <commit>; it is replaced, never edited> | unchanged
+```
+
+The **closed line** — the tool's answer, one per design file:
+
+```
+Closed <design file> at <commit> — redrew <regions> | nothing; folded <files> | nothing; deleted <files> | nothing; could not: <what> | nothing
+```
+
+- A design file that draws several screens closes for all of them at once, each with its own
+  sources and deltas in the close-out; a screen left out is one its line would stamp unread.
+- Anything under *could not* leaves the row unstamped: the close is not done.
+- Stamp a row only on the closed line for its own design file, never in bulk: a re-stamp of
+  every row at once marks screens nobody closed as current.
+- Re-stamp only if the row's sources have not moved since the commit the tool closed
+  against. If they have, the tool read an older screen; close again for the newer change.
 
 ### 3. Evolve — when the trigger fires
 
