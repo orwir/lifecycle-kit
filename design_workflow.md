@@ -54,7 +54,7 @@ twelve. In order:
 package / Storybook / style crate costs more than it returns. The one-page reference + the
 enforced contract *is* the system until the evolve trigger fires.
 
-### 2. Handoff — per new screen or restructure
+### 2. Handoff — per new screen, restructure, or change judged by eye
 
 Where a design/prototyping tool exists (rich for web, thinner for TUI/CLI), use it for new
 screens and restructures, then translate its output. The loop:
@@ -90,7 +90,28 @@ screens and restructures, then translate its output. The loop:
    the next brief for the screen starts from it. The tool answers with the **closed line**,
    and only that line re-stamps the pairing.
 
-Small tweaks skip the tool — a one-control change doesn't need a brief.
+**A round can start in the tool instead of a brief.** A change that is easier to judge by eye
+than to describe — comment on a region, see it redrawn, repeat — is a round like any other,
+minus the brief, and it still ends with the handoff block. The search a brief runs before
+anything is drawn moves to reconcile: look up each behaviour change and backend assumption
+the drawing implies in the tracker, then settle each with the maintainer before its region
+is built.
+
+A change you can state in one line skips the tool altogether: make it in the code, and close
+the screen once it lands.
+
+**One round per screen, from its first redraw to its closed line.** However a round starts,
+it puts the design file ahead of the code until the change ships and closes, and the
+pairing's stamp hashes only the code, so nothing on the codebase side sees that. Three rules
+keep the window honest:
+
+- No second round on the screen while one is open, and no close-out for it: each block
+  records one round, and a closed line sent mid-round would vouch for a design file that also
+  draws unshipped changes.
+- A round dropped at any point before its closed line — declined at reconcile, or abandoned
+  before it ships — is reverted in the tool to the design file as it stood before the round.
+- A close the screen's code needs meanwhile, from a code-first fix or release prep, waits
+  and goes out with the round's close-out; a release that cannot wait reverts the round.
 
 **Close after the change lands, not before.** A close-out sent from an unmerged change asks
 the tool to redraw from a list of deltas somebody wrote, and the one left off the list stays
