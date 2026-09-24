@@ -331,6 +331,8 @@ Two stages:
 | `pre-commit` (on `git commit`) | Fast things: lint, format, trailing whitespace, YAML check, large-file check, **secret scanning**. | Keeps the commit loop snappy. Catches obvious problems before they enter history. |
 | `pre-push` (on `git push`)     | Slow things: **full test suite with the same coverage floor as CI**.                               | CI should be a backstop, not the first time tests run.                            |
 
+**Keep the push gate fast.** Every push pays its wall time. Run the suite across worker processes (pytest-xdist, Jest's workers), in CI too with the worker count sized to its runner, and hunt the costs every test pays: a template engine or schema rebuilt per test, a live network call a mock missed.
+
 **Pin each tool once.** A hook manager that pins its own tool version — pre-commit's `rev:`, a lockfile under husky/lefthook — is a second pin beside whatever CI installs. Two pins drift on the next bump, and the failure reads as a broken CI rather than version skew: the commit hook reformats a file one way, CI's `--check` rejects it. A test asserting that the two agree does not survive Dependabot, which bumps each ecosystem in its own PR: every release of the tool arrives as two PRs that each fail the assertion.
 
 **Let CI run the hooks.** CI calls the hook manager's own hooks — `pre-commit run <hook-id> --all-files` — and leaves the tool out of its own install, so the hook's pin is the only one and a bump lands as one PR (`pre-commit` is a Dependabot ecosystem). Keep `--all-files` in local runs too: without it, pre-commit stashes unstaged edits and checks only what is staged.
