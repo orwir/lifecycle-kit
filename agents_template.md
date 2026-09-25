@@ -78,9 +78,21 @@ These are the canonical invocations — the same ones the hooks and CI run. Don'
 Every tracked task moves through three explicit phases. **Do not collapse them** — each gate is the user's, not yours to assume.
 
 1. **Clarify.** Read the ticket and/or description, ask for any missing detail, and surface scope or constraint conflicts *before* writing code. Move the board item to `In Progress` when you pick it up (skip the board steps for untracked micro-tasks; the approval gates still apply). Implementation does not begin until the details are clear — whether from the ticket, added clarification, or the discussion.
-2. **Implement & stop.** Do the work in full: code, tests, docs, fixtures. Run the local gate (lint + tests) — never report it as passed without having run it in this session, and say so explicitly if something couldn't be run. Run the task review round, then **stop and hand back for review** with the hand-back brief (the packets stay between the two agents): on `{{INTEGRATION_BRANCH}}` leave the changes **uncommitted** in the working tree; on a feature branch intermediate WIP commits are fine (the gate is landing, not committing). If the maintainer's review turns up corrections, work them out here and stop again. Do **not** push, merge, or close anything in this phase.
+2. **Implement & stop.** Do the work in full — code, tests, docs, fixtures — to the *Definition of Done* below. Run the local gate (lint + tests) — never report it as passed without having run it in this session, and say so explicitly if something couldn't be run. Run the task review round, then **stop and hand back for review** with the hand-back brief (the packets stay between the two agents): on `{{INTEGRATION_BRANCH}}` leave the changes **uncommitted** in the working tree; on a feature branch intermediate WIP commits are fine (the gate is landing, not committing). If the maintainer's review turns up corrections, work them out here and stop again. Do **not** push, merge, or close anything in this phase.
    - The round is [docs/guides/task_review.md](docs/guides/task_review.md): a hand-off packet to a reviewer agent with no author context, its return packet, and the hand-back brief — the one thing the maintainer reads. An untracked micro-task skips the round, and the brief says so.
 3. **Complete — on explicit approval only.** An explicit go-ahead ("complete the task", "lgtm", or equivalent) is the *only* trigger to commit the task work, push, close the ticket, move the board item to `Done`, and — when the work rode a feature branch — delete the merged branch, remote and local. No approval → no commit, no push, no close. The same gate applies to `git push`, `gh pr create`, and `gh pr merge` — auto mode is permission to write code without re-asking, not permission to land it.
+
+### Definition of Done
+
+A task is done when all five hold. The gate and the review round prove some of them; the rest are the developer's to show before the hand-back, and a brief that cannot claim one says which, instead of calling the task done.
+
+1. **It serves the ticket's goal at real scale, not only its named mechanism.** A control, a copy line or a shape the ticket names is where the work starts, not a defense of how it turned out. If it serves the goal badly with real data — the whole list, the longest locale, the smallest screen — raise it at *Clarify* or take it through the design loop ([docs/guides/design_workflow.md](docs/guides/design_workflow.md)); never ship it because it was named.
+2. **It was used the way its user uses it.** A UI change is looked at running, with real data: at the smallest and the largest supported width, in every shipped locale, by keyboard alone, and without scripts where the surface promises to work without them. A CLI, API or library change is called the way its caller calls it. Not having looked is a task not done, not a *Not run* line.
+3. **Every new behaviour has a test that fails without it** (*Tests and quality gates*).
+4. **The gate is green and the review round ran** (above).
+5. **The docs are in sync:** the *Task-closing checklist*.
+
+The bar is the maintainer's. A shortfall in 1 or 2 found after landing is unfinished work, and its fix is never declined on cost or on the demand not being there yet.
 
 ## Code layout
 
