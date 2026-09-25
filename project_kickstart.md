@@ -538,6 +538,7 @@ The target for a service: **push to `master` → container built → deployed to
 ### Dockerfile essentials
 
 - **Start from a pinned base.** `python:3.13-slim-bookworm` is better than `python:3.13-slim` (OS version pinned). A full digest pin (`@sha256:…`) is best but needs a bot to keep it fresh.
+- **Hold the image's runtime to CI's.** The base image, CI's setup step and the linter's target version each name the runtime's minor version in their own file, so a test asserts they agree. The image is the only one a bump bot moves — Dependabot's docker updates change the base tag alone, and a CI that builds no image stays green — so without the test the runtime that ships stops being the one CI tests. Unlike a tool pinned twice (see *Pin each tool once*), the assertion fails only the PR that would split them, and that PR is the reminder to move all three in one change.
 - **Layer-cache dependencies first.** Copy the manifest + lockfile, install deps, *then* copy source. Changing a source file doesn't reinstall deps.
 - **Build from a committed lockfile.** The manifest declares intent; the lockfile pins reality. Without one, every image build resolves dependencies differently — the single-source-of-truth principle, applied to deps.
 - **Run as non-root.** `RUN useradd --create-home app && USER app`. Defense in depth against container escapes.
