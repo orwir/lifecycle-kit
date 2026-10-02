@@ -134,4 +134,4 @@ What the maintainer reads, and the only thing they read: a reader who was at *Cl
 
 ## Where the packets land
 
-The packets are data between the two agents: they sit in the reviewer's task and its result, and are never printed for the maintainer. Nothing reaches GitHub before the maintainer's approval. At *Complete*, a feature branch's PR takes the hand-off as its body with a `Closes #N` line added and the return as a comment (`gh pr review --comment --body-file <file>`); on `develop` the close-out comment may quote the brief's *In the tree* bullets and *Round* line.
+The packets are data between the two agents: they sit in the reviewer's task and its result, and are never printed for the maintainer or posted anywhere. Nothing reaches GitHub before the maintainer's approval. At *Complete*, a feature branch's PR body follows the repository's PR template, written for a reader who never saw the round: no packet field, finding id or reviewer verdict in it. On `develop` the close-out comment may quote the brief's *In the tree* bullets and *Round* line.
