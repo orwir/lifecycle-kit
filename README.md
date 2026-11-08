@@ -38,7 +38,7 @@ here, then re-sync the mirrors.
   TUI, CLI, chat bot): journey walkthroughs, error paths, consistency, latency,
   accessibility floor, surface diet. Shares the codebase review's machinery.
 - **`design_workflow.md`** — the design lifecycle (the *how*): found the foundation
-  before screen 2, codify every design-tool handoff back into it, and evolve it on a
+  before screen 2, codify every design round back into it, and evolve it on a
   trigger. Companion to each project's own `design_language.md` (the *what* — tokens,
   components, patterns), which is project-specific and not mirrored here.
 - **`design_review.md`** — the runnable design-language pass: establish or evolve the
