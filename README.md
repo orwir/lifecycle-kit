@@ -6,10 +6,13 @@ here, then re-sync the mirrors.
 
 ## Files (lifecycle order)
 
-- **`idea_gauntlet.md`** — pre-project stage-gate: idea → validated commitment, or a
-  kill-log line. Covers software, hardware, and mixed builds. The filled copy lives
-  at the project root as `IDEA.md`; on graduation it freezes into
-  `docs/product/idea.md` as the origins artifact.
+- **`idea_gauntlet.md`** — pre-project stage-gate: an evening of research and
+  definition, an evening drawing the product, then one decision — make, park, or
+  kill. Covers software, hardware, and mixed builds. Every idea lives in a private
+  ideas home repo: one folder each, with `IDEA.md` and its evidence
+  (`docs/product/`, `design/`). A graduated idea moves out into its own repo, where
+  `IDEA.md` freezes into `docs/product/idea.md`; a killed one moves to the home's
+  `archive/`.
 - **`project_kickstart.md`** — language-agnostic playbook for standing up and
   growing a project (branching, releases, CI, docs layers, tracking, the
   user-facing-surface foundation, what to grow / what to skip).
@@ -48,7 +51,8 @@ here, then re-sync the mirrors.
 
 ## Use in a project
 
-Mirror the files into the repo and point `AGENTS.md` at the kickstart as the "why":
+Mirror the files into the repo (an ideas home mirrors them once, at its root) and
+point `AGENTS.md` at the kickstart as the "why":
 
 ```
 base=https://gist.githubusercontent.com/orwir/d288ef4ec7dcb37a4cd3e9ae2019c037/raw
@@ -70,22 +74,36 @@ Re-run the same lines to pull the latest after editing the canonical here.
 
 ## Bootstrap a new idea (agent instructions)
 
-When pointed at this gist from a new or empty project folder and asked to bootstrap
-or prepare the gauntlet:
+When pointed at this gist and asked to bootstrap or prepare the gauntlet:
 
-1. Mirror the files into `docs/guides/` (block above).
-2. Create `IDEA.md` at the folder root from the fenced Template body in
+1. Find the user's ideas home: a repo whose root `AGENTS.md` says it is one (the
+   user's global agent instructions may name it). If there's none, offer to set
+   one up where the user chooses, private by default, with the layout in
+   `idea_gauntlet.md` § *The ideas home*: its root `AGENTS.md` (the template
+   there), `archived.md`, `graduated.md`, `active/`, `archive/`, and this gist
+   mirrored into `docs/guides/` (block above).
+2. Check `archived.md`: if this idea, or a close variant, was killed before, show
+   the line — re-opening needs new facts against the logged reason.
+3. Create `active/<idea>/IDEA.md` from the fenced Template body in
    `docs/guides/idea_gauntlet.md`; fill `{{name}}` and the Captured date, set
-   `Status: parked`.
-3. Stop there. The gauntlet's answers and gates belong to the user — do not fill
-   the Phase 0–2 judgments. On request, assist with Phase 1 research (existing
-   solutions, costs) and the Phase 3 spike.
+   `Status: captured`.
+4. Stop there. The answers in `IDEA.md`, the bar and every verdict belong to the
+   user — never fill them or call a gate. On request, do the legwork into the
+   idea's artifacts: Phase 1 research (`docs/product/competitors.md`,
+   `docs/product/feasibility.md`) and draft CUJs for the user to agree; Phase 2's
+   competitor walk sheet and the low-fidelity picture in `design/`; the Phase 3
+   spike in `spike/`.
 
-When the user says the idea passed and asks to start the project: follow
-`docs/guides/project_kickstart.md` seeded from `IDEA.md` (done statement → v0.1
-milestone, IN list → first issues, the spike's stack choice → first ADRs);
-gauntlet Phase 4 covers the `IDEA.md` → `docs/product/idea.md` + `vision.md`
-handoff.
+When the user kills the idea: move its folder to `archive/<YYYY-MM-DD>-<idea>/`,
+set its Status, and add the line to `archived.md` in the user's words.
+
+When the user says the idea passed and asks to start the project: move the folder
+into the project's own repo (`git subtree split --prefix=active/<idea>` keeps its
+history), add a line to `graduated.md`, mirror the guides into the new repo, then
+follow `docs/guides/project_kickstart.md` seeded from `IDEA.md` and its artifacts
+(done statement → v0.1 milestone, IN list → first issues, the spike's stack choice
+and the decisions recorded in `IDEA.md` → first ADRs); gauntlet Phase 4 covers the
+`IDEA.md` → `docs/product/idea.md` + `vision.md` handoff.
 
 ## Edit the canonical
 
