@@ -94,7 +94,8 @@ gist, never the mirror, and re-sync with the curl block in the gist's README.
 - `active/<idea>/`: every idea still in the gauntlet, parked ones included.
   `IDEA.md` is its state; its evidence sits beside it.
 - `archive/<YYYY-MM-DD>-<idea>/`: killed ideas, moved here whole.
-- `archived.md`: one line per killed idea. `graduated.md`: one per graduated idea.
+- `archived.md`: one line per killed idea. `graduated.md`: one per graduated idea,
+  with its status.
 
 ## Rules
 
@@ -294,9 +295,9 @@ From here the kickstart playbook owns the process.
 | ---------- | ------------ | ------- | ---------------------------------------------------------- | -------------------------------- |
 | 2026-06-01 | auto-waterer | Phase 1 | solved by a $25 drip timer; the gap isn't worth 3 weekends | archive/2026-06-01-auto-waterer/ |
 
-| Date       | Idea   | Repo                  |
-| ---------- | ------ | --------------------- |
-| 2026-07-15 | plantr | github.com/you/plantr |
+| Graduated  | Idea   | Repo                  | Status |
+| ---------- | ------ | --------------------- | ------ |
+| 2026-07-15 | plantr | github.com/you/plantr | active |
 
 - The reason must be falsifiable: not "too expensive" but "BOM ~€140 vs €25
   off-the-shelf".
@@ -305,6 +306,9 @@ From here the kickstart playbook owns the process.
   `active/` (the archive stays as it was) and reference the old line in `IDEA.md`.
 - A graduated idea's line is all that stays in the home; its repo owns everything
   else, including the frozen `IDEA.md`.
+- Graduating doesn't mean a project lives. When one stops, change its status in
+  `graduated.md` (active, dormant or dead, with the date it was called) instead of
+  removing the line.
 
 ## When to update this file
 
