@@ -59,26 +59,25 @@ point `AGENTS.md` at the kickstart as the "why":
 gist=d288ef4ec7dcb37a4cd3e9ae2019c037
 rev=$(git ls-remote "https://gist.github.com/$gist.git" HEAD | cut -f1)
 base="https://gist.githubusercontent.com/orwir/$gist/raw/$rev"
-curl -sfL "$base/README.md"            -o docs/guides/README.md
-curl -sfL "$base/idea_gauntlet.md"     -o docs/guides/idea_gauntlet.md
-curl -sfL "$base/project_kickstart.md" -o docs/guides/project_kickstart.md
-curl -sfL "$base/agents_template.md"   -o docs/guides/agents_template.md
-curl -sfL "$base/contributing_template.md" -o docs/guides/contributing_template.md
-curl -sfL "$base/issue_template_bug.md"    -o docs/guides/issue_template_bug.md
-curl -sfL "$base/issue_template_task.md"   -o docs/guides/issue_template_task.md
-curl -sfL "$base/pr_template.md"           -o docs/guides/pr_template.md
-curl -sfL "$base/task_review.md"       -o docs/guides/task_review.md
-curl -sfL "$base/codebase_review.md"   -o docs/guides/codebase_review.md
-curl -sfL "$base/ux_review.md"         -o docs/guides/ux_review.md
-curl -sfL "$base/design_workflow.md"   -o docs/guides/design_workflow.md
-curl -sfL "$base/design_review.md"     -o docs/guides/design_review.md
-echo "$rev" > docs/guides/.gist-revision
+dl=$(mktemp -d)
+for f in README.md idea_gauntlet.md project_kickstart.md agents_template.md \
+         contributing_template.md issue_template_bug.md issue_template_task.md \
+         pr_template.md task_review.md codebase_review.md ux_review.md \
+         design_workflow.md design_review.md; do
+  curl -sfL "$base/$f" -o "$dl/$f" || { echo "failed: $f; nothing changed"; rm -rf "$dl"; break; }
+done
+[ -d "$dl" ] && cp "$dl"/* docs/guides/ && echo "$rev" > docs/guides/.gist-revision && rm -rf "$dl"
 ```
 
 Re-run the block to re-sync, on a clean mirror only (*Edit the canonical*). It pins
 every file to one revision, which also sidesteps the five-minute cache on the
 unpinned raw links, and records that revision in `.gist-revision`: the point a push
-starts from.
+starts from. It changes all or nothing: if any download fails, it names the file
+and leaves the mirror and its revision as they were.
+
+A mirror from before `.gist-revision` has no recorded revision to check against:
+compare it with the gist's current files, push anything only the mirror has, then
+re-sync.
 
 ## Bootstrap a new idea (agent instructions)
 
@@ -140,8 +139,8 @@ may, before a push these are the files to push. Run it from the project root:
 
 ```
 gist=d288ef4ec7dcb37a4cd3e9ae2019c037
-tmp=$(mktemp -d) && git clone -q "https://gist.github.com/$gist.git" "$tmp"
-git -C "$tmp" checkout -q "$(cat docs/guides/.gist-revision)"
+tmp=$(mktemp -d) && git clone -q "https://gist.github.com/$gist.git" "$tmp" &&
+git -C "$tmp" checkout -q "$(cat docs/guides/.gist-revision)" &&
 for f in $(git -C "$tmp" ls-files); do
   tr -d '\r' < "docs/guides/$f" | cmp -s - "$tmp/$f" || echo "differs: $f"
 done
