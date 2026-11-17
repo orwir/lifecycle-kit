@@ -10,7 +10,7 @@ It does not cover the maintainer's own read of the diff, the comprehensive passe
 
 **The work round** runs on every task after the local gate is green and before the hand-back, in both flows: the packet points at the uncommitted tree on `develop`, or at the branch's diff against `develop`. Nothing is pushed for it — the PR, when the work rides a branch, is opened at *Complete* as before. A second work round is bought only by a `Real bug` in the first. Anything still disputed after that goes to the maintainer, never to a third round between agents.
 
-An untracked micro-task has no plan and skips both rounds, and its hand-back brief says so.
+A task with no issue is untracked, and nothing of it goes on the board. An untracked micro-task — one obvious change, nothing to decide — has no plan and skips both rounds, and its hand-back brief says so. Any other untracked task skips the plan round, having no issue to hold a plan, and runs the work round with an `untracked:` packet. Its hand-back brief is its only record, so it finishes in the session it started; one that needs a second session, or makes a decision worth keeping, gets an issue then and is tracked from there: its plan written at *Clarify*, its item on the board.
 
 The rounds answer what the gate cannot. Lint, format, the suite and the coverage floor are settled by the push hook, so no packet re-argues them; the reviewer's questions are the ones only a reader can answer — of a plan, what it leaves out before any code exists; of the tree, scope, decisions, invariants, tests, prose, docs, and what could go.
 

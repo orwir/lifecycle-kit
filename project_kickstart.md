@@ -143,7 +143,7 @@ Two branches are mandatory. Feature branches are optional and earn their keep on
 - **`master` (or `main`)** — production. Every commit here is deployed. Nobody pushes directly; merges only.
 - **`develop`** — integration branch. Default branch in GitHub. **The pre-push hook runs the same lint + test gate as CI before any push lands**, so it is safe to commit directly here; CI itself re-runs on PRs as a backstop.
 - **feature branches** — optional, branched from `develop`, named `feat/…`, `fix/…`, `chore/…`, `docs/…`, `refactor/…`. Used only when the change warrants them (see below).
-- **Commit messages** — [Conventional Commits](https://www.conventionalcommits.org/) (`feat` / `fix` / `chore` / `docs` / `refactor` / `test` / `perf`), imperative subject under 72 characters, body for the *why* when it isn't obvious. `gh pr create --fill` and squash-merge titles inherit their quality from these.
+- **Commit messages** — [Conventional Commits](https://www.conventionalcommits.org/) (`feat` / `fix` / `chore` / `docs` / `refactor` / `test` / `perf`), imperative subject under 72 characters, body for the *why* when it isn't obvious. Squash-merge titles inherit their quality from these.
 
 ### Pick the flow that matches the situation
 
@@ -182,11 +182,11 @@ When those apply, automate the flow end-to-end. The overhead is ~30 seconds per 
 git checkout -b feat/my-thing
 # ... work, commit ...
 git push -u origin feat/my-thing
-gh pr create --fill --base develop
+gh pr create --base develop --title "<subject>" --body-file <pr.md outside the tree>
 gh pr merge --squash --auto --delete-branch
 ```
 
-- `gh pr create --fill` uses your commit messages as the PR title and body — so write good commit messages.
+- The PR body is `.github/pull_request_template.md`, filled for a reader who never saw the review rounds (`task_review.md`). `--fill` would send the commit messages instead.
 - `gh pr merge --squash --auto --delete-branch` waits for CI to pass, squashes the branch into one commit on `develop`, and deletes the remote branch. You can close the terminal; the merge completes in the background.
 - `--delete-branch` removes only the **remote** copy. Once the merge lands, finish the job locally — stale merged branches are how `git branch` output turns into noise:
 

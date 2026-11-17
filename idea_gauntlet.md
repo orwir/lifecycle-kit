@@ -314,4 +314,5 @@ From here the kickstart playbook owns the process.
 ## When to update this file
 
 Same rule as the rest of the set: if two ideas in a row needed the same hand-edit
-to the template, the template is wrong — fix it here.
+to the template, the template is wrong — fix it in the canonical gist, through the
+mirror of the project that found it.
