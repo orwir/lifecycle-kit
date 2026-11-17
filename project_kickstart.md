@@ -164,7 +164,7 @@ git push
 
 The pre-push stage of the local hook config runs the identical lint, format-check, and test commands (with the coverage floor) that CI runs, so every push has already cleared the CI gate locally. CI itself re-runs on PRs as a backstop. Releases still go through a `develop → master` PR, so the auto-deploy gate on `master` stays intact. Broken commits on `develop` are a fix-forward or `git revert` problem, not a crisis — nothing is deployed.
 
-The hook is the mechanical gate; the read is `task_review.md` (mirrored alongside this playbook). Before a task is handed back, the developer session hands a packet to a reviewer agent with no author context — a subagent it launches, or a fresh session where the tool has none — and renders a hand-back brief for the maintainer from its return packet: two plain-text packets between the agents, and the same round whether the work rides a PR or lands on `develop` directly. The maintainer reads the brief and nothing else of the round, then the diff, with what a gate cannot check (scope, decisions, invariants, prose, docs) already read by a reviewer the author could not steer.
+The hook is the mechanical gate; the read is `task_review.md` (mirrored alongside this playbook). Before a task is handed back, the developer session hands a packet to a reviewer agent with no author context — a subagent it launches, or a fresh session where the tool has none — and renders a hand-back brief for the maintainer from its return packet: two plain-text packets between the agents, and the same round whether the work rides a PR or lands on `develop` directly. The maintainer reads the brief and nothing else of the round, then the diff, with what a gate cannot check (scope, decisions, invariants, prose, docs) already read by a reviewer the author could not steer. The same guide runs a plan round at *Clarify*, before any code: where the plan in the issue has one of the shapes that have shipped holes before, a reviewer with no author context reads it against the code, and the maintainer accepts it from a Clarify brief.
 
 ### Feature-branch flow (escape hatch for riskier work)
 
@@ -492,8 +492,10 @@ If you're working with an AI coding assistant, give it explicit ownership of the
 
 Two markdown templates in `.github/ISSUE_TEMPLATE/`:
 
-- **`bug.md`** — sections: Goal, Context, Reproduction, Expected vs actual, Root cause (optional), Fix options (optional), Verification.
-- **`task.md`** — sections: Goal, Context, Technical details (file-path checkboxes with `[NEW]` / `[MODIFY]` / `[DELETE]` markers — the marker carries the change type, the checkbox carries progress), Options (optional), Verification, Related.
+- **`bug.md`** — at capture: Goal, Context, Reproduction, Expected vs actual, and Root cause once known. At *Clarify*: the root cause confirmed, and the Plan.
+- **`task.md`** — at capture: Goal, Context, Related. At *Clarify*: the Plan — Status, Behaviour (scenarios, what changes or goes, the seams), Technical details (file-path checkboxes with `[NEW]` / `[MODIFY]` / `[DELETE]` markers — the marker carries the change type, the checkbox carries progress), Decisions, Verification, Departures.
+
+An issue is captured without a plan: one written at capture is stale by the time the work starts, and was written without the code in front of it. The plan is written when the issue is picked up and stays in the issue, so the task survives the end of any one session, and the work round reads the tree against what the maintainer accepted.
 
 Markdown templates (rather than YAML issue forms) preserve the freeform prose + file-path markers that make issues actually readable. Forms over-constrain technical details. Canonical copies ship with this doc set (`issue_template_bug.md`, `issue_template_task.md`) — install those rather than retyping the section lists.
 

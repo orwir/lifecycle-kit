@@ -25,13 +25,13 @@ here, then re-sync the mirrors.
   templates; install to `.github/ISSUE_TEMPLATE/` as `bug.md` / `task.md`.
 - **`pr_template.md`** — copy-and-fill PR template; install to
   `.github/pull_request_template.md`.
-- **`task_review.md`** — the review round between a task's implementation and its
-  hand-back: the developer session hands a packet to a reviewer agent with no author
-  context (a subagent, where the assistant can launch one), acts on the packet it gets
-  back, and renders the
-  hand-back brief — the one thing the maintainer reads. Two packets between the
-  agents, the brief, and each role's rules; the same round whether the work rides a PR
-  or lands on the integration branch.
+- **`task_review.md`** — a task's two review rounds, each read by a reviewer agent
+  with no author context (a subagent, where the assistant can launch one). The plan
+  round, at Clarify, reads the plan in the issue against the code when the plan has a
+  shape that has shipped holes before, and ends in the Clarify brief; the work round,
+  before the hand-back, reads the tree against the accepted plan and ends in the
+  hand-back brief. The packets between the agents, the briefs, and each role's rules;
+  the same rounds whether the work rides a PR or lands on the integration branch.
 - **`codebase_review.md`** — comprehensive-review template (13 phases, 0–12, in the default
   layout) for solo-maintained repos; the method is language-agnostic and the shell
   recipes are shown for Python. Run after a heavy build phase to catch
