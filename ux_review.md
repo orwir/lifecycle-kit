@@ -21,6 +21,7 @@ Don't run it:
 - Pre-v0.1 — polish before the gauntlet's done-statement ships is procrastination with extra steps.
 - Mid-redesign — review a stable target.
 - To establish or evolve the design system itself — that's a `design_review.md` pass (it builds the language; this review audits a settled surface for friction).
+- To decide which screens, commands and messages exist, what each shows and where each fact lives — that's an `ia_review.md` pass (it settles the structure; this review walks it for friction).
 - On a headless service or library — no surface, no review (an API's "UX" is its docs, covered by the codebase review's truth-up phase).
 
 **Minimum viable review.** Phase 0 → Phase 1 → Phase 8: inventory the journeys, walk them cold, write the deltas and the ledger. Everything else sharpens what the walkthroughs find.
@@ -45,7 +46,7 @@ Format, one line each in the plan:
 CUJ-1 — <intent>: <entry point> → <success criterion>. Frequency: daily | weekly | rare.
 ```
 
-Canonical home: `docs/product/vision.md` § Critical user journeys. The review plan references CUJs by id; it doesn't restate them.
+Canonical home: `docs/product/vision.md` § Critical user journeys. The review plan references CUJs by id; it doesn't restate them. Ids are permanent: a retired journey is struck, never renumbered, so every review that cites one still resolves.
 
 ## Phases
 
@@ -136,6 +137,7 @@ The subtraction phase. Evidence first: the usage data from Phase 0's instrumenta
 - **Settings never changed from default** across real usage: hardcode the default, delete the setting — the surface twin of the config phase's one-position switches.
 - **Step diet per CUJ:** for every step recorded in Phase 1, ask what removes it — a default, a merge, an inference. Removing a step beats polishing it.
 - **Choice overload:** menus and option lists past ~7 entries; flags duplicating other flags; two paths to the same outcome where one is always better (kill the loser).
+- **Structure goes to the IA review.** Removal here is usage-driven: a command, a setting, a step. A screen or command the intent doc's IA section keeps is not removed on usage alone. When the finding is the structure itself — two screens doing one job, one fact shown in several places, a screen no reader's decision uses — route it to an `ia_review.md` pass instead of patching screens one at a time.
 - **Removal etiquette:** where real users exist, removals ship behind a deprecation note one release ahead. Subtraction is the goal; surprise is not.
 
 ### Phase 8 sub-checks — close-out

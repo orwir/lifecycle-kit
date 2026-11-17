@@ -2,7 +2,8 @@
 
 When the user asks for a **design-language pass** — establishing the visual system for the first
 time, or evolving it after the surface has grown — follow this template. It is the design
-counterpart of `codebase_review.md` (the code) and `ux_review.md` (the journeys): where the UX
+counterpart of `codebase_review.md` (the code), `ia_review.md` (the structure) and `ux_review.md`
+(the journeys): where the UX
 review asks *do the journeys work*, the design review asks *is the visual system coherent* — one
 function looking and behaving the same everywhere, built from one set of tokens, with
 accessibility baked in. The two pair at a release; neither replaces the other.
@@ -34,7 +35,8 @@ This doc defines only what differs: the stance, the phases, and the severity tra
   edit. This pass is for when the *language itself* needs building or rebuilding.
 - **Not a redesign of what the product *does*.** Information architecture, flows, and feature
   scope are out of scope — the pass re-skins and systematizes the surfaces that exist; it doesn't
-  re-architect them. (IA changes are an ADR + a `ux_review`, run on a settled design.)
+  re-architect them. (Information architecture is an `ia_review.md` pass, which ends in an ADR;
+  flows are a `ux_review`'s.)
 
 ## When to use
 

@@ -255,7 +255,7 @@ Only after this checklist passes should you report the task as done.
 - Do not mock the {{primary-side-effect target}} in integration tests.
 - Do not add `print()` / `console.log` / `println!` for debugging — use the project's structured logger.
 - Do not add dependencies casually. New dependencies need a reason that justifies the supply-chain surface.
-- Do not improvise a review process — a task's plan and work rounds follow `docs/guides/task_review.md`, comprehensive code reviews follow `docs/guides/codebase_review.md`, UI/UX reviews follow `docs/guides/ux_review.md`.
+- Do not improvise a review process — a task's plan and work rounds follow `docs/guides/task_review.md`, comprehensive code reviews follow `docs/guides/codebase_review.md`, UI/UX reviews follow `docs/guides/ux_review.md`, information-architecture reviews follow `docs/guides/ia_review.md`.
 
 ## When in doubt
 

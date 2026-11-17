@@ -174,7 +174,7 @@ Read these end-to-end before changing anything:
 - `AGENTS.md` / `CONTRIBUTING.md` — the operating contract. A `CLAUDE.md` or `CLAUDE.local.md` that doesn't import `@AGENTS.md` is a finding: it hides `AGENTS.md` from Claude Code.
 - `README.md` — what the project claims to do.
 - `docs/architecture/` (or equivalent) — load-bearing diagrams and decision records.
-- `docs/reviews/` (or equivalent) — past review docs. Read the latest review *of each kind* (code, UX, design): carry its unresolved `[ ]` action items in as starting findings, and every Open or untriggered Accepted-risk row of its [Decision register](#decision-register) into this plan's register, origin pointing back.
+- `docs/reviews/` (or equivalent) — past review docs. Read the latest review *of each kind* (code, UX, IA, design): carry its unresolved `[ ]` action items in as starting findings, and every Open or untriggered Accepted-risk row of its [Decision register](#decision-register) into this plan's register, origin pointing back.
 
 The output of 0.2 is *internal alignment*, not a written artifact. If a rule surprises you, that's a finding for Phase 1 (docs truth-up).
 
@@ -782,7 +782,7 @@ Status vocabulary — exactly these four:
 
 Rules:
 
-- **Carry-forward.** [Phase 0.2](#02-ground-rules-read) copies every Open row, and every Accepted-risk row whose trigger has not fired, from the latest review *of each kind* (code, UX, design) into the new plan's register, origin pointing back. A fired trigger reopens the row. A decision parked in a UX review must be visible to the next codebase review, and vice versa.
+- **Carry-forward.** [Phase 0.2](#02-ground-rules-read) copies every Open row, and every Accepted-risk row whose trigger has not fired, from the latest review *of each kind* (code, UX, IA, design) into the new plan's register, origin pointing back. A fired trigger reopens the row. A decision parked in a UX review must be visible to the next codebase review, and vice versa.
 - **Third-review rule.** A row entering its third review is decided in that review's Phase 0 — by the maintainer, or by default to the recommendation. Carrying a question costs a re-read every time; three carries means the answer is the recommendation, or the question is dropped.
 - **Close-out block.** No action item is `[DONE]` while an Open row it depends on is still Open. Note the block in the action item, per [Cross-phase blocks](#cross-phase-blocks).
 - **Decision shapes stay put.** The `(A) / (B) / (C)` block lives in the phase's action items; the register links to it by slug and never repeats the options prose.

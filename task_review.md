@@ -2,7 +2,7 @@
 
 A task's two review rounds, each read by a reviewer agent that has no author context. The **plan round** runs at *Clarify*, before any code: the reviewer reads the plan in the issue against the code it will change, and the developer folds the findings into the plan and renders the **Clarify brief**. The **work round** runs between *Implement & stop* and the hand-back to the maintainer: the developer session hands a **hand-off packet** to the reviewer, the reviewer reads the tree against it and answers with a **return packet**, and the developer acts on the return and renders the **hand-back brief**. The packets are data passed between the two agents and are never shown to the maintainer; the briefs are the only things the maintainer reads. Written for the two AI roles and for the maintainer who reads the briefs.
 
-It does not cover the maintainer's own read of the diff, the comprehensive passes (`codebase_review.md`, `ux_review.md`, `design_review.md`), or a release gate.
+It does not cover the maintainer's own read of the diff, the comprehensive passes (`codebase_review.md`, `ia_review.md`, `ux_review.md`, `design_review.md`), or a release gate.
 
 ## When it runs
 

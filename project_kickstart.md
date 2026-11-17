@@ -368,7 +368,7 @@ In order:
 
 The design language has a lifecycle, not just a document. Keep `docs/guides/design_workflow.md` (the *how* — found the foundation before screen 2, codify every design round back into it, evolve it on a trigger) alongside `docs/guides/design_language.md` (the *what* — the resolved tokens, components, and patterns). The same shape applies to a Textual/ratatui TUI or a Qt/Tauri desktop app.
 
-Once shipped, the surface gets audited periodically against this foundation by two complementary passes: `docs/guides/ux_review.md` walks the journeys for friction and bloat, and `docs/guides/design_review.md` — the runnable pass `design_workflow.md` triggers — establishes or evolves the visual system itself when the surface has outgrown the foundation set here.
+Once shipped, the surface gets audited periodically against this foundation by three complementary passes: `docs/guides/ia_review.md` settles the structure (which screens and messages exist, what each shows, where each fact lives), `docs/guides/ux_review.md` walks the journeys for friction and bloat, and `docs/guides/design_review.md` — the runnable pass `design_workflow.md` triggers — establishes or evolves the visual system itself when the surface has outgrown the foundation set here.
 
 ---
 

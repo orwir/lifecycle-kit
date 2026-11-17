@@ -232,7 +232,8 @@ redesign of the same surface.
 | `design_language.md`         | *What* is the resolved system — tokens, components, patterns?  | Living; updated on every round and pass   |
 | `design_review.md`           | The runnable *pass* that establishes/evolves the language      | Run on a trigger                      |
 | `ux_review.md`               | Do the *journeys* work — friction, bloat, usability?           | Per minor release / quarterly         |
+| `ia_review.md`               | Is the *information* in the right place, for whose decision?   | Before a redesign or opening to strangers |
 
-`design_language.md` is **this project's own** artifact (its real tokens); the other three are
+`design_language.md` is **this project's own** artifact (its real tokens); the other four are
 reusable templates. Keep the same shape for a TUI or a desktop app — the tokens differ, the
 lifecycle doesn't.

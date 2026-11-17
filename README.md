@@ -41,6 +41,11 @@ pushed here (*Edit the canonical*); the other mirrors re-sync.
 - **`ux_review.md`** — CUJ-driven review of the user-facing surface (web, desktop,
   TUI, CLI, chat bot): journey walkthroughs, error paths, consistency, latency,
   accessibility floor, surface diet. Shares the codebase review's machinery.
+- **`ia_review.md`** — information-architecture review of the user-facing surface:
+  which screens, commands and messages exist, what each shows and for which reader's
+  decision, where each fact lives, and what is missing. Ends in a target structure
+  written back to the intent doc, an ADR, and filed work. Shares the codebase review's
+  machinery.
 - **`design_workflow.md`** — the design lifecycle (the *how*): found the foundation
   before screen 2, codify every design round back into it, and evolve it on a
   trigger. Companion to each project's own `design_language.md` (the *what* — tokens,
@@ -63,7 +68,7 @@ dl=$(mktemp -d)
 for f in README.md idea_gauntlet.md project_kickstart.md agents_template.md \
          contributing_template.md issue_template_bug.md issue_template_task.md \
          pr_template.md task_review.md codebase_review.md ux_review.md \
-         design_workflow.md design_review.md; do
+         ia_review.md design_workflow.md design_review.md; do
   curl -sfL "$base/$f" -o "$dl/$f" || { echo "failed: $f; nothing changed"; rm -rf "$dl"; break; }
 done
 [ -d "$dl" ] && cp "$dl"/* docs/guides/ && echo "$rev" > docs/guides/.gist-revision && rm -rf "$dl"
@@ -74,6 +79,10 @@ every file to one revision, which also sidesteps the five-minute cache on the
 unpinned raw links, and records that revision in `.gist-revision`: the point a push
 starts from. It changes all or nothing: if any download fails, it names the file
 and leaves the mirror and its revision as they were.
+
+A mirror runs the block from its own copy of this README, so a file added to the
+gist after that copy arrives on the second re-sync: the first one fetches the README
+that names it. Between the two, the check lists that file as `missing`.
 
 A mirror from before `.gist-revision` has no recorded revision to check against:
 compare it with the gist's current files, push anything only the mirror has, then
@@ -135,23 +144,32 @@ Two rules keep every mirror safe:
   now, so a mirror that fell behind cannot revert anyone else's change.
 
 The check lists what differs from the recorded revision: before a re-sync nothing
-may, before a push these are the files to push. Run it from the project root:
+may, before a push these are the files to push. A file the mirror's re-sync block
+names but the gist does not hold yet is listed as `new`, and pushed like the rest.
+A file the gist holds but the mirror lacks is listed as `missing`: it reached the
+gist after the mirror's block, the next re-sync fetches it, and it does not block
+one. Run it from the project root:
 
 ```
 gist=d288ef4ec7dcb37a4cd3e9ae2019c037
 tmp=$(mktemp -d) && git clone -q "https://gist.github.com/$gist.git" "$tmp" &&
 git -C "$tmp" checkout -q "$(cat docs/guides/.gist-revision)" &&
 for f in $(git -C "$tmp" ls-files); do
+  [ -e "docs/guides/$f" ] || { echo "missing: $f"; continue; }
   tr -d '\r' < "docs/guides/$f" | cmp -s - "$tmp/$f" || echo "differs: $f"
+done &&
+for f in $(tr -d '\r' < docs/guides/README.md |
+           sed -n '/^for f in README\.md /,/; do$/p' | grep -oE '[A-Za-z_]+\.md'); do
+  [ -e "$tmp/$f" ] || echo "new: $f"
 done
 ```
 
-The push, in the same shell, with the files the check listed (`tr` keeps the gist
-LF whatever the project's checkout uses):
+The push, in the same shell, with the files the check listed as `differs` or `new`
+(`tr` keeps the gist LF whatever the project's checkout uses):
 
 ```
 git -C "$tmp" switch -q -c push
-for f in <the differing files>; do tr -d '\r' < "docs/guides/$f" > "$tmp/$f"; done
+for f in <the differing and new files>; do tr -d '\r' < "docs/guides/$f" > "$tmp/$f"; done
 git -C "$tmp" add -A && git -C "$tmp" commit -qm "<what changed and why, one line>"
 git -C "$tmp" pull -q --rebase origin main
 git -C "$tmp" push -q origin HEAD:main
@@ -162,4 +180,4 @@ mirrors pick that up at their next re-sync, and pushes rebase onto it.
 
 A new file here needs the same justification as a new dependency — prefer
 extending an existing doc over adding another file. A new file also joins the
-re-sync block.
+re-sync block, and the check lists it as new until it is pushed.
