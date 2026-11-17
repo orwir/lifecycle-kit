@@ -243,4 +243,4 @@ Same seven labels, same default actions — design meanings:
 ## When to update this template
 
 Same rule as the set: two passes in a row needing the same hand-edit means the template is wrong —
-fix it in the canonical gist.
+fix it in the canonical gist, through the mirror of the project that found it.

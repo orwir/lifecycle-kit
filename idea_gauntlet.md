@@ -86,8 +86,9 @@ A new home starts from this one, adjusted to taste:
 # Ideas home
 
 Every idea still being weighed lives here, run through the idea gauntlet in
-`docs/guides/idea_gauntlet.md`. `docs/guides/` mirrors the canonical gist: edit the
-gist, never the mirror, and re-sync with the curl block in the gist's README.
+`docs/guides/idea_gauntlet.md`. `docs/guides/` mirrors the canonical gist. A guide
+changes here only inside the work that found it: re-sync first, and push the change
+to the gist when the work is approved, by the steps in `docs/guides/README.md`.
 
 ## Layout
 

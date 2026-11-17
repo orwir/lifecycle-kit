@@ -1,8 +1,9 @@
 # orwir project templates — canonical source
 
 This gist is the **single source of truth** for the reusable project lifecycle docs.
-Each project keeps a *mirror* copy of the repo-facing files in `docs/guides/`; edit
-here, then re-sync the mirrors.
+Each project keeps a *mirror* copy of its files in `docs/guides/`. A change is made
+in the mirror of the project that found it, reviewed in that project's diff, and
+pushed here (*Edit the canonical*); the other mirrors re-sync.
 
 ## Files (lifecycle order)
 
@@ -55,22 +56,29 @@ Mirror the files into the repo (an ideas home mirrors them once, at its root) an
 point `AGENTS.md` at the kickstart as the "why":
 
 ```
-base=https://gist.githubusercontent.com/orwir/d288ef4ec7dcb37a4cd3e9ae2019c037/raw
-curl -sL "$base/idea_gauntlet.md"     -o docs/guides/idea_gauntlet.md
-curl -sL "$base/project_kickstart.md" -o docs/guides/project_kickstart.md
-curl -sL "$base/agents_template.md"   -o docs/guides/agents_template.md
-curl -sL "$base/contributing_template.md" -o docs/guides/contributing_template.md
-curl -sL "$base/issue_template_bug.md"    -o docs/guides/issue_template_bug.md
-curl -sL "$base/issue_template_task.md"   -o docs/guides/issue_template_task.md
-curl -sL "$base/pr_template.md"           -o docs/guides/pr_template.md
-curl -sL "$base/task_review.md"       -o docs/guides/task_review.md
-curl -sL "$base/codebase_review.md"   -o docs/guides/codebase_review.md
-curl -sL "$base/ux_review.md"         -o docs/guides/ux_review.md
-curl -sL "$base/design_workflow.md"   -o docs/guides/design_workflow.md
-curl -sL "$base/design_review.md"     -o docs/guides/design_review.md
+gist=d288ef4ec7dcb37a4cd3e9ae2019c037
+rev=$(git ls-remote "https://gist.github.com/$gist.git" HEAD | cut -f1)
+base="https://gist.githubusercontent.com/orwir/$gist/raw/$rev"
+curl -sfL "$base/README.md"            -o docs/guides/README.md
+curl -sfL "$base/idea_gauntlet.md"     -o docs/guides/idea_gauntlet.md
+curl -sfL "$base/project_kickstart.md" -o docs/guides/project_kickstart.md
+curl -sfL "$base/agents_template.md"   -o docs/guides/agents_template.md
+curl -sfL "$base/contributing_template.md" -o docs/guides/contributing_template.md
+curl -sfL "$base/issue_template_bug.md"    -o docs/guides/issue_template_bug.md
+curl -sfL "$base/issue_template_task.md"   -o docs/guides/issue_template_task.md
+curl -sfL "$base/pr_template.md"           -o docs/guides/pr_template.md
+curl -sfL "$base/task_review.md"       -o docs/guides/task_review.md
+curl -sfL "$base/codebase_review.md"   -o docs/guides/codebase_review.md
+curl -sfL "$base/ux_review.md"         -o docs/guides/ux_review.md
+curl -sfL "$base/design_workflow.md"   -o docs/guides/design_workflow.md
+curl -sfL "$base/design_review.md"     -o docs/guides/design_review.md
+echo "$rev" > docs/guides/.gist-revision
 ```
 
-Re-run the same lines to pull the latest after editing the canonical here.
+Re-run the block to re-sync, on a clean mirror only (*Edit the canonical*). It pins
+every file to one revision, which also sidesteps the five-minute cache on the
+unpinned raw links, and records that revision in `.gist-revision`: the point a push
+starts from.
 
 ## Bootstrap a new idea (agent instructions)
 
@@ -107,11 +115,52 @@ and the decisions recorded in `IDEA.md` → first ADRs); gauntlet Phase 4 covers
 
 ## Edit the canonical
 
-- Web: edit this gist in the browser.
-- CLI: `gh gist edit d288ef4ec7dcb37a4cd3e9ae2019c037`
-- Clone: `git clone https://gist.github.com/d288ef4ec7dcb37a4cd3e9ae2019c037.git`
+When a project discovers a reusable pattern (not project-specific), it comes back
+here so every project inherits it on the next re-sync. The change starts in the
+mirror of the project that found it, inside the task that found it, so it is
+reviewed in that project's diff with the rest of the task.
 
-When a project discovers a reusable pattern (not project-specific), fold it back
-into the relevant file *here* so every project inherits it on the next sync.
+1. **Sync first.** Before the first edit, re-sync the mirror (*Use in a project*).
+2. **Edit the mirror** inside the task. The task's hand-back names the push to the
+   gist as a step of its *Complete*.
+3. **Push at *Complete***, on the task's go-ahead: the check below, then the push
+   block. Git replays the change onto anything pushed since the recorded revision;
+   a conflict stops the push and goes back to the maintainer.
+4. **Re-sync the mirror**, so it matches the revision just pushed.
+
+Two rules keep every mirror safe:
+
+- **A mirror edit never outlives its task.** It is pushed at *Complete* or
+  reverted, so a re-sync, which overwrites, never meets an unpushed edit.
+- **A push starts from the recorded revision**, not from whatever the gist holds
+  now, so a mirror that fell behind cannot revert anyone else's change.
+
+The check lists what differs from the recorded revision: before a re-sync nothing
+may, before a push these are the files to push. Run it from the project root:
+
+```
+gist=d288ef4ec7dcb37a4cd3e9ae2019c037
+tmp=$(mktemp -d) && git clone -q "https://gist.github.com/$gist.git" "$tmp"
+git -C "$tmp" checkout -q "$(cat docs/guides/.gist-revision)"
+for f in $(git -C "$tmp" ls-files); do
+  tr -d '\r' < "docs/guides/$f" | cmp -s - "$tmp/$f" || echo "differs: $f"
+done
+```
+
+The push, in the same shell, with the files the check listed (`tr` keeps the gist
+LF whatever the project's checkout uses):
+
+```
+git -C "$tmp" switch -q -c push
+for f in <the differing files>; do tr -d '\r' < "docs/guides/$f" > "$tmp/$f"; done
+git -C "$tmp" add -A && git -C "$tmp" commit -qm "<what changed and why, one line>"
+git -C "$tmp" pull -q --rebase origin main
+git -C "$tmp" push -q origin HEAD:main
+```
+
+The maintainer can still edit the gist directly (web, `gh gist edit`, a clone):
+mirrors pick that up at their next re-sync, and pushes rebase onto it.
+
 A new file here needs the same justification as a new dependency — prefer
-extending an existing doc over adding another file.
+extending an existing doc over adding another file. A new file also joins the
+re-sync block.
