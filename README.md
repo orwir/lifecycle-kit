@@ -14,7 +14,7 @@ pushed here (*Edit the canonical*); the other mirrors re-sync.
   private ideas home repo: one folder each, with `IDEA.md` and its evidence
   (`docs/product/`, `design/`). A graduated idea moves out into its own repo with
   its kill criteria, `IDEA.md` freezes into `docs/product/idea.md`, and the home
-  checks the project every four weeks; a killed one moves to the home's `archive/`.
+  checks the project on a schedule; a killed one moves to the home's `archive/`.
 - **`project_kickstart.md`** — language-agnostic playbook for standing up and
   growing a project (branching, releases, CI, docs layers, tracking, the
   user-facing-surface foundation, what to grow / what to skip).

@@ -76,15 +76,16 @@ to that kind; untagged items always apply. Mixed projects take both.
    v0.1's budget, the circuit breaker: v0.1 not in use when it runs out re-runs the
    verdict instead of extending by default. A check comes every four weeks, and
    sooner when a budget runs out: it counts the sessions spent and ends in a call
-   (continue, re-scope, park or dead; *The logs* says what each one writes), so no
-   project drifts into dormancy unnoticed.
+   (continue, re-scope, park, done or dead; *The logs* says what each one writes),
+   so no project drifts into dormancy unnoticed. A done project, its bet met and in
+   use, is checked every twelve weeks for its use and its upkeep.
 8. **WIP limit.** One idea in exploration at a time, carried to a verdict before the
-   next is picked up. At most two running projects (`active` in `graduated.md`),
-   counting an idea past its make verdict, toys included; a make verdict, or a
-   parked project picked back up, over the limit names the project it parks. Raise
-   either limit deliberately, never by accident. Captured and parked ideas are
-   unlimited. A new project's real price is the time it steals from the projects
-   you already run.
+   next is picked up. At most two running projects (`active` in `graduated.md`; a
+   done project isn't one), counting an idea past its make verdict, toys included.
+   A make verdict, or a parked or done project picked back up, over the limit
+   names the project it parks. Raise either limit deliberately, never by accident.
+   Captured and parked ideas are unlimited. A new project's real price is the time
+   it steals from the projects you already run.
 9. **No product code, no purchases before Phase 3.** Sketches, mock-ups and
    throwaway canvases are fine: they answer the cheap questions instead of skipping
    them. [hw] No parts orders before the Phase 3 spike defines the minimal shopping
@@ -123,8 +124,8 @@ ideas/
   `graduated.md` with its first check, four weeks out.
 - **Check:** when a graduated project's next check comes due, count its sessions,
   read them against the bet in its `docs/product/vision.md`, and call it:
-  continue, re-scope, park or dead. Its `graduated.md` row records the call (see
-  *The logs*).
+  continue, re-scope, park, done or dead. Its `graduated.md` row records the call
+  (see *The logs*).
 
 The root `AGENTS.md` carries these steps for any agent opened in an idea's folder.
 A new home starts from this one, adjusted to taste:
@@ -162,8 +163,8 @@ At the start of a session, list the `graduated.md` rows whose next check has
 passed. For each, show the bet from its project's `docs/product/vision.md` where
 that can be read, and its sessions: the days with commits in its repo since the
 last check and since graduation, for the user to correct. Then ask the user to
-call each one: continue, re-scope, park or dead. Write the call into the row as
-the guide's *The logs* says.
+call each one: continue, re-scope, park, done or dead. Write the call into the row
+as the guide's *The logs* says.
 
 ## Capture
 
@@ -424,11 +425,16 @@ is the outside view for the next idea. A running project is one whose Status is
 | continue | active                    | four weeks out                               |
 | re-scope | active, the bet rewritten | four weeks out                               |
 | park     | parked until {{trigger}}  | the trigger's date, or four weeks out to ask |
+| done     | done, in use              | twelve weeks out                             |
 | dead     | dead, called {{date}}     | none                                         |
 
-A check with no sessions since the last one rules out continue: the call is park,
-with a trigger, or dead. A park needs a trigger, as an idea's does: no trigger
-means dead. A next check is always a date, so every row still in play comes due.
+A running project with no sessions since the last check can't continue: the call
+is park, with a trigger, or dead. A park needs a trigger, as an idea's does: no
+trigger means dead. Done means the bet is met and the project is in use, with
+only upkeep left. Its check asks whether it is still in use and whether the
+upkeep stayed within the bet's cost ceiling: it stays done, re-opens as a new bet
+(re-scope, back to `active`), or is dead once nobody uses it. A next check is
+always a date, so every row still in play comes due.
 
 ## When to update this file
 
