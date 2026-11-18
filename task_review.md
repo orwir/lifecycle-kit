@@ -2,7 +2,7 @@
 
 A task's two review rounds, each read by a reviewer agent that has no author context. The **plan round** runs at *Clarify*, before any code: the reviewer reads the plan in the issue against the code it will change, and the developer folds the findings into the plan and renders the **Clarify brief**. The **work round** runs between *Implement & stop* and the hand-back to the maintainer: the developer session hands a **hand-off packet** to the reviewer, the reviewer reads the tree against it and answers with a **return packet**, and the developer acts on the return and renders the **hand-back brief**. The packets are data passed between the two agents and are never shown to the maintainer; the briefs are the only things the maintainer reads. Written for the two AI roles and for the maintainer who reads the briefs.
 
-It does not cover the maintainer's own read of the diff, the comprehensive passes (`codebase_review.md`, `ia_review.md`, `ux_review.md`, `design_review.md`), or a release gate.
+It does not cover the maintainer's own read of the diff, the comprehensive passes (`codebase_review.md`, `ia_review.md`, `ux_review.md`, `design_review.md`, `llm_review.md`, all on `review_machinery.md`), or a release gate.
 
 ## When it runs
 
@@ -32,7 +32,7 @@ Read by the reviewer. Claims with coordinates, never the plan pasted: the review
 
 ```
 Plan review: #<N> <title>
-Ticket: gh issue view <N>
+Ticket: <the command or link that shows issue N>
 Shape: <which of the four, and where the plan meets it>
 Read first: <the docs, ADR sections or guides the plan is held to> | none
 Rests on: <facts about the code the plan assumes, each with a coordinate — "<rule> is enforced only in <path:line>"> | none
@@ -107,9 +107,9 @@ Read by the reviewer. Claims with coordinates, never the diff: the reviewer read
 ```
 Review request: #<N> <title> | untracked: <one line of intent>
 Flow: direct on develop, uncommitted (base <sha>) | branch <name> | PR #<M>
-Diff: git diff | git diff develop...HEAD | gh pr diff <M>
+Diff: git diff | git diff develop...HEAD | <the command or link that shows PR M's diff>
 New files: <paths, which git diff does not show> | none
-Ticket: gh issue view <N> | untracked
+Ticket: <the command or link that shows issue N> | untracked
 Read first: <the docs, ADR sections or guides the diff is held to, beyond the operating contract> | none
 
 Summary: <what and why, one paragraph; what was removed, or why nothing could go>
@@ -133,7 +133,7 @@ Docs: <files touched per the change → doc mapping>; CHANGELOG: "<the line>" | 
 
 ## Return packet
 
-Read by the developer. Every finding is a commitment: a location, a severity from the seven-label vocabulary in [codebase_review.md § Severity vocabulary](codebase_review.md#severity-vocabulary), evidence, and the action it requires. `Real bug` and `Drift` are required; `Cleanup` and `Minor` are fixed only inside the diff; `Acceptable` is recorded; `Decision pending` goes to the maintainer with a recommended option.
+Read by the developer. Every finding is a commitment: a location, a severity from the seven-label vocabulary in [review_machinery.md § Severity vocabulary](review_machinery.md#severity-vocabulary), evidence, and the action it requires. `Real bug` and `Drift` are required; `Cleanup` and `Minor` are fixed only inside the diff; `Acceptable` is recorded; `Decision pending` goes to the maintainer with a recommended option.
 
 ```
 Verdict: approve | corrections | split: <what lands now, what is filed>

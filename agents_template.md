@@ -113,8 +113,8 @@ The bar is the maintainer's. A shortfall in 1 or 2 found after landing is unfini
 
 Releases run in three explicit phases too, mirroring the task workflow. Full mechanics (commands, file targets, post-merge steps) live in [CONTRIBUTING.md § Releasing](CONTRIBUTING.md); this section is the contract.
 
-1. **Prepare.** Decide the next version yourself from [semver](https://semver.org/) based on the changes since the last release (breaking → major, additive → minor, fixes only → patch) — unless the user names a specific version. Bump the version string in `{{VERSION_FILE}}`, date the CHANGELOG entry, complete any doc-sync, commit, and open the `{{INTEGRATION_BRANCH}} → {{PRODUCTION_BRANCH}}` release PR. All reversible inside this phase; no extra approval needed.
-2. **Review.** **Stop** and surface the PR URL plus a one-paragraph summary. Wait for explicit "proceed". Work out any corrections here, then stop again.
+1. **Prepare.** Decide the next version yourself from [semver](https://semver.org/) based on the changes since the last release (breaking → major, additive → minor, fixes only → patch) — unless the user names a specific version. Bump the version string in `{{VERSION_FILE}}`, date the CHANGELOG entry, complete any doc-sync, commit, open the `{{INTEGRATION_BRANCH}} → {{PRODUCTION_BRANCH}}` release PR, and check which comprehensive reviews are due (`docs/guides/review_machinery.md` § When a review is due). All reversible inside this phase; no extra approval needed.
+2. **Review.** **Stop** and surface the PR URL, a one-paragraph summary and the reviews that are due. Wait for explicit "proceed". Work out any corrections here, then stop again.
 3. **Ship — on explicit approval only.** The "proceed" authorizes the entire ship phase in one batch: merge the release PR, push the `vX.Y.Z` tag, fast-forward the integration branch, publish the GitHub release, close the milestone, and verify post-deploy. A prior "do the release" instruction does **not** extend past the review checkpoint — only the phase-3 approval does. The publish steps (PR merge + tag push) are irreversible.
 
 ## Tests and quality gates
@@ -255,7 +255,7 @@ Only after this checklist passes should you report the task as done.
 - Do not mock the {{primary-side-effect target}} in integration tests.
 - Do not add `print()` / `console.log` / `println!` for debugging — use the project's structured logger.
 - Do not add dependencies casually. New dependencies need a reason that justifies the supply-chain surface.
-- Do not improvise a review process — a task's plan and work rounds follow `docs/guides/task_review.md`, comprehensive code reviews follow `docs/guides/codebase_review.md`, UI/UX reviews follow `docs/guides/ux_review.md`, information-architecture reviews follow `docs/guides/ia_review.md`.
+- Do not improvise a review process — a task's plan and work rounds follow `docs/guides/task_review.md`; the comprehensive reviews run on `docs/guides/review_machinery.md`: code reviews follow `docs/guides/codebase_review.md`, UI/UX reviews `docs/guides/ux_review.md`, information-architecture reviews `docs/guides/ia_review.md`, design-language passes `docs/guides/design_review.md`, and reviews of what the product tells its language model `docs/guides/llm_review.md`.
 
 ## When in doubt
 

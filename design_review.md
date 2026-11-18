@@ -8,20 +8,16 @@ review asks *do the journeys work*, the design review asks *is the visual system
 function looking and behaving the same everywhere, built from one set of tokens, with
 accessibility baked in. The two pair at a release; neither replaces the other.
 
-Surface-agnostic, with surface tags where a check differs: `[web]`, `[desktop]`, `[tui]`,
-`[cli]`. Untagged checks apply everywhere. Run it on the trigger described in
-`design_workflow.md` § *Triggers*.
+Surface-agnostic, with surface tags (`review_machinery.md` § Surface tags) where a check differs;
+untagged checks apply everywhere. Run it on the trigger described in `design_workflow.md`
+§ *Triggers*.
 
 ## Shared machinery
 
-Process is inherited from `codebase_review.md` and applies unchanged: the pass structure
-(skeleton → per-phase analysis → execution → close-out, each phase picked up cold from the plan),
-per-phase context discipline, the working-document pattern (`docs/reviews/YYYY-MM-design-review.md`,
-a permanent record feeding the next pass), the findings tables and per-phase format, the
-seven-label severity vocabulary (translated for the visual system at the end), action-item slugs
-and lifecycle, the issue-worthiness threshold, decision shapes, cross-phase blocks, the per-phase Checks-run block, and the Decision register as the plan's last section. The
-per-phase **"what can go?"** habit applies with force here — a design pass that only *adds* tokens
-and never *collapses* a forked variant didn't look hard enough.
+Process is `review_machinery.md`'s and applies unchanged; the working document is
+`docs/reviews/YYYY-MM-design-review.md`, and the labels are translated for the visual system at the
+end. The per-phase **"what can go?"** habit applies with force here — a design pass that only
+*adds* tokens and never *collapses* a forked variant didn't look hard enough.
 
 This doc defines only what differs: the stance, the phases, and the severity translation.
 
@@ -70,7 +66,7 @@ the component, conformance, and accessibility phases sharpen what it finds.
 
 ## The inventory is the backbone
 
-Where `ux_review` is anchored on 3–7 journeys, a design pass is anchored on the
+Where `ux_review` is anchored on its journeys, a design pass is anchored on the
 **token-and-component inventory** from Phase 0: the distinct values per axis, the primitives and
 their forks, and the repeated functions that render differently across the surface. Every later
 phase deltas against that inventory.
@@ -89,6 +85,9 @@ phase deltas against that inventory.
 | 7     | Codify & enforce                   | Write the language doc; add the lint + the agent contract            |
 | 8     | Close-out                          | Delta table, simplification ledger, issues                          |
 
+**Waves** (`review_machinery.md` § How a review runs): Phase 0 → 1 → 2 → Phases 3, 4 and 6 in
+parallel → 5, the conformance audit against them → 7 → 8.
+
 ### Phase 0 — Baseline & inventory
 
 Capture the starting state mechanically; it's the denominator Phase 8 deltas against.
@@ -106,6 +105,7 @@ Capture the starting state mechanically; it's the denominator Phase 8 deltas aga
 - **"One function, many looks" scan.** Pick 3–5 repeated functions (the primary action, a
   selectable item, a status indicator, an empty state) and list every visual variant of each in
   the wild. This is the consistency smell, made concrete.
+- **Ground-rules read** per `review_machinery.md` § Phase 0 reads.
 - **Baseline table:**
 
   | Metric                                       | Baseline ({date}) |
@@ -185,15 +185,19 @@ each; the fixes are action items, batched by surface or by token.
 Not a per-screen WCAG audit — the floor, baked into the foundations so conformance is automatic:
 
 - **Contrast** designed *into* the color roles (text-on-surface combinations that pass at their
-  intended sizes), not checked per label.
+  intended sizes), not checked per label — and 3:1 for the borders, icons and focus or selected
+  indicators that identify a control or its state (WCAG 1.4.11).
 - **Touch / hit targets** sized *into* the control-size scale, so no control can be built too
   small.
+- **Meaning never carried by color alone**, on every surface (WCAG 1.4.1, Level A on the web).
 - `[web]` `[desktop]` **Keyboard:** every interactive element reachable with a visible focus
-  indicator from the token set; popups trap focus, close on `Esc`, and return focus.
+  indicator from the token set. Modal dialogs trap focus, close on `Esc` and return focus to what
+  opened them ([APG dialog](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/)); menus close on
+  `Esc` and when Tab moves focus out, and never trap it
+  ([APG menubar](https://www.w3.org/WAI/ARIA/apg/patterns/menubar/)).
   **Reduced-motion** honored by the motion tokens. Text scales without breaking the primary
   screens.
-- `[tui]` `[cli]` Meaning never carried by color alone (`NO_COLOR` respected); a machine-readable
-  mode for the scripted user.
+- `[tui]` `[cli]` `NO_COLOR` respected; a machine-readable mode for the scripted user.
 
 The output is a set of *rules* in the foundations, plus findings where the current floor is
 breached.
@@ -206,6 +210,8 @@ breached.
 - **Self-enforcing rules, one assertion each:** a lint banning raw values outside the token file
   `[web]`; a snapshot of the token set; the component-reuse rule in `AGENTS.md`; and, where the project keeps a design file per screen, the screen-to-file pairing (`design_workflow.md` § *Round*). A doc is
   advisory; a lint holds the line — add it now that the system is worth enforcing.
+- **Checks on what renders:** an automated accessibility check over the primary screens, and
+  screenshot comparison where the stack allows. A lint reads the source, not what ships.
 - **Update the agent contract** (`AGENTS.md`) so every future UI edit, including
   AI-driven ones, conforms.
 
@@ -220,13 +226,16 @@ breached.
   | Shared primitives / hand-rolled variants     | 5 / 14      | 8 / 2     | unified  |
   | Components covering all states               | 2 / 9       | 9 / 9     | all      |
 
-- **Simplification ledger**, same rules as the codebase review's: every collapse across phases in
+- **A regression check per consolidated scale.** Every axis the pass collapsed leaves a check that
+  fails when it regrows — a lint rule or a test — or a register row saying why not. A consolidation
+  with neither regrows.
+- **Simplification ledger**, per `review_machinery.md` § Close-out: every collapse across phases in
   one ranked table (forked variants killed, off-grid values normalized, dead tokens removed). An
   empty ledger means the pass didn't look.
 - **Decision register** — the plan's last section, per the shared machinery: competing directions
   the maintainer hasn't picked are rows there, not prose under a heading of the pass's own invention.
-- **File issues** for deferred surface-conformance work per the issue-worthiness threshold; the
-  plan stays in `docs/reviews/` permanently as the record the next pass picks up from.
+- **Close every action item** per the machinery — deferred surface-conformance work becomes
+  job-sized children of the parent issue — and freeze the document.
 
 ## Severity, translated to the visual system
 
@@ -244,5 +253,4 @@ Same seven labels, same default actions — design meanings:
 
 ## When to update this template
 
-Same rule as the set: two passes in a row needing the same hand-edit means the template is wrong —
-fix it in the canonical gist, through the mirror of the project that found it.
+Per `review_machinery.md` § Updating a guide.

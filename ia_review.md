@@ -9,28 +9,16 @@ It is the structure counterpart of three other guides:
 
 This pass asks *is the right information in the right place, under one name, for the decision its reader makes?* It decides a target structure and files the work; it does not redraw screens.
 
-Surface tags as in `ux_review.md`: `[web]`, `[desktop]`, `[tui]`, `[cli]`, `[bot]`. Untagged checks
-apply to every surface.
+Surface tags as in `review_machinery.md` § Surface tags; untagged checks apply to every surface.
 
 ## Shared machinery
 
-Process is inherited from `codebase_review.md` and applies unchanged:
-- the pass structure: skeleton → per-phase analysis → execution → close-out, each phase picked up cold from the plan;
-- per-phase context discipline;
-- the working-document pattern: `docs/reviews/YYYY-MM-ia-review.md`, a permanent record feeding the next pass;
-- the findings tables and the per-phase format;
-- the seven-label severity vocabulary, translated at the end;
-- action-item slugs and lifecycle;
-- the issue-worthiness threshold;
-- decision shapes;
-- cross-phase blocks;
-- the per-phase Checks-run block;
-- the Decision register as the plan's last section.
+Process is `review_machinery.md`'s and applies unchanged; the working document is `docs/reviews/YYYY-MM-ia-review.md`, and the labels are translated at the end.
 
-The per-phase **"what can go?"** habit applies with force: in a surface that grew, the biggest wins are screens merged, figures dropped and commands retired.
+The per-phase **"what can go?"** habit applies with force: a surface that grew one feature at a time hides screens to merge, figures to drop and commands to retire.
 
-This doc defines only what differs: the stance, the backbone, the phases, and the severity
-translation.
+This doc defines only what differs: the stance, the backbone, the phases, the verdict set and the
+severity translation.
 
 ## What this is *not*
 
@@ -55,17 +43,18 @@ Don't run it:
 - in the middle of a redesign of the same surface: the redesign should start from this pass's result;
 - on a headless service: there is no surface.
 
-**Minimum viable pass.** Phases 0 → 1 → 3 → 4 → 8: frame, inventory, decisions, verdicts, close-out. That loop yields a verdict per row and the list of decisions with nothing behind them. The object, structure, label and validation phases sharpen it.
+**Minimum viable pass.** Phases 0 → 1 → 3 → 4 → 5 → 8: frame, inventory, decisions, verdicts, the target map, close-out. That loop yields a verdict per row, the list of decisions with nothing behind them, and the structure its close-out writes back. The object, label and validation phases sharpen it; their objects and vocabulary are written back only when they ran.
 
 ## Stance
 
 1. **Decisions are the unit of value.** Information earns its place by changing what its reader
    does next. An accurate figure that no decision uses is noise. A decision with nothing on screen
    to stand on is the pass's most valuable finding.
-2. **Structure before surface.** IA informs the interface, so settle which screens exist, what each
-   carries and what each thing is called before anyone polishes a screen
-   ([NN/g](https://www.nngroup.com/articles/ia-vs-navigation/)). Test the structure and the
-   interface separately, so a failure can be traced to one of them.
+2. **Structure before surface.** IA informs the interface, so a first pass of it — which screens
+   exist, what each carries and what each thing is called — comes before anyone polishes a screen
+   ([NN/g](https://www.nngroup.com/articles/ia-vs-navigation/)). A tree test checks the structure
+   with no visual design at all ([NN/g](https://www.nngroup.com/articles/tree-testing/)), so a
+   failure of the structure is not mistaken for one of the interface.
 3. **One home per fact.** Every object has one place where it is shown in full and acted on.
    Everywhere else it appears as a reference, such as a badge, a line or a link, never as a second
    full copy that can drift from the first.
@@ -91,6 +80,8 @@ Don't run it:
 | 7     | Validate             | The target tested with real people where they can be reached           |
 | 8     | Close-out            | The target written back, the ADR, the migration list, the deltas        |
 
+**Waves** (`review_machinery.md` § How a review runs): Phase 0 → Phases 1 and 3 in parallel → 2, 4 and 6, which read the inventory and the decision table → 5, the target map → 7, which tests it → 8.
+
 ### Phase 0 — Frame
 
 - **Readers.** Every role that meets the surface. Include roles that never sign in, such as a member who only meets the product in chat `[bot]`, and roles the account model merges, such as the person who pays and the person who configures. Where real users can't be interviewed, write proto-personas and mark them as assumptions.
@@ -105,7 +96,7 @@ Don't run it:
 - **Ground-rules read:**
   - the product's intent doc, `docs/product/vision.md`: its readers, its journeys and any IA section;
   - the design-language reference;
-  - the open items and Decision registers of the latest review of each kind.
+  - the rest per `review_machinery.md` § Phase 0 reads.
 
 ### Phase 1 — Inventory
 
@@ -128,7 +119,7 @@ Don't run it:
 
 ### Phase 2 — Objects
 
-The nouns come before the screens ([OOUX](https://www.ooux.com/what-is-ooux)).
+Slice the system by its nouns, not by its verbs or its screens ([OOUX](https://www.ooux.com/what-is-ooux)).
 
 - **Objects** are what readers care about, such as an account, a subscription, a credential, a
   member or a record. They are not the screens that happen to show them.
@@ -138,7 +129,7 @@ The nouns come before the screens ([OOUX](https://www.ooux.com/what-is-ooux)).
 
 ### Phase 3 — Tasks & decisions
 
-- **Per reader, the top tasks**, each with its frequency (daily, weekly, rare) and its urgency. A full Top Tasks vote needs hundreds of customers ([McGovern](https://alistapart.com/article/what-really-matters-focusing-on-top-tasks/)). Without them, derive the list from usage data where it exists and from practice where it doesn't, and say which.
+- **Per reader, the top tasks**, each with its frequency (daily, weekly, rare) and its urgency. A Top Tasks vote usually draws hundreds of voters or more ([McGovern](https://alistapart.com/article/what-really-matters-focusing-on-top-tasks/)). Without that many, derive the list from usage data where it exists and from practice where it doesn't, and say which.
 - **Per task: trigger → decision → information → action.** Record what brings the reader (an event, a notification, a question), what they decide, what they must see to decide it, what they do next, and where each of those happens.
 - **Two kinds of finding:**
   - a **gap**: a decision with no information behind it. Gaps are the pass's highest-value output.
@@ -147,7 +138,15 @@ The nouns come before the screens ([OOUX](https://www.ooux.com/what-is-ooux)).
 
 ### Phase 4 — Content audit
 
-Each row gets a verdict: **keep · revise · move · merge · remove**. The verdict names the row's reader, the decision it serves and its production reading. The usual reasons to remove are that the content is redundant, outdated or trivial.
+Each row gets a verdict, mapped to a label (`review_machinery.md` § Severity vocabulary). The verdict names the row's reader, the decision it serves and its production reading. The usual reasons to remove are that the content is redundant, outdated or trivial.
+
+| Verdict    | Maps to                                           |
+| ---------- | ------------------------------------------------- |
+| **keep**   | Acceptable                                        |
+| **revise** | Minor; Real bug where the row misleads a decision |
+| **move**   | Drift: the fact is shown away from its home       |
+| **merge**  | Drift: one fact in more than one full copy        |
+| **remove** | Cleanup: no decision uses it                      |
 
 - **Evidence rule.** Visit counts and observed values alike never decide a removal on their own. A figure that reads the same for every live user may serve a state none of them is in yet. A removal rests on the decision table, because no decision uses the row, with the readings as support.
 - **Per-figure checklist.** A figure that fails an item is revised, or removed if no revision helps:
@@ -187,13 +186,13 @@ Each row gets a verdict: **keep · revise · move · merge · remove**. The verd
   marked, and the way back is always there.
 - **Progressive disclosure.** What the decision needs comes first, with detail on request. A screen
   that shows everything shows nothing.
-- **Labels.** One name per concept across every surface and the docs: a controlled vocabulary. A category whose label does not explain itself is backed by examples. The vocabulary is written back at close-out.
+- **Labels.** One name per concept across every surface and the docs: a controlled vocabulary. A category whose label does not explain itself is backed by examples. The vocabulary is written back at close-out, and the UX review checks copy against it (`ux_review.md` § Phase 4).
 
 ### Phase 7 — Validate
 
-- **Test with real people where they can be reached.** A tree test shows the target map as a bare outline, with no visual design, and asks people where they would find things. A qualitative one needs only a few participants ([NN/g](https://www.nngroup.com/articles/tree-testing/)). Where it costs little, tree-test the current structure first, so the target has a number to beat.
+- **Test with real people where they can be reached.** A tree test shows the target map as a bare outline, with no visual design, and asks people where they would find things. A qualitative one needs only a few participants ([NN/g](https://www.nngroup.com/articles/tree-testing/)). Where it costs little, tree-test the current structure first, to see where it fails; a number for the target to beat needs a quantitative test and a larger sample.
 - **Time-box the wait.** Set a window when the invitations go out. Then read the test with whoever answered, per task and per participant: a handful of people gives no success rate.
-- **AI-simulated users generate hypotheses, never verdicts.** They outperform real people at tree tests, so their results read optimistic ([NN/g](https://www.nngroup.com/articles/synthetic-users/)).
+- **AI-simulated users generate hypotheses, never verdicts.** In the study NN/g cites, ChatGPT outperformed most real people at a tree test, so an AI's success at a task proves little ([NN/g](https://www.nngroup.com/articles/synthetic-users/)); a task the AI fails is still worth a look.
 - **Heuristic pass on the target**, using Abby Covert's ten IA heuristics ([Covert](https://abbycovert.com/ia-tools/ia-heuristics/)):
   - findable, accessible, clear, communicative, useful,
   - credible, controllable, valuable, learnable, delightful.
@@ -206,14 +205,14 @@ Each row gets a verdict: **keep · revise · move · merge · remove**. The verd
 
 ### Phase 8 — Close-out
 
-- **Write the target structure back** into the IA section of the product's intent doc: its objects,
-  its vocabulary, and the target map's screens, commands and messages. This is the section the
+- **Write the target structure back** into the IA section of the product's intent doc: the target
+  map's screens, commands and messages, and — where Phases 2 and 6 ran — its objects and its vocabulary. This is the section the
   gauntlet seeds (`idea_gauntlet.md`, Phase 2). The
   vocabulary keeps one home: where the project has a design-language reference, its terminology
   holds the words and the IA section cites it.
 - **An ADR** records the structural decision and cites that section. The review doc keeps the
   evidence.
-- **The migration list.** Every change becomes a job-sized issue per the issue-worthiness threshold, each named in the Decision register: a merge, a move, a removal, a new message, a new screen. Screens are redrawn in their own design rounds, not here.
+- **The migration list.** Every change becomes a job-sized child of the review's parent issue (`review_machinery.md` § Action items), each named in the Decision register: a merge, a move, a removal, a new message, a new screen. Screens are redrawn in their own design rounds, not here.
 - **Write journey changes back** into the intent doc. Journey ids keep their numbers
   (`ux_review.md` § *CUJs*).
 - **Delta table** against Phase 0. A smaller surface with no copies and no gaps is the success signal:
@@ -244,5 +243,4 @@ Same seven labels, same default actions — structural meanings:
 
 ## When to update this template
 
-Same rule as the set: two passes in a row needing the same hand-edit means the template is wrong —
-fix it in the canonical gist, through the mirror of the project that found it.
+Per `review_machinery.md` § Updating a guide.

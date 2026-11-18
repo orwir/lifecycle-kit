@@ -33,19 +33,25 @@ pushed here (*Edit the canonical*); the other mirrors re-sync.
   before the hand-back, reads the tree against the accepted plan and ends in the
   hand-back brief. The packets between the agents, the briefs, and each role's rules;
   the same rounds whether the work rides a PR or lands on the integration branch.
+- **`review_machinery.md`** — what every comprehensive review shares: the five kinds,
+  the order they run in and when each is due; a parent issue per review; a lead with
+  phase agents in waves; findings and the seven-label severity vocabulary; action items
+  and how they close; the private route for exploitable findings; the close-out (record
+  frozen, issues carry the follow-through) and the Decision register.
 - **`codebase_review.md`** — comprehensive-review template (13 phases, 0–12, in the default
   layout) for solo-maintained repos; the method is language-agnostic and the shell
   recipes are shown for Python. Run after a heavy build phase to catch
-  drift, dead code, and quiet bugs; plan lives in `docs/reviews/` as a permanent
-  record.
+  drift, dead code, and quiet bugs. Runs on `review_machinery.md`.
 - **`ux_review.md`** — CUJ-driven review of the user-facing surface (web, desktop,
-  TUI, CLI, chat bot): journey walkthroughs, error paths, consistency, latency,
-  accessibility floor, surface diet. Shares the codebase review's machinery.
+  TUI, CLI, chat bot): expert walkthroughs beside a real-user source, error paths,
+  consistency, latency, accessibility floor, surface diet. Runs on `review_machinery.md`.
 - **`ia_review.md`** — information-architecture review of the user-facing surface:
   which screens, commands and messages exist, what each shows and for which reader's
   decision, where each fact lives, and what is missing. Ends in a target structure
-  written back to the intent doc, an ADR, and filed work. Shares the codebase review's
-  machinery.
+  written back to the intent doc, an ADR, and filed work. Runs on `review_machinery.md`.
+- **`llm_review.md`** — review of what a product tells its language model and how it
+  knows the replies are good: the text the model reads, the model settings, and the
+  eval that measures the replies. Runs on `review_machinery.md`.
 - **`design_workflow.md`** — the design lifecycle (the *how*): found the foundation
   before screen 2, codify every design round back into it, and evolve it on a
   trigger. Companion to each project's own `design_language.md` (the *what* — tokens,
@@ -53,7 +59,7 @@ pushed here (*Edit the canonical*); the other mirrors re-sync.
 - **`design_review.md`** — the runnable design-language pass: establish or evolve the
   visual system (baseline → north-star → foundations → components & states →
   conformance audit → codify). The design counterpart of the code and UX reviews;
-  shares the codebase review's machinery.
+  runs on `review_machinery.md`.
 
 ## Use in a project
 
@@ -67,8 +73,8 @@ base="https://gist.githubusercontent.com/orwir/$gist/raw/$rev"
 dl=$(mktemp -d)
 for f in README.md idea_gauntlet.md project_kickstart.md agents_template.md \
          contributing_template.md issue_template_bug.md issue_template_task.md \
-         pr_template.md task_review.md codebase_review.md ux_review.md \
-         ia_review.md design_workflow.md design_review.md; do
+         pr_template.md task_review.md review_machinery.md codebase_review.md \
+         ux_review.md ia_review.md llm_review.md design_workflow.md design_review.md; do
   curl -sfL "$base/$f" -o "$dl/$f" || { echo "failed: $f; nothing changed"; rm -rf "$dl"; break; }
 done
 [ -d "$dl" ] && cp "$dl"/* docs/guides/ && echo "$rev" > docs/guides/.gist-revision && rm -rf "$dl"

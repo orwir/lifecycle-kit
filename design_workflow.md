@@ -58,7 +58,7 @@ enforced contract *is* the system until the evolve trigger fires.
 
 The design canvas runs inside the coding session: the assistant that writes the code opens the
 screen's design file, draws on it, and publishes it for the maintainer to review in place
-(Claude Design, through the assistant's artifact tool). A round is one conversation with the
+(on whatever canvas the assistant can draw on and publish from). A round is one conversation with the
 codebase, the tokens and the tracker in reach, so nothing is copied between tools and no
 message is shaped for a reader on the other side. Use it for new screens and restructures; the
 canvas is rich for web and desktop, thinner for TUI/CLI. A project that came through the
@@ -218,6 +218,7 @@ the periodic evolution.
 | A **second surface or platform** appears (web + desktop, CLI + TUI)                      | Two surfaces sharing one product need one language; the moment the second lands is when the shared vocabulary must go explicit   |
 | **Pre-release polish**, before opening to strangers                                      | Pair it with a `ux_review`: the UX review finds journey friction, the design pass finds systemic incoherence — same release gate |
 | A **felt inconsistency a single PR can't fix** — "this one function looks different in three places" | Systemic drift is a language problem, not a screen problem; patching screens one at a time re-grows it               |
+| The **first release prep after a quarter** with no pass — a recount, not a pass                | Re-run the last pass's Phase 0 counts against its delta. A new value that maps to an existing token is a direct conformance fix; a pass follows only for growth that needs a new token or primitive |
 
 **Don't run a pass for:** mid-build churn on a single screen, or a *single* divergence from the
 reference — that's a direct conformance fix (or a `ux_review` Phase 4 finding), not a rebuild of
