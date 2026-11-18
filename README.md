@@ -7,13 +7,14 @@ pushed here (*Edit the canonical*); the other mirrors re-sync.
 
 ## Files (lifecycle order)
 
-- **`idea_gauntlet.md`** — pre-project stage-gate: an evening of research and
-  definition, an evening drawing the product, then one decision — make, park, or
-  kill. Covers software, hardware, and mixed builds. Every idea lives in a private
-  ideas home repo: one folder each, with `IDEA.md` and its evidence
-  (`docs/product/`, `design/`). A graduated idea moves out into its own repo, where
-  `IDEA.md` freezes into `docs/product/idea.md`; a killed one moves to the home's
-  `archive/`.
+- **`idea_gauntlet.md`** — pre-project stage-gate: an evening on whether the idea is
+  worth its cost (its journeys, the best existing option tried by hand), an evening
+  shaping it (the IA, a picture only where needed), then one decision — make, park,
+  or kill. Covers software, hardware, and mixed builds. Every idea lives in a
+  private ideas home repo: one folder each, with `IDEA.md` and its evidence
+  (`docs/product/`, `design/`). A graduated idea moves out into its own repo with
+  its kill criteria, `IDEA.md` freezes into `docs/product/idea.md`, and the home
+  checks the project every four weeks; a killed one moves to the home's `archive/`.
 - **`project_kickstart.md`** — language-agnostic playbook for standing up and
   growing a project (branching, releases, CI, docs layers, tracking, the
   user-facing-surface foundation, what to grow / what to skip).
@@ -112,8 +113,9 @@ When pointed at this gist and asked to bootstrap or prepare the gauntlet:
 4. Stop there. The answers in `IDEA.md`, the bar and every verdict belong to the
    user — never fill them or call a gate. On request, do the legwork into the
    idea's artifacts: Phase 1 research (`docs/product/competitors.md`,
-   `docs/product/feasibility.md`) and draft CUJs for the user to agree; Phase 2's
-   competitor walk sheet and the low-fidelity picture in `design/`; the Phase 3
+   `docs/product/feasibility.md`), draft CUJs for the user to agree, and the sheet
+   for the baseline walk the user does by hand; Phase 2's draft IA and its walk,
+   and a picture in `design/` where the walk can't settle the bar; the Phase 3
    spike in `spike/`.
 
 When the user kills the idea: move its folder to `archive/<YYYY-MM-DD>-<idea>/`,
@@ -121,11 +123,12 @@ set its Status, and add the line to `archived.md` in the user's words.
 
 When the user says the idea passed and asks to start the project: move the folder
 into the project's own repo (`git subtree split --prefix=active/<idea>` keeps its
-history), add a line to `graduated.md`, mirror the guides into the new repo, then
-follow `docs/guides/project_kickstart.md` seeded from `IDEA.md` and its artifacts
-(done statement → v0.1 milestone, IN list → first issues, the spike's stack choice
-and the decisions recorded in `IDEA.md` → first ADRs); gauntlet Phase 4 covers the
-`IDEA.md` → `docs/product/idea.md` + `vision.md` handoff.
+history), add a line to `graduated.md` with a next check four weeks out, mirror
+the guides into the new repo, then follow `docs/guides/project_kickstart.md` seeded
+from `IDEA.md` and its artifacts (done statement → v0.1 milestone, IN list → first
+issues, the spike's stack choice and the decisions recorded in `IDEA.md` → first
+ADRs); gauntlet Phase 4 covers the bet and the `IDEA.md` → `docs/product/idea.md`
+handoff.
 
 ## Edit the canonical
 

@@ -41,7 +41,7 @@ project/
 │   ├── architecture/           # the "how" — components, data flow, design decisions
 │   ├── guides/                 # task-oriented howtos (deploy, extend, onboard)
 │   └── adr/                    # architecture decision records
-├── design/                     # design files, from the gauntlet's low-fi picture on (none if headless)
+├── design/                     # design files, from the gauntlet's low-fi picture on, where it drew one (none if headless)
 ├── scripts/                    # setup, build, backup, one-off utilities
 ├── .env.example                # every env var the app reads, with comments
 ├── .gitignore
@@ -390,7 +390,7 @@ Each document answers a different question. If two docs are answering the same q
 
 ### `vision.md` is seeded, not written
 
-It is started in the gauntlet — the CUJs in Phase 1, the IA in Phase 2 — and completed from the graduated `IDEA.md` (gauntlet Phase 4), which itself freezes as `docs/product/idea.md`, the never-edited origins artifact. The first UX review builds its **CUJ inventory** on those CUJs (`ux_review.md` § CUJs); a project that skipped the gauntlet creates them there. One living file owns product intent end-to-end; the frozen one remembers where it came from. Don't add a separate requirements doc — that's `roadmap.md` with a different name; tracked work lives in issues, scope history lives in milestones and the CHANGELOG.
+It is started in the gauntlet — the problem and the CUJs in Phase 1, the scope and the IA in Phase 2, the bet (appetite, cost ceiling, kill criteria) in Phase 4 — so graduation copies nothing into it, and `IDEA.md` freezes beside it as `docs/product/idea.md`, the never-edited origins artifact. The first UX review builds its **CUJ inventory** on those CUJs (`ux_review.md` § CUJs); a project that skipped the gauntlet creates them there. One living file owns product intent end-to-end; the frozen one remembers where it came from. Don't add a separate requirements doc — that's `roadmap.md` with a different name; tracked work lives in issues, scope history lives in milestones and the CHANGELOG.
 
 ### ADRs deserve a special note
 
