@@ -54,13 +54,15 @@ twelve. In order:
 package / Storybook / style crate costs more than it returns. The one-page reference + the
 enforced contract *is* the system until the evolve trigger fires.
 
-### 2. Round — per new screen, restructure, or change judged by eye
+### 2. Round — per change to what a screen shows
 
 The design canvas runs inside the coding session: the assistant that writes the code opens the
 screen's design file, draws on it, and publishes it for the maintainer to review in place
 (on whatever canvas the assistant can draw on and publish from). A round is one conversation with the
 codebase, the tokens and the tracker in reach, so nothing is copied between tools and no
-message is shaped for a reader on the other side. Use it for new screens and restructures; the
+message is shaped for a reader on the other side. Use it for every change to what a screen
+shows — a new screen, a restructure, a line of copy — because a look agreed in words can still
+look wrong on the screen: the drawing is part of the change's plan and is approved with it. The
 canvas is rich for web and desktop, thinner for TUI/CLI. A project that came through the
 gauntlet starts with its IA in `docs/product/vision.md`, and sometimes a low-fidelity picture in
 `design/`: its first rounds draw from the IA and bring those files to full fidelity instead of
@@ -84,7 +86,8 @@ drawing beside them. The loop:
    re-implements the app's logic has to be ported again at every close.
 3. **Review.** End the round with a short summary in the conversation: what changed on the
    canvas, and each open decision as a question with a recommended answer. The maintainer
-   judges by eye on the canvas, corrects, and approves; nothing is built before the approval.
+   judges by eye on the canvas, corrects, and approves the drawing with the plan it belongs
+   to, in one approval; nothing is built before it.
    A picked variant collapses into the screen's one file. Where the pick settled a genuine
    fork — two defensible layouts for one region, two interaction models for one action — the
    losing region stays beside the winner, labelled **NOT TAKEN**, with the trade-off and the
@@ -103,17 +106,18 @@ drawing beside them. The loop:
    shipped screen naming the design file that draws it and the source files that decide what
    it draws. Two checks over that table are worth a test: every shipped screen has a row, so
    a screen cannot ship undrawn, and no two rows claim the same screen.
-6. **Close.** Once the change has landed, bring the design file to what shipped: redraw each
-   delta from the ledger, collapse each decided fork (its NOT TAKEN region stays), move what
-   the round added to its surface's page, fold in or delete every other file the round made (a
-   spec for work still open stays until it ships), cut the notes back to what a note holds,
-   and say so in one line. A prototype takes only the deltas it simulates; logic with no look
-   or feel of its own stays in the code. The design file claims to be the current screen, so a
-   delta left out is drift on the day it ships, and the next round on the screen starts from it.
+6. **Close.** Before the hand-back, bring the design file to the code the change will ship:
+   redraw each delta from the ledger, collapse each decided fork (its NOT TAKEN region stays),
+   move what the round added to its surface's page, fold in or delete every other file the
+   round made (a spec for work still open stays until it ships), cut the notes back to what a
+   note holds, and say so in one line. The maintainer then reads the drawing and the code
+   together, and the close lands with the change. A prototype takes only the deltas it
+   simulates; logic with no look or feel of its own stays in the code. The design file claims
+   to be the current screen, so a delta left out is drift on the day it ships, and the next
+   round on the screen starts from it.
 
-A change you can state in one line skips the canvas: make it in the code, and close the screen
-once it lands. A change easier to judge by eye than to describe — redraw, look, redraw — is a
-round like any other.
+A change that moves a screen's code without changing what it shows draws nothing: its plan
+says so, and its close only re-stamps the pairing.
 
 **One round per screen, from its first redraw to its close.** A round puts the design file
 ahead of the code until the change ships and closes, and the pairing's stamp hashes only the
@@ -122,16 +126,21 @@ code, so nothing on the codebase side sees that. Three rules keep the window hon
 - No second round on the screen while one is open: a close made mid-round would vouch for a
   design file that also draws unshipped changes.
 - A round dropped before its close — declined at review, or abandoned before it ships — is
-  reverted on the canvas to the design file as it stood before the round.
-- A close the screen's code needs meanwhile, from a code-first fix or release prep, waits and
-  goes in with the round's close; a release that cannot wait reverts the round.
+  reverted on the canvas to the design file as it stood before the round. So is a design file
+  closed by a change that then does not ship: its pre-close version comes back from the
+  canvas's history.
+- A re-stamp the screen's code needs meanwhile, from a change that leaves its look alone, goes
+  ahead: it vouches only for the screen's own file, and the round's additions wait on their page
+  until its close.
 
-**Close after the change lands, not before.** Closed before the merge, the design file claims a
-screen the review may still change, and a delta that arrives in review stays drift under a
-fresh stamp. Closed after, it is drawn from the shipped files, with the ledger only a guide to
-them. The same close serves a screen whose code moved without a design round — its deltas come
-from the diff rather than a ledger — which is how a stale reading at release prep gets acted
-on.
+**Close before the hand-back, and let the gate hold it.** The maintainer approved the drawing
+with the plan, and at the hand-back judges the code and the closed design file together, so the
+file is drawn from the code the change will ship, with the ledger only a guide to it. A
+correction to what the screen shows re-opens the close before the change lands, whether or not
+it moves the code the pairing hashes: copy kept in a catalog moves no stamp. A check on every
+push and change request names each pairing whose code that change moved since its stamp. The
+same close re-stamps a screen whose code moved without changing what it shows — nothing to
+redraw — so no stale pairing waits for a release.
 
 **One surface, one design file.** The second check above is the rule made mechanical, and it
 is worth the machinery because the alternative is seductive. When a change touches one region
@@ -163,10 +172,11 @@ that have fallen behind the code, and the reading is free and repeatable. Stamp 
 its own design file closes, never in bulk, and only if its sources haven't moved since the
 close was drawn: a bulk stamp marks screens nobody closed as current. A design file that draws
 several screens closes for all of them at once. Without a stamp, drift is discovered by audit —
-which is to say, long after the cheapest moment to fix it. Prefer reporting to failing the
-build: on most projects the code under a screen moves far more often than what the screen
-looks like, and a hard gate spends a redraw on changes that never altered the design. Read it
-on a trigger that already exists, such as release prep.
+which is to say, long after the cheapest moment to fix it. Gate each change on the pairings
+it moved, and the whole table at the release. The change that moved a screen closes it, which
+is a bare re-stamp when the look did not change, so the gate spends a redraw only where the
+design moved, and a pairing someone else left stale blocks a change only through code the
+two share.
 
 **What a note holds.** One notes card per surface, six to nine short fields, each something a
 reader of the drawing would otherwise get wrong:
