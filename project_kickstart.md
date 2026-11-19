@@ -339,6 +339,8 @@ Two stages:
 
 **Keep the push gate fast.** Every push pays its wall time. Run the suite across worker processes (pytest-xdist, Jest's workers), in CI too with the worker count sized to its runner, and hunt the costs every test pays: a template engine or schema rebuilt per test, a live network call a mock missed.
 
+**Clear git's environment where the suite starts.** A git hook exports the variables that let the commands in it find the repository, `GIT_DIR` among them, and from a linked worktree that path is absolute. A test that makes a scratch repository then runs `git init` on the real one, which comes out bare, and every checkout fails far from the cause. Before any test runs, clear what `git rev-parse --local-env-vars` lists, as githooks(5) advises for a hook that runs git elsewhere.
+
 **Pin each tool once.** A hook manager that pins its own tool version — pre-commit's `rev:`, a lockfile under husky/lefthook — is a second pin beside whatever CI installs. Two pins drift on the next bump, and the failure reads as a broken CI rather than version skew: the commit hook reformats a file one way, CI's `--check` rejects it. A test asserting that the two agree does not survive Dependabot, which bumps each ecosystem in its own PR: every release of the tool arrives as two PRs that each fail the assertion.
 
 **Let CI run the hooks.** CI calls the hook manager's own hooks — `pre-commit run <hook-id> --all-files` — and leaves the tool out of its own install, so the hook's pin is the only one and a bump lands as one PR (`pre-commit` is a Dependabot ecosystem). Keep `--all-files` in local runs too: without it, pre-commit stashes unstaged edits and checks only what is staged.
