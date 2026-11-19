@@ -89,8 +89,8 @@ Don't run it:
 - **Evidence policy**, written before anything is read:
   - which production data may be read, and in what form: aggregates before raw rows, and the least
     raw data that answers the question;
-  - where copies sit and when they are deleted, and a rule that no message text or person's name
-    enters the review;
+  - where copies sit and when they are deleted, by the session that fetched them, since a later
+    session may never find them; and a rule that no message text or person's name enters the review;
   - how far the sample can be trusted: how many users, and which states no live user is in.
 - **Surface counts**, taken mechanically: screens, commands, proactive messages, distinct figures, settings. Phase 8 measures its deltas against them.
 - **Ground-rules read:**
@@ -192,7 +192,7 @@ Each row gets a verdict, mapped to a label (`review_machinery.md` § Severity vo
 
 - **Test with real people where they can be reached.** A tree test shows the target map as a bare outline, with no visual design, and asks people where they would find things. A qualitative one needs only a few participants ([NN/g](https://www.nngroup.com/articles/tree-testing/)). Where it costs little, tree-test the current structure first, to see where it fails; a number for the target to beat needs a quantitative test and a larger sample.
 - **Time-box the wait.** Set a window when the invitations go out. Then read the test with whoever answered, per task and per participant: a handful of people gives no success rate.
-- **AI-simulated users generate hypotheses, never verdicts.** In the study NN/g cites, ChatGPT outperformed most real people at a tree test, so an AI's success at a task proves little ([NN/g](https://www.nngroup.com/articles/synthetic-users/)); a task the AI fails is still worth a look.
+- **AI-simulated users generate hypotheses, never verdicts.** In the study NN/g cites, ChatGPT outperformed most real people at a tree test, so an AI's success at a task proves little ([NN/g](https://www.nngroup.com/articles/synthetic-users/)); a task the AI fails is still worth a look. An AI reader sees only the bare outline and the tasks, never the review or the product's code, or it reads the answers off the target.
 - **Heuristic pass on the target**, using Abby Covert's ten IA heuristics ([Covert](https://abbycovert.com/ia-tools/ia-heuristics/)):
   - findable, accessible, clear, communicative, useful,
   - credible, controllable, valuable, learnable, delightful.
@@ -212,7 +212,7 @@ Each row gets a verdict, mapped to a label (`review_machinery.md` § Severity vo
   holds the words and the IA section cites it.
 - **An ADR** records the structural decision and cites that section. The review doc keeps the
   evidence.
-- **The migration list.** Every change becomes a job-sized child of the review's parent issue (`review_machinery.md` § Action items), each named in the Decision register: a merge, a move, a removal, a new message, a new screen. Screens are redrawn in their own design rounds, not here.
+- **The migration list.** Every change becomes a job-sized child of the review's parent issue (`review_machinery.md` § Action items), closed in its phase's action items as `[FILED → #N]`: a merge, a move, a removal, a new message, a new screen. The Decision register holds the decisions behind them, not the children. Screens are redrawn in their own design rounds, not here.
 - **Write journey changes back** into the intent doc. Journey ids keep their numbers
   (`ux_review.md` § *CUJs*).
 - **Delta table** against Phase 0. A smaller surface with no copies and no gaps is the success signal:
