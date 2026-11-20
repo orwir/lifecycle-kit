@@ -36,8 +36,25 @@ TEMPLATES = (
 )
 
 
+#: Where a project installs each template the method ships whole; a project that adapts
+#: one (AGENTS.md, CONTRIBUTING.md) has no entry, and its port stays a judgement.
+INSTALLED_AS = {
+    "issue_template_bug.md": ".github/ISSUE_TEMPLATE/bug.md",
+    "issue_template_task.md": ".github/ISSUE_TEMPLATE/task.md",
+    "pr_template.md": ".github/pull_request_template.md",
+}
+
+
 class GuidesError(Exception):
     pass
+
+
+class Changes(list):
+    """The guide files an upgrade changed, and the templates it installed whole."""
+
+    def __init__(self, names=(), installed=()):
+        super().__init__(names)
+        self.installed = list(installed)
 
 
 @dataclass
@@ -188,12 +205,35 @@ def _check_upgradable(config: Config, lock: Lock | None, adopt: bool) -> list[st
     return []
 
 
-def upgrade(config: Config, adopt: bool = False, dry_run: bool = False) -> list[str]:
-    """Pin the repository's guides to the installed kit; returns the files that changed."""
+def _verbatim_installs(config: Config, before: dict[str, str]) -> list[str]:
+    """The installed templates still word for word as the method shipped them before."""
+    installs = []
+    for name, target in INSTALLED_AS.items():
+        old, path = before.get(name), config.root / target
+        present = old is not None and (METHOD / name).is_file() and path.is_file()
+        if present and text(path) == old and old != text(METHOD / name):
+            installs.append(target)
+    return installs
+
+
+def upgrade(config: Config, adopt: bool = False, dry_run: bool = False) -> Changes:
+    """Pin the repository's guides to the installed kit.
+
+    Returns the guide files that changed; ``installed`` names each template the
+    repository had installed word for word, which the upgrade replaces with the new text.
+    """
     lock = read_lock(config.root)
     carry = _check_upgradable(config, lock, adopt)
     if carry is None:
-        return []
+        return Changes()
+    # A template whose guide copy holds a carried edit is the task's to finish: its
+    # installed copy may hold the same edit, which the kit's text would undo.
+    before = {
+        name: text(config.guides_dir / name)
+        for name in INSTALLED_AS
+        if (config.guides_dir / name).is_file() and name not in carry
+    }
+    installs = _verbatim_installs(config, before)
     carried = _carry(config, lock, carry) if lock and carry else {}
     new = Lock(kit=kit_version())
     changed = []
@@ -213,9 +253,11 @@ def upgrade(config: Config, adopt: bool = False, dry_run: bool = False) -> list[
         if not dry_run:
             (config.guides_dir / name).unlink(missing_ok=True)
     if not dry_run:
+        for target, name in ((t, n) for n, t in INSTALLED_AS.items() if t in installs):
+            (config.root / target).write_text(text(METHOD / name), encoding="utf-8", newline="\n")
         write_lock(config.root, new)
         (config.guides_dir / GIST_REVISION).unlink(missing_ok=True)
-    return sorted(changed)
+    return Changes(sorted(changed), installs)
 
 
 def _git(cwd: str, *args: str) -> str:

@@ -20,7 +20,7 @@ The developer's work is uncommitted in the tree you read, and their session shar
 - git's read commands (`diff`, `log`, `show`, `status`, `blame`, `grep`, `ls-files`, `rev-parse`, `merge-base` and the like; `-C <path>` is fine, `-c` is not);
 - `gh issue view|list`, `gh pr view|diff|list|checks`, `gh run view|list`;
 - plain readers: `cat`, `head`, `tail`, `grep`, `ls`, `wc`, `diff`, `find` without `-exec` or `-delete`, `sed -n '<lines>p'`;
-- `lifecycle config`, `lifecycle doctor`, `lifecycle where`, `lifecycle guides check`;
+- `lifecycle config`, `lifecycle doctor`, `lifecycle where`, `lifecycle guides check`, `lifecycle upgraded`;
 - the repository's own read-only checks: `lifecycle config` → `review.allow`.
 
 Everything else is refused: stash, checkout, a test suite (two runs on one tree share their output files), formatters, `--fix`, any `gh` write (the issue and its plan are the developer's), a redirection into a file, and anything the shell would rewrite before running (`$VAR`, `$(...)`, backticks, `{a,b}`). Write each command out literally, with a literal `$` or brace inside single quotes; read a file's earlier version with `git show <rev>:<path>`. A refused command is neither a finding nor a reason to stop: read the same thing another way. Never prefix a command with `cd <absolute path>`: the shell starts in the repository root.

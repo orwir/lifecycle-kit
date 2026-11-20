@@ -54,3 +54,21 @@ def test_session_start_is_quiet_when_current(repo, monkeypatch):
     upgrade(repo, adopt=True)
     monkeypatch.setattr(hook.doctor, "kit_version", lambda: "1.2.0")
     assert hook.session_start({"cwd": str(repo.root)}) == ""
+
+
+def test_session_start_lists_what_the_kit_changed(repo, monkeypatch, tmp_path):
+    upgrade(repo, adopt=True)
+    (tmp_path / "CHANGELOG.md").write_text("## v1.3.0\n\n- a change\n", encoding="utf-8")
+    monkeypatch.setattr(hook.doctor, "KIT_ROOT", tmp_path)
+    monkeypatch.setattr(hook.doctor, "kit_version", lambda: "1.3.0")
+    text = hook.session_start({"cwd": str(repo.root)})
+    assert "the next task upgrades first" in text and "\n  - a change" in text
+
+
+def test_session_start_says_a_newer_kit_is_out(repo, monkeypatch):
+    from lifecycle import latest
+
+    upgrade(repo, adopt=True)
+    monkeypatch.setattr(hook.doctor, "kit_version", lambda: "1.2.0")
+    monkeypatch.setattr(latest, "latest_release", lambda: "1.4.0")
+    assert "kit 1.4.0 is out" in hook.session_start({"cwd": str(repo.root)})

@@ -74,16 +74,20 @@ otherwise `bin/lifecycle` in a checkout of the kit) keeps the copy:
 lifecycle upgrade --adopt   # the first time: copy the method into docs/guides/
 lifecycle upgrade           # later: move the copy to the installed kit's release
 lifecycle doctor            # what the repository needs before its next task
+lifecycle upgraded          # an upgrade in the tree the integration branch lacks
 ```
 
 `upgrade` writes `.lifecycle.lock`: the release and each copied file's digest. A
 copied guide holding an edit not yet in the kit keeps it: the upgrade replays the edit
 onto the new release from the release the copy came from, stops on a conflict, and
-the edit still goes to the kit at its task's *Complete*. It names the templates that
-changed, so the repository ports what applies into its
-own `AGENTS.md`, `CONTRIBUTING.md` and `.github/` templates. A repository behind the
-kit by a minor or major release upgrades, as its own commit, before its next review
-round; a patch release only changed guide wording.
+the edit still goes to the kit at its task's *Complete*. It replaces each issue and
+PR template the repository kept word for word, and names the templates left to port
+into its own `AGENTS.md`, `CONTRIBUTING.md` and adapted `.github/` templates. A
+release that needs any other change in each repository says so in a `Repositories:`
+line of the kit's changelog; `lifecycle upgraded` lists them, and whoever runs the
+upgrade makes each one. A repository behind the installed kit
+upgrades as a tracked task's first step, and the task's briefs say what the upgrade
+brought; it lands as its own commit ahead of the task's where it can.
 
 A copy from before the kit holds a `.gist-revision`: the first `upgrade` checks it
 against the gist it came from and refuses if it holds an edit the gist never took.
@@ -133,7 +137,8 @@ the rest of the task.
 1. **Edit the copy** inside the task. The task's hand-back names the push to the kit
    as a step of its *Complete*; `lifecycle guides check` lists the edited guides.
 2. **Push at *Complete***, on the task's go-ahead and before its commit:
-   `lifecycle guides push -m "<what changed and why, one line>"`. It applies the edits
+   `lifecycle guides push -m "<what changed and why, one line>"`, the line in the kit's
+   words, since every project on the kit reads it. It applies the edits
    onto the release the copy is pinned to, replays them onto the kit's latest, and
    releases them as a patch; a conflict stops the push before anything lands, and goes
    back to the maintainer.

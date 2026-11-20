@@ -32,6 +32,7 @@ ALLOW = ("pre-commit run ruff-all --hook-stage pre-push --all-files",)
         "git log --oneline --output-indicator-new=+",
         "git grep --or -e a -e b",
         "lifecycle guides check",
+        "lifecycle upgraded --json",
     ],
 )
 def test_reads_pass(command):

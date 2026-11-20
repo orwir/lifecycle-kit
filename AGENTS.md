@@ -29,4 +29,6 @@ The version's one home is `.claude-plugin/plugin.json`, and every change that sh
 - **minor** — a skill, the settings schema, a template, or anything else a repository must upgrade to before its next review round.
 - **major** — a change a repository cannot take by `lifecycle upgrade` alone.
 
-Repositories stay on their cached copy until the version changes, so a commit without a bump reaches no one. A project's guide push refuses while `main` has commits after its release's tag, since its patch would ship them: release what is on `main` before projects push again.
+Repositories stay on their cached copy until the version changes, so a commit without a bump reaches no one.
+
+A release that requires a change in every repository beyond its guides and templates — a setting, a hook, a CI step, a renamed settings key — says so in a CHANGELOG line that starts `Repositories:`, worded so a repository's agent can make it and naming the file it changes. The upgrade skill applies each one, and the briefs' *Upgrade* line reports it. A project's guide push refuses while `main` has commits after its release's tag, since its patch would ship them: release what is on `main` before projects push again.

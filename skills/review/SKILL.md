@@ -9,7 +9,7 @@ Task: $ARGUMENTS — an issue number, a PR number, or empty for a task with no i
 ## 0. Before anything
 
 - `lifecycle` is the kit's command: on PATH where the kit's Claude plugin is on, otherwise `bin/lifecycle` in a checkout of the kit.
-- `lifecycle doctor --require-current`. Any non-zero exit stops here: tell the maintainer what it printed and do nothing else.
+- `lifecycle doctor --json`. A `block` whose fix is `upgrade` (the kit moved past a minor release since this task's clarify, or an untracked task meets one): run the upgrade skill first. A `block` whose fix is `adopt` or `update-kit`, or any failure of the command: stop and tell the maintainer what it printed. A `note` waits for a tracked task's clarify or the upgrade skill run alone.
 - `lifecycle config` prints the repository's settings. Below, `<guides>` is its `guides.path`, and the lenses are `review.lenses`.
 - **The gate** is `gate.commands`, in order; where the settings name none, the commands AGENTS.md § Commands gives for lint and tests; with neither, the gate is `not run`, and the brief says so.
 - Read `<guides>/task_review.md`: the packet shapes, the brief and the developer rules are there. This round reads the tree against the plan accepted at *Clarify* (the clarify skill). Read `AGENTS.md` § Task workflow too: a repository may add a step before the hand-back (a design close, a sync check), and you do it where it says.
@@ -19,7 +19,7 @@ You are the developer and you run the whole round here. The maintainer reads onl
 ## 1. Render the hand-off packet — gather, don't recall
 
 1. **Coordinates.** `git status --short`, `git diff --stat`, `git rev-parse --short HEAD` (the base). State the flow — direct on the integration branch (`branches.integration`), a feature branch, or an existing PR (`gh pr view --json number,url,baseRefName`) — and the diff command that matches it. List every new file by path: `git diff` does not show them.
-   - *Lenses*, from the changed and new paths (`task_review.md` § Lens reviewers). `base` always. `person-facing` when the diff changes what a person reads or drives; `model-facing` when it changes what a model reads, how it is asked, or the eval that scores it. The rule decides; each lens's `paths` in the settings are where those changes usually sit, not the whole list, and where a path's lens is unclear, launch it.
+   - *Lenses*, from the changed and new paths (`task_review.md` § Lens reviewers). `base` always. `person-facing` when the diff changes what a person reads or drives; `model-facing` when it changes what a model reads, how it is asked, or the eval that scores it. The rule decides; each lens's `paths` in the settings are where those changes usually sit, not the whole list, and where a path's lens is unclear, launch it. An upgrade's port into agent-instruction text (`AGENTS.md`, `CONTRIBUTING.md`) takes the base lens only.
 2. **The plan.** `gh issue view <N>`: the tree is held to its `## Plan`, accepted at *Clarify* (`**Status:** accepted <date>`). A plan still `proposed` was never accepted: stop and tell the maintainer before rendering anything.
    - *Reconciliation*: one line per box of the plan's technical details — `landed` or `dropped: <why>` — and an `added beyond the plan: <why>` line per path the tree changed outside them. Tick every landed box still open: write the body to a file in a scratch folder outside the tree with those boxes ticked, then `gh issue edit <N> --body-file <file>`.
    - *Departures*: the plan's *Departures* section copied as it stands, or `none`.
@@ -31,6 +31,7 @@ You are the developer and you run the whole round here. The maintainer reads onl
    - the run must load the code under test from the worktree, not from this tree: check where it imported from. A run that collected no tests proves nothing;
    - `git worktree remove --force <worktree>`.
 4. **Read first.** The docs, ADR sections or guides the diff is held to beyond AGENTS.md, or `none`.
+   - **Upgrade.** `lifecycle upgraded`: when the tree holds one, the packet's *Upgrade* line names the release move, the paths it wrote, each change the release required and where it was made, and each port with its template's diff command. Those paths get no *Reconciliation* line.
 5. **The gate.** If the gate did not run in this session after the last edit, run it now. Report the numbers; anything that still could not run goes under `NOT RUN` with its reason.
 6. **Decisions taken alone.** Every option picked without the maintainer, every hypothesis left untested and where it is marked, every spend. `none` is a claim the reviewer checks.
 7. **Where to look.** The two or three hunks you are least sure of, the invariant each relies on, and the test that enforces it — or `stated only`.

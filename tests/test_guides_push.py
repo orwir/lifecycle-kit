@@ -173,7 +173,7 @@ def test_a_gist_mirror_past_the_import_is_refused(tmp_path, monkeypatch):
         guides.check_imported(str(gist), later)
 
 
-def installed(monkeypatch, version, **files):
+def installed_kit(monkeypatch, version, **files):
     for name, body in files.items():
         (guides.METHOD / name).write_text(body, encoding="utf-8")
     monkeypatch.setattr(guides, "kit_version", lambda: version)
@@ -182,7 +182,7 @@ def installed(monkeypatch, version, **files):
 def test_an_upgrade_carries_an_unpushed_edit_onto_the_new_release(repo, kit, monkeypatch):
     upgrade(repo, adopt=True)
     (repo.guides_dir / "guide.md").write_text("a\nb\nc\nd\nE\n", encoding="utf-8")
-    installed(monkeypatch, "1.3.0", **{"guide.md": "A\nb\nc\nd\ne\n"})
+    installed_kit(monkeypatch, "1.3.0", **{"guide.md": "A\nb\nc\nd\ne\n"})
     assert upgrade(repo) == ["guide.md"]
     assert read(repo.guides_dir / "guide.md") == "A\nb\nc\nd\nE\n"
     lock = read_lock(repo.root)
@@ -192,7 +192,7 @@ def test_an_upgrade_carries_an_unpushed_edit_onto_the_new_release(repo, kit, mon
 def test_a_carried_edit_pushes_from_the_new_release(repo, kit, monkeypatch, tmp_path):
     upgrade(repo, adopt=True)
     (repo.guides_dir / "task_review.md").write_text("# Task review, better\n", encoding="utf-8")
-    installed(monkeypatch, "1.2.1")
+    installed_kit(monkeypatch, "1.2.1")
     upgrade(repo)
     assert push(repo, "task_review: say it better") == (["task_review.md"], "1.2.2")
     assert read(clone(kit, tmp_path / "check") / "method" / "task_review.md") == (
@@ -203,7 +203,7 @@ def test_a_carried_edit_pushes_from_the_new_release(repo, kit, monkeypatch, tmp_
 def test_a_carried_edit_that_conflicts_stops_the_upgrade(repo, kit, monkeypatch):
     upgrade(repo, adopt=True)
     (repo.guides_dir / "agents_template.md").write_text("# AGENTS, mine\n", encoding="utf-8")
-    installed(monkeypatch, "1.3.0", **{"agents_template.md": "# AGENTS, later\n"})
+    installed_kit(monkeypatch, "1.3.0", **{"agents_template.md": "# AGENTS, later\n"})
     with pytest.raises(GuidesError, match="conflict"):
         upgrade(repo)
     assert read_lock(repo.root).kit == "1.2.0"
@@ -213,6 +213,19 @@ def test_a_carried_edit_that_conflicts_stops_the_upgrade(repo, kit, monkeypatch)
 def test_a_deleted_guide_stops_the_upgrade(repo, kit, monkeypatch):
     upgrade(repo, adopt=True)
     (repo.guides_dir / "task_review.md").unlink()
-    installed(monkeypatch, "1.3.0")
+    installed_kit(monkeypatch, "1.3.0")
     with pytest.raises(GuidesError, match="Restore"):
         upgrade(repo)
+
+
+def test_a_template_edit_the_task_carries_is_not_overwritten(repo, kit, monkeypatch):
+    upgrade(repo, adopt=True)
+    installed = repo.root / ".github" / "pull_request_template.md"
+    installed.parent.mkdir(parents=True)
+    for path in (installed, repo.guides_dir / "pr_template.md"):
+        path.write_text("A\nb\nc\nd\n", encoding="utf-8")
+    installed_kit(monkeypatch, "1.3.0", **{"pr_template.md": "a\nb\nc\nD\n"})
+    changes = upgrade(repo)
+    assert changes.installed == []
+    assert read(installed) == "A\nb\nc\nd\n"
+    assert read(repo.guides_dir / "pr_template.md") == "A\nb\nc\nD\n"

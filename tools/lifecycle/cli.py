@@ -8,7 +8,7 @@ import os
 import sys
 from collections.abc import Sequence
 
-from . import KIT_ROOT, board, doctor, guard, guides, hook, kit_version
+from . import KIT_ROOT, board, doctor, guard, guides, hook, kit_version, latest
 from .config import Config, ConfigError, load
 
 
@@ -20,13 +20,33 @@ def _config() -> Config:
 
 
 def _doctor(args: argparse.Namespace) -> int:
-    findings = doctor.check(_config())
-    for finding in findings:
+    findings = doctor.check(_config(), latest=latest.latest_release())
+    if args.json:
+        print(json.dumps([finding.as_dict() for finding in findings], indent=2))
+    for finding in [] if args.json else findings:
         print(f"{finding.level}: {finding.message}")
-    if not findings:
+        for detail in finding.details:
+            print(f"  - {detail}")
+    if not findings and not args.json:
         print(f"on kit {kit_version()}, nothing to do")
-    blocked = any(finding.level == doctor.BLOCK for finding in findings)
-    return 1 if args.require_current and blocked else 0
+    return 0
+
+
+def _upgraded(args: argparse.Namespace) -> int:
+    found = doctor.upgraded(_config(), args.base)
+    if args.json:
+        print(json.dumps(found, indent=2))
+    elif found is None:
+        print("no upgrade the integration branch lacks")
+    else:
+        print(f"kit {found['from'] or 'none'} -> {found['to']}")
+        for change in found["changes"]:
+            print(f"  - {change}")
+        print("required of this repository: " + ("; ".join(found["required"]) or "none"))
+        print("guides rewritten: " + (", ".join(found["guides"]) or "none"))
+        print("guides deleted: " + (", ".join(found["deleted"]) or "none"))
+        print("templates installed whole: " + (", ".join(found["installed"]) or "none"))
+    return 0
 
 
 def _upgrade(args: argparse.Namespace) -> int:
@@ -43,7 +63,11 @@ def _upgrade(args: argparse.Namespace) -> int:
             "carried onto the new release, still to push at their task's Complete: "
             + ", ".join(carried)
         )
-    templates = [name for name in changed if name in guides.TEMPLATES]
+    if changed.installed:
+        verb = "would install" if args.dry_run else "installed"
+        print(f"{verb} unchanged from the old template: " + ", ".join(changed.installed))
+    done = {name for name, target in guides.INSTALLED_AS.items() if target in changed.installed}
+    templates = [name for name in changed if name in guides.TEMPLATES and name not in done]
     if templates and not args.dry_run:
         paths = " ".join(f"{config.guides}/{name}" for name in templates)
         print(
@@ -121,7 +145,10 @@ def parser() -> argparse.ArgumentParser:
     sub.add_parser("where", help="the installed kit's folder, which holds agents/ and method/")
     sub.add_parser("config", help="this repository's .lifecycle.toml, resolved, as JSON")
     p = sub.add_parser("doctor", help="what this repository needs before its next task")
-    p.add_argument("--require-current", action="store_true", help="exit 1 when a round must wait")
+    p.add_argument("--json", action="store_true", help="the findings as JSON, each with its fix")
+    p = sub.add_parser("upgraded", help="the upgrade the tree holds that has not landed, if any")
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--base", help="measure from this commit (default: the flow's base)")
     p = sub.add_parser("upgrade", help="pin this repository's guides to the installed kit")
     p.add_argument("--adopt", action="store_true", help="take over guides with no recorded source")
     p.add_argument("--dry-run", action="store_true")
@@ -158,6 +185,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
         handler = {
             "doctor": _doctor,
+            "upgraded": _upgraded,
             "upgrade": _upgrade,
             "guides": _guides,
             "board": _board,
