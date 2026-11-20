@@ -11,9 +11,13 @@ def test_a_repo_with_no_record_needs_adopt(repo):
 def test_adopt_copies_the_method_and_pins_it(repo):
     (repo.guides_dir / "design_language.md").write_text("own\n", encoding="utf-8")
     changed = upgrade(repo, adopt=True)
-    assert changed == ["agents_template.md", "task_review.md"]
+    assert changed == ["agents_template.md", "pr_template.md", "task_review.md"]
     lock = read_lock(repo.root)
-    assert lock.kit == "1.2.0" and set(lock.guides) == {"agents_template.md", "task_review.md"}
+    assert lock.kit == "1.2.0" and set(lock.guides) == {
+        "agents_template.md",
+        "pr_template.md",
+        "task_review.md",
+    }
     assert (repo.guides_dir / "design_language.md").read_text(encoding="utf-8") == "own\n"
 
 
@@ -32,7 +36,11 @@ def test_a_file_the_kit_dropped_leaves_the_copy(repo, monkeypatch):
 
 
 def test_dry_run_writes_nothing(repo):
-    assert upgrade(repo, adopt=True, dry_run=True) == ["agents_template.md", "task_review.md"]
+    assert upgrade(repo, adopt=True, dry_run=True) == [
+        "agents_template.md",
+        "pr_template.md",
+        "task_review.md",
+    ]
     assert read_lock(repo.root) is None
     assert not (repo.guides_dir / "task_review.md").exists()
 
@@ -67,3 +75,43 @@ def test_a_new_kit_file_never_overwrites_a_guide_of_the_repository(repo, monkeyp
     with pytest.raises(GuidesError, match=r"design_language.md"):
         upgrade(repo)
     assert (repo.guides_dir / "design_language.md").read_text(encoding="utf-8") == "ours\n"
+
+
+def test_a_template_installed_word_for_word_takes_the_new_text(repo, monkeypatch):
+    (guides.METHOD / "pr_template.md").write_text("## Summary\n", encoding="utf-8")
+    upgrade(repo, adopt=True)
+    installed = repo.root / ".github" / "pull_request_template.md"
+    installed.parent.mkdir(parents=True)
+    installed.write_text("## Summary\n", encoding="utf-8")
+    (guides.METHOD / "pr_template.md").write_text(
+        "## Summary\n\n## Verification\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(guides, "kit_version", lambda: "1.3.0")
+    changes = upgrade(repo)
+    assert changes.installed == [".github/pull_request_template.md"]
+    assert installed.read_text(encoding="utf-8") == "## Summary\n\n## Verification\n"
+
+
+def test_an_adapted_template_is_left_for_the_port(repo, monkeypatch):
+    (guides.METHOD / "pr_template.md").write_text("## Summary\n", encoding="utf-8")
+    upgrade(repo, adopt=True)
+    installed = repo.root / ".github" / "pull_request_template.md"
+    installed.parent.mkdir(parents=True)
+    installed.write_text("## Summary\n\nOurs.\n", encoding="utf-8")
+    (guides.METHOD / "pr_template.md").write_text(
+        "## Summary\n\n## Verification\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(guides, "kit_version", lambda: "1.3.0")
+    assert upgrade(repo).installed == []
+    assert installed.read_text(encoding="utf-8") == "## Summary\n\nOurs.\n"
+
+
+def test_a_dry_run_leaves_installed_templates_alone(repo, monkeypatch):
+    upgrade(repo, adopt=True)
+    installed = repo.root / ".github" / "pull_request_template.md"
+    installed.parent.mkdir(parents=True)
+    installed.write_text("a\nb\nc\nd\n", encoding="utf-8")
+    (guides.METHOD / "pr_template.md").write_text("a\nb\nc\nD\n", encoding="utf-8")
+    monkeypatch.setattr(guides, "kit_version", lambda: "1.3.0")
+    assert upgrade(repo, dry_run=True).installed == [".github/pull_request_template.md"]
+    assert installed.read_text(encoding="utf-8") == "a\nb\nc\nd\n"

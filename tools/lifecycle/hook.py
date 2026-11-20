@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from . import doctor, readonly
+from . import doctor, latest, readonly
 from .config import ConfigError, load
 
 # The plugin-scoped name Claude Code's docs give a plugin subagent's events; a live
@@ -69,8 +69,11 @@ def session_start(event: dict) -> str:
         return f"lifecycle kit: {error}"
     if config is None:
         return ""
-    findings = doctor.check(config)
+    findings = doctor.check(config, latest=latest.latest_release())
     if not findings:
         return ""
-    lines = [f"- {finding.message}" for finding in findings]
+    lines = []
+    for finding in findings:
+        lines.append(f"- {finding.message}")
+        lines.extend(f"  - {detail}" for detail in finding.details)
     return "lifecycle kit, before the next task:\n" + "\n".join(lines)

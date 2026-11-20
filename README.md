@@ -21,7 +21,7 @@ Three files hold a repository's side of it:
 - `.lifecycle.lock` — written by `lifecycle upgrade` (the kit release the repository is on and the digest of each guide it copied) and by `lifecycle guides push` (each guide pushed since, with the release that took it, which the next upgrade waits for).
 - the guides folder (`docs/guides/` by default) — a copy of `method/` at that release, so the repository reads on its own, on GitHub and for any agent.
 
-`lifecycle doctor` runs at every session start through the plugin. A repository behind the installed kit by a minor or major release waits for `lifecycle upgrade` before a review round, since the skills were written for the newer method; a patch release only changed guide wording.
+`lifecycle doctor` runs at every session start through the plugin and names each finding's fix, with what the kit changed since the repository's release. A repository behind the installed kit upgrades as a tracked task's first step, on any release; an untracked task meets a minor or major one at its work round. The upgrade replaces the issue and PR templates a repository kept word for word, and the agent ports the rest and makes each change a `Repositories:` line of the kit's CHANGELOG requires; it lands as its own commit ahead of the task's where it can. Once a day, `doctor` also asks the kit's remote for its newest release, and says so when this machine's kit is older.
 
 A guide edit starts in the repository whose task found it, is reviewed in that task's diff, and goes to the kit at the task's *Complete* with `lifecycle guides push`, which replays it onto the kit's latest and releases it as a patch.
 

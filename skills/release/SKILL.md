@@ -6,7 +6,7 @@ argument-hint: "[version, when the maintainer names one]"
 
 Version: $ARGUMENTS — empty means you pick it (where nothing substitutes `$ARGUMENTS`, the version the maintainer named, if any).
 
-It starts only when the maintainer asks for a release in their own message; that request covers Phase 1, and nothing past it. The checklist is the repository's own: AGENTS.md § Release workflow names it (usually `CONTRIBUTING.md` § Releasing). Read its phases and numbered steps before starting, and run the steps as written there, commands included. This skill is the order and the gates, not a second copy of the steps. `lifecycle config` → `branches` names the integration and protected branches.
+It starts only when the maintainer asks for a release in their own message; that request covers Phase 1, and nothing past it. The checklist is the repository's own: the release checklist AGENTS.md names, usually a section of `CONTRIBUTING.md` whose heading starts with "Releasing". Read its phases and numbered steps before starting, and run the steps as written there, commands included. This skill is the order and the gates, not a second copy of the steps. `lifecycle config` → `branches` names the integration and protected branches.
 
 ## Phase 1 — Prepare
 

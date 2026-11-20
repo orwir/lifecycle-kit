@@ -9,7 +9,8 @@ Task: $ARGUMENTS — the issue number given with the invocation (where nothing s
 ## 0. Before anything
 
 - `lifecycle` is the kit's command: on PATH where the kit's Claude plugin is on, otherwise `bin/lifecycle` in a checkout of the kit.
-- `lifecycle doctor --require-current`. Any non-zero exit stops here: tell the maintainer what it printed (usually `lifecycle upgrade`, as its own commit) and do nothing else.
+- When the settings name a board (`lifecycle config`), `lifecycle board <N> "In Progress"` first.
+- `lifecycle doctor --json`. A finding whose fix is `upgrade`: run the upgrade skill now, before the ticket; the Clarify brief carries its *Upgrade* line. A `block` whose fix is `adopt` or `update-kit`, or any failure of the command: stop and tell the maintainer what it printed. Anything else: carry on.
 - `lifecycle config` prints the repository's settings. Below, `<guides>` is its `guides.path`.
 - Read `<guides>/task_review.md`: the plan packet, the plan return, the Clarify brief and the developer rules are there, and the plan's sections are the repository's issue templates (`.github/ISSUE_TEMPLATE/`). Read `AGENTS.md` § Task workflow too: a repository may add steps to this round (a drawing, an evidence source), and you do them where it says.
 
@@ -17,7 +18,7 @@ You are the developer and you run the whole round here, before any code. The mai
 
 ## 1. Write the plan into the issue — gather, don't recall
 
-1. **The ticket.** When the settings name a board, `lifecycle board <N> "In Progress"` first. Then `gh issue view <N>` and the code the change touches: every path, caller and entry point it meets. A *Plan* already in the issue is where this session continues: `proposed` is checked against the code and goes on to its round; `accepted` means *Clarify* is over, and the work continues from its ticked boxes and the tree.
+1. **The ticket.** `gh issue view <N>` and the code the change touches: every path, caller and entry point it meets. A *Plan* already in the issue is where this session continues: `proposed` is checked against the code and goes on to its round; `accepted` means *Clarify* is over, and the work continues from its ticked boxes and the tree.
 2. **The root cause.** A bug's root cause is a hypothesis until real data confirms it — the evidence sources AGENTS.md names (logs, the database, a live probe). Before the plan is written, the issue's *Root cause* says what holds, with the evidence as coordinates.
 3. **The plan.** The template's `## Plan` with `**Status:** proposed`, as the body's last section, where the template puts it. A WHEN … THEN line per scenario, failure paths included; *Seams*; a box per path; the D-rows; *Verification*; *Departures* `none`. An issue in an older shape gets its plan now: its top-level technical details, options and verification move into it, re-checked against the code.
    - Every D-row names the layer it touches — one AGENTS.md names, such as the runtime, a prompt or an eval — or none, for a docs or process choice.
