@@ -53,15 +53,28 @@ def test_no_cache_and_no_remote_is_silence():
 def test_a_hung_remote_is_cut_off_and_waits_a_day(tmp_path, monkeypatch):
     helpers = tmp_path / "helpers"
     helpers.mkdir()
+    beat = tmp_path / "beat"
+    # A helper that never answers: it appends a line to `beat` five times a second, for
+    # about twenty seconds, so a helper left running shows.
     hang = helpers / "git-remote-hang"
-    hang.write_text("#!/bin/sh\nsleep 20\n", encoding="utf-8", newline="\n")
+    hang.write_text(
+        "#!/bin/sh\ni=0\nwhile [ $i -lt 100 ]; do\n"
+        f"  echo >> '{beat.as_posix()}'\n  sleep 0.2\n  i=$((i + 1))\ndone\n",
+        encoding="utf-8",
+        newline="\n",
+    )
     hang.chmod(0o755)
     monkeypatch.setenv("PATH", f"{helpers}{os.pathsep}{os.environ['PATH']}")
     monkeypatch.setenv("LIFECYCLE_KIT_REMOTE", "hang::nowhere")
-    monkeypatch.setattr(latest, "TIMEOUT_SECONDS", 1)
+    monkeypatch.setattr(latest, "TIMEOUT_SECONDS", 2)
     started = time.monotonic()
     assert latest.latest_release() is None
     assert time.monotonic() - started < 8
+    assert beat.exists(), "the helper never started, so nothing was tested"
+    time.sleep(0.3)
+    left = beat.stat().st_size
+    time.sleep(1)
+    assert beat.stat().st_size == left, "the helper outlived the cut-off"
     monkeypatch.setattr(latest, "_ask", boom)
     assert latest.latest_release() is None
 
