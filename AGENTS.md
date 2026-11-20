@@ -21,6 +21,29 @@ You are working in `orwir/lifecycle-kit`: the maintainer's project lifecycle —
 - **Repository specifics never enter the kit.** A skill reads them from the repository: structured values from `.lifecycle.toml`, everything else from its `AGENTS.md`.
 - Every new behaviour gets a test in `tests/` that fails without it.
 
+## Task workflow
+
+A kit issue runs the two review rounds every repository on the kit runs (`method/task_review.md`), by the kit's own skills: clarify writes the plan into the issue and runs the plan round, review runs the work round, and complete lands the task on the maintainer's go-ahead (Claude: `/lifecycle:clarify <N>`, `/lifecycle:review <N>`, `/lifecycle:complete <N>`). They read this repository's settings from `.lifecycle.toml`, and the method from `method/` itself.
+
+- **The plan** takes the shape of `method/issue_template_task.md`'s *Plan*: the kit keeps no `.github/` copy of it.
+- **Labels:** an issue split off or deferred takes `enhancement`, `bug` or `documentation`. There is no board.
+- **The release** rides the task's diff: the version in `.claude-plugin/plugin.json` and its CHANGELOG section (§ Releases). At *Complete* it replaces the plain push to `main`: rebase onto `origin/main`, tag `HEAD` `v<version>`, then `git push --atomic origin HEAD:main v<version>`, since a project's guide push refuses while `main` holds a commit no release's tag carries. A push refused because `main` moved: `git tag -d v<version>`, rebase, tag again, push again.
+- **The installed plugin runs the rounds**, not this checkout: `lifecycle doctor` notes when it is older than the release on `main`, and how to update it.
+
+## Branching and commits
+
+Work lands on `main`, from a worktree branch or directly; no branch is protected. One Conventional Commit per task (`feat:`, `fix:`, `docs:`, `refactor:`); the complete skill says what its body holds. A guide push from a project commits under its own one-line message.
+
+## Change → docs
+
+| Change | Also update |
+|---|---|
+| a `lifecycle` subcommand, its output, or a skill's steps | `README.md` where it describes them |
+| a `.lifecycle.toml` key | `README.md` § Settings |
+| anything a repository picks up | a line under the release in `CHANGELOG.md` |
+| a change every repository must make beyond its guides and templates | a `Repositories:` line naming the file it changes |
+| a guide added, renamed or removed | its line in `method/README.md` |
+
 ## Releases
 
 The version's one home is `.claude-plugin/plugin.json`, and every change that should reach repositories is a release, tagged `v<version>`:

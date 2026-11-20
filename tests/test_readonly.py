@@ -1,5 +1,12 @@
 import pytest
-from lifecycle.readonly import HEREDOC, SUBSTITUTION, UNKNOWN, WRITE_REDIRECT, check
+from lifecycle.readonly import (
+    HEREDOC,
+    OPTION_AFTER_ALLOWED,
+    SUBSTITUTION,
+    UNKNOWN,
+    WRITE_REDIRECT,
+    check,
+)
 
 ALLOW = ("pre-commit run ruff-all --hook-stage pre-push --all-files",)
 
@@ -88,6 +95,8 @@ def test_reads_pass(command):
         ("cat <<EOF\nx\nEOF", HEREDOC),
         ("git diff; rm x", UNKNOWN),
         ("git log && touch x", UNKNOWN),
+        ("git diff \\\n--output=patch.txt", UNKNOWN),
+        ("git diff \\\r\n--output=patch.txt", UNKNOWN),
         ("pre-commit run ruff-all --hook-stage pre-push --all-files && rm x", UNKNOWN),
     ],
 )
@@ -97,3 +106,36 @@ def test_writes_and_unknowns_are_refused(command, reason):
 
 def test_an_unclosed_quote_is_refused():
     assert "quote" in check("grep 'x")
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "ruff check tools tests --fix",
+        "ruff check tools tests --output-file=report.txt",
+        "ruff check tools tests extra '--fix'",
+        "ruff check tools tests -o report.txt",
+        "ruff check tools tests \\--fix",
+        "ruff check tools tests \\\n--fix",
+        "ruff check tools tests \\  --fix",
+    ],
+)
+def test_an_option_appended_to_an_allow_entry_is_refused(command):
+    assert check(command, ("ruff check tools tests",)) == OPTION_AFTER_ALLOWED
+
+
+def test_a_path_appended_to_an_allow_entry_passes():
+    assert check("ruff check tools tests bin/", ("ruff check tools tests",)) is None
+
+
+def test_a_longer_entry_is_read_past_a_shorter_one():
+    allow = ("ruff format", "ruff format --check tools tests")
+    assert check("ruff format --check tools tests", allow) is None
+
+
+def test_an_allow_entry_never_refuses_a_read_the_guard_knows():
+    assert check("git diff --check --cached", ("git diff --check",)) is None
+
+
+def test_a_continued_line_reads_as_one_command():
+    assert check("git log \\\n--oneline -5") is None

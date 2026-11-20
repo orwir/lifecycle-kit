@@ -66,12 +66,15 @@ def _upgrade(args: argparse.Namespace) -> int:
     if changed.installed:
         verb = "would install" if args.dry_run else "installed"
         print(f"{verb} unchanged from the old template: " + ", ".join(changed.installed))
-    done = {name for name, target in guides.INSTALLED_AS.items() if target in changed.installed}
-    templates = [name for name in changed if name in guides.TEMPLATES and name not in done]
+    mapping = config.templates
+    templates = [
+        name for name in changed if name in mapping and mapping[name] not in changed.installed
+    ]
     if templates and not args.dry_run:
+        ports = ", ".join(f"{name} -> {mapping[name]}" for name in templates)
         paths = " ".join(f"{config.guides}/{name}" for name in templates)
         print(
-            "templates changed: port what applies into this repository's own files "
+            f"templates changed: port what applies into this repository's own files: {ports} "
             f"(git diff -- {paths}; a template new to this repository is read whole)"
         )
     return 0

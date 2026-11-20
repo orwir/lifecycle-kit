@@ -80,9 +80,10 @@ lifecycle upgraded          # an upgrade in the tree the integration branch lack
 `upgrade` writes `.lifecycle.lock`: the release and each copied file's digest. A
 copied guide holding an edit not yet in the kit keeps it: the upgrade replays the edit
 onto the new release from the release the copy came from, stops on a conflict, and
-the edit still goes to the kit at its task's *Complete*. It replaces each issue and
-PR template the repository kept word for word, and names the templates left to port
-into its own `AGENTS.md`, `CONTRIBUTING.md` and adapted `.github/` templates. A
+the edit still goes to the kit at its task's *Complete*. It replaces each file a
+template ports into that the repository kept word for word, and names the templates
+left to port, each with its file: a project's `AGENTS.md`, `CONTRIBUTING.md` and
+`.github/` templates, unless `[templates]` in `.lifecycle.toml` names others. A
 release that needs any other change in each repository says so in a `Repositories:`
 line of the kit's changelog; `lifecycle upgraded` lists them, and whoever runs the
 upgrade makes each one. A repository behind the installed kit
@@ -101,8 +102,9 @@ When pointed at this method and asked to bootstrap or prepare the gauntlet:
    one up where the user chooses, private by default, with the layout in
    `idea_gauntlet.md` § *The ideas home*: its root `AGENTS.md` (the template
    there), `archived.md`, `graduated.md`, `active/`, `archive/`, a `.lifecycle.toml`
-   naming `main` as its integration branch and no protected branch, and this method
-   copied into `docs/guides/` (*Use in a project*).
+   naming `main` as its integration branch, no protected branch and
+   `"idea_gauntlet.md" = "AGENTS.md"` under `[templates]`, and this method copied into
+   `docs/guides/` (*Use in a project*).
 2. Check `archived.md`: if this idea, or a close variant, was killed before, show
    the line — re-opening needs new facts against the logged reason.
 3. Create `active/<idea>/IDEA.md` from the fenced Template body in

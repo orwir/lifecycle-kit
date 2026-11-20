@@ -52,6 +52,10 @@ UNKNOWN = (
     "readers (cat, head, grep, ls, find without -exec) and the repository's own checks in "
     ".lifecycle.toml [review] allow. Read the same thing another way; a refusal is not a finding"
 )
+OPTION_AFTER_ALLOWED = (
+    "an option after a check .lifecycle.toml [review] allow lists: each entry runs as listed, "
+    "with paths after it, never with an added option"
+)
 
 
 def _scan(command: str) -> tuple[list[str], str | None]:
@@ -66,8 +70,10 @@ def _scan(command: str) -> tuple[list[str], str | None]:
         if quote == "'":
             quote = None if char == "'" else quote
         elif char == "\\":
-            current += command[i : i + 2]
-            i += 2
+            # A backslash-newline is a line continuation: the shell drops both characters.
+            joined = next((e for e in ("\n", "\r\n") if command.startswith(e, i + 1)), None)
+            current += "" if joined else command[i : i + 2]
+            i += 1 + len(joined) if joined else 2
             continue
         elif char in "$`":
             return [], SUBSTITUTION
@@ -168,9 +174,27 @@ def _reader(name: str, args: list[str]) -> bool:
     return name in READERS
 
 
-def _allowed_extra(segment: str, allow: Sequence[str]) -> bool:
-    normal = " ".join(segment.split())
-    return any(normal == entry or normal.startswith(entry + " ") for entry in allow)
+def _allowed_extra(segment: str, allow: Sequence[str]) -> bool | str:
+    """True for an allow entry word for word, then positional arguments only; the reason
+    when only an option after an entry stands in the way, since an option (``--fix``,
+    ``--output-file``) can make a read-only check write. Entry and command are compared
+    as the words the shell will pass, unquoted and unescaped."""
+    try:
+        words = shlex.split(segment, posix=True)
+    except ValueError:
+        return False
+    refused = False
+    for entry in allow:
+        try:
+            listed = shlex.split(entry, posix=True)
+        except ValueError:
+            continue
+        if not listed or words[: len(listed)] != listed:
+            continue
+        if not any(word.startswith("-") for word in words[len(listed) :]):
+            return True
+        refused = True
+    return OPTION_AFTER_ALLOWED if refused else False
 
 
 def check(command: str, allow: Sequence[str] = ()) -> str | None:
@@ -179,7 +203,8 @@ def check(command: str, allow: Sequence[str] = ()) -> str | None:
     if reason:
         return reason
     for segment in segments:
-        if _allowed_extra(segment, allow):
+        allowed = _allowed_extra(segment, allow)
+        if allowed is True:
             continue
         try:
             words, reason = _words(segment)
@@ -198,5 +223,5 @@ def check(command: str, allow: Sequence[str] = ()) -> str | None:
             else _reader(name, words[1:])
         )
         if not ok:
-            return UNKNOWN
+            return allowed or UNKNOWN
     return None

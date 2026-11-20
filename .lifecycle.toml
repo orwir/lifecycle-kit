@@ -1,0 +1,28 @@
+# The kit's own settings: its tasks run the rounds every repository on the kit runs.
+# Its method/ is the canonical method, so it has no lock and never upgrades.
+
+[branches]
+integration = "main"
+protected = ""
+
+[gate]
+commands = [".githooks/pre-push"]
+# {root} is a worktree of the base, {tests} the new tests as pytest node ids under it.
+targeted = "python -m pytest -q -p no:cacheprovider --rootdir {root} {tests}"
+
+[guides]
+path = "method"
+
+[review]
+allow = [
+  "ruff check tools tests",
+  "ruff format --check tools tests",
+  "claude plugin validate . --strict",
+]
+
+[review.lenses.model-facing]
+paths = ["skills/", "agents/"]
+read = [
+  "AGENTS.md § Rules — skills keep to the portable Agent Skills subset; mechanics live in the tools, words in the skills",
+  "method/task_review.md — a rule a skill restates keeps its one home in the guide",
+]

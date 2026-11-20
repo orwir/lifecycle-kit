@@ -109,7 +109,8 @@ ideas/
 ├── archived.md      one line per killed idea -> its folder in archive/
 ├── graduated.md     one line per graduated idea -> its repo, status and next check
 ├── docs/guides/     the kit's method, shared by every idea
-├── .lifecycle.toml  the kit's settings: integration branch `main`, no protected branch
+├── .lifecycle.toml  the kit's settings: integration branch `main`, no protected branch,
+│                    and this guide as the template AGENTS.md follows
 ├── .lifecycle.lock  the kit release docs/guides/ is pinned to
 ├── active/          every idea still in the gauntlet, parked ones included
 │   └── <idea>/
@@ -118,7 +119,10 @@ ideas/
 ```
 
 Where the home's agent has a plugin system, the home turns the kit's plugin on as a
-project does (the kit's README).
+project does (the kit's README). Its `.lifecycle.toml` names its one template under
+`[templates]`, `"idea_gauntlet.md" = "AGENTS.md"`, and none of a project's. An upgrade
+then names this guide for the port whenever it changes, and what is ported is the
+fenced template below, nothing else of the guide.
 
 - **Capture:** a new folder in `active/`, with `IDEA.md` from the template below.
 - **Park:** it stays in `active/`; its `IDEA.md` says until when.
@@ -168,9 +172,7 @@ At the start of a session, run `lifecycle doctor --json` (the lifecycle kit's
 command: on the agent's PATH where the kit's plugin is on, otherwise `bin/lifecycle`
 in a checkout of the kit). A finding whose fix is `upgrade`: run the kit's upgrade
 skill first, as its own commit. A `block` whose fix is `adopt` or `update-kit`: tell
-the user what it printed. This file follows the template in `idea_gauntlet.md` § *The
-ideas home*, not `agents_template.md` or `contributing_template.md`: an upgrade that
-changes that template is what gets ported here.
+the user what it printed.
 
 Then list the `graduated.md` rows whose next check has passed. For each, show the
 bet from its project's `docs/product/vision.md` where that can be read, and its

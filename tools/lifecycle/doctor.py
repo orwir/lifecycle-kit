@@ -16,13 +16,12 @@ import re
 import subprocess
 from dataclasses import dataclass, field
 
-from . import KIT_ROOT, kit_version
+from . import KIT_ROOT, is_kit, kit_version
 from . import guides as _guides
 from . import release as _release
 from .config import Config
 from .guides import (
     GIST_REVISION,
-    INSTALLED_AS,
     LOCK,
     Lock,
     local_edits,
@@ -88,6 +87,12 @@ def changes_since(pinned: str, installed: str) -> list[str]:
     return entries
 
 
+def _required(installed: str) -> tuple[str, ...]:
+    """Every ``Repositories:`` line up to ``installed``: what a first move onto the kit owes,
+    which the upgrade skill reads before the upgrade, since some change the settings it reads."""
+    return tuple(e for e in changes_since("0.0.0", installed) if e.startswith(REPOSITORIES))
+
+
 def _shown(entries: list[str]) -> tuple[str, ...]:
     """The entries a session sees: every ``Repositories:`` line, then the rest up to the cap."""
     required = [e for e in entries if e.startswith(REPOSITORIES)]
@@ -145,19 +150,53 @@ def check(config: Config, installed: str | None = None, latest: str | None = Non
     return _newer_out(installed, latest) + findings
 
 
+def _kit(config: Config, installed: str) -> list[Finding]:
+    """The kit's own repository pins no copy of the method, so it needs no lock. Its rounds
+    run on the installed plugin, though: older than the release on the integration branch,
+    they run skills that release replaced. The release is read at the flow's base, so a
+    task's own bump in the tree is not mistaken for it."""
+    released = _at(config, flow_base(config), ".claude-plugin/plugin.json")
+    try:
+        version = str(json.loads(released)["version"]) if released else None
+        behind = bool(version) and _release(installed) < _release(version)
+    except (ValueError, KeyError, TypeError):
+        return []
+    if not behind:
+        return []
+    return [
+        Finding(
+            NOTE,
+            f"the kit's {config.integration} is at {version} and the installed kit is "
+            f"{installed}: update it before the next round ({UPDATE_COMMAND})",
+            UPDATE_KIT,
+        )
+    ]
+
+
 def _repository(config: Config, installed: str) -> list[Finding]:
+    if is_kit(config.root):
+        return _kit(config, installed)
     lock = read_lock(config.root)
     if lock is None:
         if (config.guides_dir / GIST_REVISION).is_file():
             return [
                 Finding(
                     BLOCK,
-                    "the guides still mirror the gist: moving onto the kit is its own task "
-                    "(`lifecycle upgrade`, then port the templates)",
+                    "the guides still mirror the gist: moving onto the kit is its own task, by "
+                    f"{UPGRADE_SKILL} (the `.lifecycle.toml` changes below first, then "
+                    "`lifecycle upgrade`, then the templates)",
                     ADOPT,
+                    _required(installed),
                 )
             ]
-        return [Finding(BLOCK, "not on the kit yet: see `lifecycle upgrade --help`", ADOPT)]
+        return [
+            Finding(
+                BLOCK,
+                "not on the kit yet: see `lifecycle upgrade --help`",
+                ADOPT,
+                _required(installed),
+            )
+        ]
 
     findings = []
     current = _release(installed)
@@ -249,7 +288,7 @@ def upgraded(config: Config, base: str | None = None) -> dict | None:
     deleted = sorted(set(before.get("guides", {})) - set(lock.guides)) if before else []
     installed = [
         target
-        for name, target in INSTALLED_AS.items()
+        for name, target in config.templates.items()
         if (config.root / target).is_file()
         and (_guides.METHOD / name).is_file()
         and text(config.root / target) == text(_guides.METHOD / name)
@@ -257,11 +296,13 @@ def upgraded(config: Config, base: str | None = None) -> dict | None:
     ]
     previous = before.get("kit") if before else None
     changes = changes_since(previous, lock.kit) if previous else []
+    # A first move has no release to measure from: every line the kit has required applies.
+    owed = changes if previous else changes_since("0.0.0", lock.kit)
     return {
         "from": previous,
         "to": lock.kit,
         "changes": changes,
-        "required": [c.removeprefix(REPOSITORIES) for c in changes if c.startswith(REPOSITORIES)],
+        "required": [c.removeprefix(REPOSITORIES) for c in owed if c.startswith(REPOSITORIES)],
         "guides": rewritten,
         "deleted": deleted,
         "installed": installed,

@@ -30,3 +30,26 @@ def repo(tmp_path, monkeypatch):
     (root / "docs" / "guides").mkdir(parents=True)
     (root / ".lifecycle.toml").write_text('[branches]\nprotected = "master"\n', encoding="utf-8")
     return load(root)
+
+
+@pytest.fixture
+def kit_checkout(tmp_path):
+    """A checkout of the kit itself: the kit's manifest at its root, its canonical method/."""
+    root = tmp_path / "kit-checkout"
+    (root / "method").mkdir(parents=True)
+    (root / "method" / "task_review.md").write_text("# Task review, canonical\n", encoding="utf-8")
+    (root / ".claude-plugin").mkdir()
+    (root / ".claude-plugin" / "plugin.json").write_text(
+        '{"name": "lifecycle", "version": "9.9.9"}\n', encoding="utf-8"
+    )
+    (root / ".lifecycle.toml").write_text(
+        '[branches]\nintegration = "main"\nprotected = ""\n\n[guides]\npath = "method"\n',
+        encoding="utf-8",
+    )
+    return load(root)
+
+
+def name_templates(config, table):
+    """``config``'s repository with ``[templates]`` as ``table`` (TOML lines), reloaded."""
+    (config.root / ".lifecycle.toml").write_text(f"[templates]\n{table}", encoding="utf-8")
+    return load(config.root)

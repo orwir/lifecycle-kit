@@ -17,7 +17,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import METHOD, kit_remote, kit_version, release
+from . import METHOD, is_kit, kit_remote, kit_version, release
 from .config import Config
 
 LOCK = ".lifecycle.lock"
@@ -27,22 +27,10 @@ GIST_REVISION = ".gist-revision"
 #: The gist commit the kit's method was imported from; a mirror past it holds gist pushes
 #: the kit never took, which a move to the kit would silently revert.
 GIST_IMPORTED = "f3b9b7ead40849e7375ff3b26de4a3506b15065b"
-TEMPLATES = (
-    "agents_template.md",
-    "contributing_template.md",
-    "issue_template_bug.md",
-    "issue_template_task.md",
-    "pr_template.md",
+CANONICAL = (
+    "this is the kit's own repository: its method/ is the canonical method, changed by the "
+    "kit's own commits"
 )
-
-
-#: Where a project installs each template the method ships whole; a project that adapts
-#: one (AGENTS.md, CONTRIBUTING.md) has no entry, and its port stays a judgement.
-INSTALLED_AS = {
-    "issue_template_bug.md": ".github/ISSUE_TEMPLATE/bug.md",
-    "issue_template_task.md": ".github/ISSUE_TEMPLATE/task.md",
-    "pr_template.md": ".github/pull_request_template.md",
-}
 
 
 class GuidesError(Exception):
@@ -50,7 +38,8 @@ class GuidesError(Exception):
 
 
 class Changes(list):
-    """The guide files an upgrade changed, and the templates it installed whole."""
+    """The guide files an upgrade changed, and the files it replaced with a template's new
+    text, each having been the template's old text word for word."""
 
     def __init__(self, names=(), installed=()):
         super().__init__(names)
@@ -205,10 +194,21 @@ def _check_upgradable(config: Config, lock: Lock | None, adopt: bool) -> list[st
     return []
 
 
+def _check_templates(config: Config) -> None:
+    """A ``[templates]`` the repository wrote names only templates the method has; a default
+    the method lacks is skipped, so a kit that drops one still deletes its copy."""
+    missing = [name for name in config.templates if not (METHOD / name).is_file()]
+    if config.templates_named and missing:
+        raise GuidesError(
+            f"[templates] in .lifecycle.toml names {', '.join(missing)}, which kit "
+            f"{kit_version()}'s method does not have: fix the name, or take the line out."
+        )
+
+
 def _verbatim_installs(config: Config, before: dict[str, str]) -> list[str]:
-    """The installed templates still word for word as the method shipped them before."""
+    """The files the templates port into that still hold a template's old text word for word."""
     installs = []
-    for name, target in INSTALLED_AS.items():
+    for name, target in config.templates.items():
         old, path = before.get(name), config.root / target
         present = old is not None and (METHOD / name).is_file() and path.is_file()
         if present and text(path) == old and old != text(METHOD / name):
@@ -219,9 +219,12 @@ def _verbatim_installs(config: Config, before: dict[str, str]) -> list[str]:
 def upgrade(config: Config, adopt: bool = False, dry_run: bool = False) -> Changes:
     """Pin the repository's guides to the installed kit.
 
-    Returns the guide files that changed; ``installed`` names each template the
-    repository had installed word for word, which the upgrade replaces with the new text.
+    Returns the guide files that changed; ``installed`` names each file a template ports
+    into that held its old text word for word, which the upgrade replaces with the new text.
     """
+    if is_kit(config.root):
+        raise GuidesError(CANONICAL + ": nothing upgrades it")
+    _check_templates(config)
     lock = read_lock(config.root)
     carry = _check_upgradable(config, lock, adopt)
     if carry is None:
@@ -230,7 +233,7 @@ def upgrade(config: Config, adopt: bool = False, dry_run: bool = False) -> Chang
     # installed copy may hold the same edit, which the kit's text would undo.
     before = {
         name: text(config.guides_dir / name)
-        for name in INSTALLED_AS
+        for name in config.templates
         if (config.guides_dir / name).is_file() and name not in carry
     }
     installs = _verbatim_installs(config, before)
@@ -253,7 +256,7 @@ def upgrade(config: Config, adopt: bool = False, dry_run: bool = False) -> Chang
         if not dry_run:
             (config.guides_dir / name).unlink(missing_ok=True)
     if not dry_run:
-        for target, name in ((t, n) for n, t in INSTALLED_AS.items() if t in installs):
+        for target, name in ((t, n) for n, t in config.templates.items() if t in installs):
             (config.root / target).write_text(text(METHOD / name), encoding="utf-8", newline="\n")
         write_lock(config.root, new)
         (config.guides_dir / GIST_REVISION).unlink(missing_ok=True)
@@ -341,6 +344,8 @@ def push(config: Config, message: str) -> tuple[list[str], str]:
     changes included, and the lock records the release, which an upgrade waits for.
     Returns the pushed files and the new release.
     """
+    if is_kit(config.root):
+        raise GuidesError(CANONICAL + ", not by a push")
     lock = read_lock(config.root)
     if lock is None:
         raise GuidesError("not on the kit yet: nothing to push")
