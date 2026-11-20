@@ -100,7 +100,8 @@ When pointed at this method and asked to bootstrap or prepare the gauntlet:
    user's global agent instructions may name it). If there's none, offer to set
    one up where the user chooses, private by default, with the layout in
    `idea_gauntlet.md` § *The ideas home*: its root `AGENTS.md` (the template
-   there), `archived.md`, `graduated.md`, `active/`, `archive/`, and this method
+   there), `archived.md`, `graduated.md`, `active/`, `archive/`, a `.lifecycle.toml`
+   naming `main` as its integration branch and no protected branch, and this method
    copied into `docs/guides/` (*Use in a project*).
 2. Check `archived.md`: if this idea, or a close variant, was killed before, show
    the line — re-opening needs new facts against the logged reason.
