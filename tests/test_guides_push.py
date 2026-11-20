@@ -229,3 +229,8 @@ def test_a_template_edit_the_task_carries_is_not_overwritten(repo, kit, monkeypa
     assert changes.installed == []
     assert read(installed) == "A\nb\nc\nd\n"
     assert read(repo.guides_dir / "pr_template.md") == "A\nb\nc\nD\n"
+
+
+def test_the_kits_own_repository_pushes_nothing(kit_checkout):
+    with pytest.raises(GuidesError, match="canonical"):
+        push(kit_checkout, "a guide edit")

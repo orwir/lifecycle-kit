@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lifecycle doctor:*)",
+      "Bash(lifecycle config:*)",
+      "Bash(lifecycle guides check:*)",
+      "Bash(lifecycle upgraded:*)"
+    ]
+  },
+  "extraKnownMarketplaces": {
+    "lifecycle-kit": {
+      "source": {
+        "source": "github",
+        "repo": "orwir/lifecycle-kit"
+      },
+      "autoUpdate": true
+    }
+  },
+  "enabledPlugins": {
+    "lifecycle@lifecycle-kit": true
+  }
+}

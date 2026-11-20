@@ -21,7 +21,7 @@ Three files hold a repository's side of it:
 - `.lifecycle.lock` — written by `lifecycle upgrade` (the kit release the repository is on and the digest of each guide it copied) and by `lifecycle guides push` (each guide pushed since, with the release that took it, which the next upgrade waits for).
 - the guides folder (`docs/guides/` by default) — a copy of `method/` at that release, so the repository reads on its own, on GitHub and for any agent.
 
-`lifecycle doctor` runs at every session start through the plugin and names each finding's fix, with what the kit changed since the repository's release. A repository behind the installed kit upgrades as a tracked task's first step, on any release; an untracked task meets a minor or major one at its work round. The upgrade replaces the issue and PR templates a repository kept word for word, and the agent ports the rest and makes each change a `Repositories:` line of the kit's CHANGELOG requires; it lands as its own commit ahead of the task's where it can. Once a day, `doctor` also asks the kit's remote for its newest release, and says so when this machine's kit is older.
+`lifecycle doctor` runs at every session start through the plugin and names each finding's fix, with what the kit changed since the repository's release. A repository behind the installed kit upgrades as a tracked task's first step, on any release; an untracked task meets a minor or major one at its work round. The upgrade replaces each file a template ports into that the repository kept word for word (usually the issue and PR templates), and the agent ports the rest and makes each change a `Repositories:` line of the kit's CHANGELOG requires; it lands as its own commit ahead of the task's where it can. Once a day, `doctor` also asks the kit's remote for its newest release, and says so when this machine's kit is older.
 
 A guide edit starts in the repository whose task found it, is reviewed in that task's diff, and goes to the kit at the task's *Complete* with `lifecycle guides push`, which replays it onto the kit's latest and releases it as a patch.
 
@@ -52,7 +52,12 @@ allow = ["dotnet format --verify-no-changes"]   # read-only checks the reviewer 
 [review.lenses.person-facing]
 paths = ["src/App/"]
 read = ["docs/guides/design_language.md — every new screen line reuses its components"]
+
+# [templates]             # an ideas home's; a project omits it for its five (below)
+# "idea_gauntlet.md" = "AGENTS.md"   # the template, and the file it ports into
 ```
+
+Without `[templates]`, a repository follows a project's templates: `agents_template.md` → `AGENTS.md`, `contributing_template.md` → `CONTRIBUTING.md`, and the issue and PR templates → `.github/ISSUE_TEMPLATE/bug.md`, `.github/ISSUE_TEMPLATE/task.md` and `.github/pull_request_template.md`. Naming any lists every template the repository follows: an ideas home follows only the one in `idea_gauntlet.md`, as the commented lines show.
 
 ### Turning it on in Claude Code
 
@@ -78,4 +83,4 @@ Then `.lifecycle.toml`, and `lifecycle upgrade` (`--adopt` for guides with no re
 
 ## Working on the kit
 
-[AGENTS.md](AGENTS.md).
+The kit runs its own task rounds, as every repository on it does: its `.lifecycle.toml` and `.claude/settings.json` turn them on, and `lifecycle doctor` knows the kit's own repository by its manifest, so its `method/`, the canonical method, needs no lock; there it notes instead when the installed plugin, which runs the rounds, is older than the release on `main`. [AGENTS.md](AGENTS.md) says how a kit task runs.

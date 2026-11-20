@@ -1,5 +1,6 @@
 import pytest
-from lifecycle.config import ConfigError, load, parse
+from lifecycle import METHOD
+from lifecycle.config import DEFAULT_TEMPLATES, ConfigError, load, parse
 
 
 def test_defaults_when_the_file_is_empty(tmp_path):
@@ -50,3 +51,45 @@ def test_no_file_is_no_config(tmp_path):
 def test_a_misspelt_lens_fails_loudly(tmp_path):
     with pytest.raises(ConfigError, match="person-facin"):
         parse({"review": {"lenses": {"person-facin": {"paths": ["x/"]}}}}, tmp_path)
+
+
+def test_templates_default_to_a_projects_five(tmp_path):
+    config = parse({}, tmp_path)
+    assert config.templates == DEFAULT_TEMPLATES and not config.templates_named
+    assert config.as_dict()["templates"]["agents_template.md"] == "AGENTS.md"
+
+
+def test_named_templates_replace_the_defaults(tmp_path):
+    (tmp_path / ".lifecycle.toml").write_text(
+        '[templates]\n"idea_gauntlet.md" = "AGENTS.md"\n', encoding="utf-8"
+    )
+    config = load(tmp_path)
+    assert config.templates == {"idea_gauntlet.md": "AGENTS.md"} and config.templates_named
+
+
+def test_an_empty_templates_table_fails_loudly(tmp_path):
+    with pytest.raises(ConfigError, match="omit the table"):
+        parse({"templates": {}}, tmp_path)
+
+
+def test_an_unquoted_template_name_says_to_quote_it(tmp_path):
+    (tmp_path / ".lifecycle.toml").write_text(
+        '[templates]\nidea_gauntlet.md = "AGENTS.md"\n', encoding="utf-8"
+    )
+    with pytest.raises(ConfigError, match="quote each file name"):
+        load(tmp_path)
+
+
+@pytest.mark.parametrize("target", ["", "  ", 3, ["AGENTS.md"]])
+def test_a_template_names_the_file_it_ports_into(tmp_path, target):
+    with pytest.raises(ConfigError, match="the file it ports into"):
+        parse({"templates": {"agents_template.md": target}}, tmp_path)
+
+
+def test_each_default_template_is_in_the_kits_method():
+    assert all((METHOD / name).is_file() for name in DEFAULT_TEMPLATES)
+
+
+def test_templates_must_be_a_table(tmp_path):
+    with pytest.raises(ConfigError, match="must be a table"):
+        parse({"templates": "AGENTS.md"}, tmp_path)

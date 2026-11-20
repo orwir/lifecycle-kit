@@ -72,3 +72,7 @@ def test_session_start_says_a_newer_kit_is_out(repo, monkeypatch):
     monkeypatch.setattr(hook.doctor, "kit_version", lambda: "1.2.0")
     monkeypatch.setattr(latest, "latest_release", lambda: "1.4.0")
     assert "kit 1.4.0 is out" in hook.session_start({"cwd": str(repo.root)})
+
+
+def test_session_start_is_quiet_in_the_kits_own_repository(kit_checkout):
+    assert hook.session_start({"cwd": str(kit_checkout.root)}) == ""

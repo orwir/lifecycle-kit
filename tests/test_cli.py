@@ -156,3 +156,27 @@ def test_output_is_utf8_whatever_the_console_page(tmp_path):
         check=False,
     )
     assert result.returncode == 0 and "проект" in result.stdout.decode("utf-8")
+
+
+def test_the_port_line_names_each_template_with_its_target(monkeypatch, capsys, repo):
+    code, out, _ = run(monkeypatch, capsys, ["upgrade", "--adopt"], cwd=repo.root)
+    port_line = next(line for line in out.splitlines() if line.startswith("templates changed"))
+    assert code == 0 and "agents_template.md -> AGENTS.md" in port_line
+
+
+def test_named_templates_replace_the_defaults_on_the_port_line(monkeypatch, capsys, repo):
+    from conftest import name_templates
+    from lifecycle import guides
+
+    name_templates(repo, '"idea_gauntlet.md" = "AGENTS.md"\n')
+    (guides.METHOD / "idea_gauntlet.md").write_text("# Gauntlet\n", encoding="utf-8")
+    code, out, _ = run(monkeypatch, capsys, ["upgrade", "--adopt"], cwd=repo.root)
+    port_line = next(line for line in out.splitlines() if line.startswith("templates changed"))
+    assert code == 0 and "idea_gauntlet.md -> AGENTS.md" in port_line
+    assert "agents_template.md" not in port_line
+
+
+def test_config_prints_the_templates(monkeypatch, capsys, repo):
+    code, out, _ = run(monkeypatch, capsys, ["config"], cwd=repo.root)
+    templates = json.loads(out)["templates"]
+    assert code == 0 and templates["pr_template.md"] == ".github/pull_request_template.md"

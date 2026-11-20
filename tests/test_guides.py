@@ -1,4 +1,5 @@
 import pytest
+from conftest import name_templates
 from lifecycle import guides
 from lifecycle.guides import GuidesError, read_lock, upgrade
 
@@ -115,3 +116,34 @@ def test_a_dry_run_leaves_installed_templates_alone(repo, monkeypatch):
     monkeypatch.setattr(guides, "kit_version", lambda: "1.3.0")
     assert upgrade(repo, dry_run=True).installed == [".github/pull_request_template.md"]
     assert installed.read_text(encoding="utf-8") == "a\nb\nc\nd\n"
+
+
+def test_a_named_template_is_replaced_where_its_mapping_puts_it(repo, monkeypatch):
+    upgrade(repo, adopt=True)
+    repo = name_templates(repo, '"pr_template.md" = "docs/pr.md"\n')
+    mapped = repo.root / "docs" / "pr.md"
+    unmapped = repo.root / ".github" / "pull_request_template.md"
+    for path in (mapped, unmapped):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("a\nb\nc\nd\n", encoding="utf-8")
+    (guides.METHOD / "pr_template.md").write_text("a\nb\nc\nD\n", encoding="utf-8")
+    monkeypatch.setattr(guides, "kit_version", lambda: "1.3.0")
+    assert upgrade(repo).installed == ["docs/pr.md"]
+    assert mapped.read_text(encoding="utf-8") == "a\nb\nc\nD\n"
+    assert unmapped.read_text(encoding="utf-8") == "a\nb\nc\nd\n"
+
+
+def test_a_named_template_the_method_lacks_stops_the_upgrade(repo):
+    repo = name_templates(repo, '"idea_gauntlt.md" = "AGENTS.md"\n')
+    with pytest.raises(GuidesError, match=r"idea_gauntlt.md"):
+        upgrade(repo, adopt=True)
+    assert read_lock(repo.root) is None and not any(repo.guides_dir.iterdir())
+
+
+def test_the_kits_own_repository_is_never_upgraded(kit_checkout):
+    for adopt in (False, True):
+        with pytest.raises(GuidesError, match="canonical"):
+            upgrade(kit_checkout, adopt=adopt)
+    assert read_lock(kit_checkout.root) is None
+    canonical = kit_checkout.root / "method" / "task_review.md"
+    assert canonical.read_text(encoding="utf-8") == "# Task review, canonical\n"

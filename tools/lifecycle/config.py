@@ -15,9 +15,18 @@ from pathlib import Path
 FILE = ".lifecycle.toml"
 #: The lens reviewers beside base, as the method's task_review.md names them.
 LENSES = {"person-facing", "model-facing"}
+#: The templates a project follows, each with the file it ports into, where the settings
+#: name none. A repository that names any lists every template it follows.
+DEFAULT_TEMPLATES = {
+    "agents_template.md": "AGENTS.md",
+    "contributing_template.md": "CONTRIBUTING.md",
+    "issue_template_bug.md": ".github/ISSUE_TEMPLATE/bug.md",
+    "issue_template_task.md": ".github/ISSUE_TEMPLATE/task.md",
+    "pr_template.md": ".github/pull_request_template.md",
+}
 
 _SCHEMA: dict[str, set[str]] = {
-    "": {"branches", "board", "gate", "guides", "review"},
+    "": {"branches", "board", "gate", "guides", "review", "templates"},
     "branches": {"integration", "protected"},
     "board": {"owner", "number"},
     "gate": {"commands", "targeted"},
@@ -49,6 +58,9 @@ class Config:
     guides: str = "docs/guides"
     reviewer_allow: tuple[str, ...] = ()
     lenses: dict[str, Lens] = field(default_factory=dict)
+    templates: dict[str, str] = field(default_factory=lambda: dict(DEFAULT_TEMPLATES))
+    #: Whether ``templates`` is the repository's own ``[templates]``, not the defaults.
+    templates_named: bool = False
 
     @property
     def guides_dir(self) -> Path:
@@ -68,6 +80,7 @@ class Config:
                     for name, lens in self.lenses.items()
                 },
             },
+            "templates": dict(self.templates),
         }
 
 
@@ -98,6 +111,24 @@ def _strings(value: object, where: str) -> tuple[str, ...]:
     return tuple(value)
 
 
+def _templates(value: object) -> dict[str, str]:
+    if not isinstance(value, dict):
+        raise ConfigError(f"{FILE}: [templates] must be a table")
+    if not value:
+        raise ConfigError(
+            f"{FILE}: [templates] is empty: omit the table to follow the project templates"
+        )
+    for name, target in value.items():
+        if isinstance(target, dict):
+            raise ConfigError(
+                f"{FILE}: [templates] {name!r} is a table: quote each file name, "
+                'as in "idea_gauntlet.md" = "AGENTS.md"'
+            )
+        if not isinstance(target, str) or not target.strip():
+            raise ConfigError(f"{FILE}: [templates] {name!r} must name the file it ports into")
+    return dict(value)
+
+
 def parse(data: dict, root: Path) -> Config:
     _check_keys(data, "", "the top level")
     for section in ("branches", "board", "gate", "guides", "review"):
@@ -118,6 +149,8 @@ def parse(data: dict, root: Path) -> Config:
             paths=_strings(table.get("paths", []), f"[review.lenses.{name}] paths"),
             read=_strings(table.get("read", []), f"[review.lenses.{name}] read"),
         )
+    named = "templates" in data
+    templates = _templates(data["templates"]) if named else dict(DEFAULT_TEMPLATES)
     if bool(board.get("owner")) != bool(board.get("number")):
         raise ConfigError(f"{FILE}: [board] needs both owner and number")
     return Config(
@@ -131,6 +164,8 @@ def parse(data: dict, root: Path) -> Config:
         guides=data.get("guides", {}).get("path", "docs/guides"),
         reviewer_allow=_strings(review.get("allow", []), "[review] allow"),
         lenses=lenses,
+        templates=templates,
+        templates_named=named,
     )
 
 

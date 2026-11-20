@@ -2,6 +2,15 @@
 
 What each kit release changed, newest first. A guide push from a project adds its own line.
 
+## v0.3.0
+
+- Repositories: where `AGENTS.md` follows a template other than `agents_template.md` (an ideas home follows `idea_gauntlet.md`), list each template the repository follows, with the file it ports into, under `[templates]` in `.lifecycle.toml`, and drop the sentence in `AGENTS.md` that says which template it follows.
+- `.lifecycle.toml` names the templates a repository follows under `[templates]`, and `lifecycle upgrade` replaces and names those, each with the file it ports into.
+- The upgrade skill makes a `Repositories:` change to `.lifecycle.toml` before the upgrade reads the settings.
+- On a first move onto the kit, `lifecycle doctor` and `lifecycle upgraded` list every `Repositories:` line up to the release.
+- The reviewer's guard refuses an option appended to a command `[review] allow` lists, so a read-only check cannot become a write.
+- The ideas-home template names its template in `.lifecycle.toml` instead of a sentence in its *Checks*.
+
 ## v0.2.2
 
 - An ideas home runs lifecycle doctor at session start, names the kit's files in its layout, and says which template its AGENTS.md follows; the bootstrap names .lifecycle.toml
