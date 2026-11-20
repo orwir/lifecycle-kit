@@ -4,7 +4,8 @@ What each kit release changed, newest first. A guide push from a project adds it
 
 ## v0.3.1
 
-- A hung kit remote no longer holds `lifecycle doctor` and the session-start note on Windows past the release check's 3 s timeout, and the cut-off check leaves none of git's processes running.
+- On Windows, a hung kit remote no longer holds `lifecycle doctor` and the session-start note past the release check's 3 s timeout.
+- A release check cut off at its timeout stops git and its remote helper instead of leaving them running.
 
 ## v0.3.0
 

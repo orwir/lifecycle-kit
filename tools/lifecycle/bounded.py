@@ -46,7 +46,8 @@ def run(
     seconds. Stdin and stderr are the null device; raises OSError when ``args`` cannot start.
 
     However the wait ends but by the child's own exit (the timeout, Ctrl+C, any exception),
-    the child and everything it started are killed before the call returns or raises.
+    the child and its group are killed before the call returns or raises: everything it
+    started, unless Windows refused the group or a process escaped it (``_job_holding``).
     """
     with tempfile.TemporaryFile() as out:
         child = subprocess.Popen(
@@ -64,9 +65,10 @@ def run(
                 return None
             finally:
                 if child.returncode is None:
+                    # The child first, while it surely still runs, then all it started.
+                    child.kill()
                     if kill_group:
                         kill_group()
-                    child.kill()
                     child.wait()
         out.seek(0)
         return subprocess.CompletedProcess(args, code, out.read().decode("utf-8", "replace"))

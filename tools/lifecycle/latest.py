@@ -4,9 +4,9 @@ A machine whose kit never updates itself (no credentials for the private remote,
 offline, auto-update off) would otherwise run an old kit with nothing saying so. One
 `git ls-remote` with a short timeout and no prompts answers it. The day is recorded
 before asking, so a failed or cut-short check is silent and still waits a day.
-The timeout cuts off git with everything it started (``bounded.run``): on Windows, Git's
-``git.exe`` launcher and a hung remote helper would otherwise hold the call for the
-helper's whole hang.
+``bounded.run`` keeps the timeout whatever git starts, and kills git's process group at it:
+on Windows, Git's ``git.exe`` launcher and a hung remote helper would otherwise hold the
+call for the helper's whole hang.
 """
 
 from __future__ import annotations

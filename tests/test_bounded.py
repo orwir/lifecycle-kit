@@ -82,12 +82,18 @@ def test_a_command_that_finishes_gives_its_code_and_output():
     assert (done.returncode, done.stdout.split()) == (3, ["v1"])
 
 
-def test_with_no_group_the_call_is_still_cut_off_in_time(tmp_path, monkeypatch):
-    monkeypatch.setattr(bounded, "_group", lambda child: contextlib.nullcontext())
+def test_a_refused_kill_group_still_cuts_the_call_off_in_time(tmp_path, monkeypatch):
+    if bounded._WINDOWS:
+        # Windows refuses the job, so the refusal path itself runs.
+        monkeypatch.setattr(bounded._kernel32, "AssignProcessToJobObject", lambda job, proc: 0)
+    else:
+        # POSIX has no refusal; the nearest stand-in is a group that kills nothing.
+        monkeypatch.setattr(bounded, "_group", lambda child: contextlib.nullcontext())
     try:
         result, took = run_family(tmp_path, timeout=2)
         assert result is None
         assert took < 8
+        assert still_beating(tmp_path), "the grandchild was killed, so no group was missing"
     finally:
         if still_beating(tmp_path):
             os.kill(int((tmp_path / "pid").read_text()), signal.SIGTERM)
