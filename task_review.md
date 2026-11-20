@@ -1,6 +1,6 @@
 # Task review
 
-A task's two review rounds, each read by a reviewer agent that has no author context. The **plan round** runs at *Clarify*, before any code: the reviewer reads the plan in the issue against the code it will change, and the developer folds the findings into the plan and renders the **Clarify brief**. The **work round** runs between *Implement & stop* and the hand-back to the maintainer: the developer session hands a **hand-off packet** to the reviewer, the reviewer reads the tree against it and answers with a **return packet**, and the developer acts on the return and renders the **hand-back brief**. The packets are data passed between the two agents and are never shown to the maintainer; the briefs are the only things the maintainer reads. Written for the two AI roles and for the maintainer who reads the briefs.
+A task's two review rounds, each read by a reviewer agent that has no author context. The **plan round** runs at *Clarify*, before any code: the reviewer reads the plan in the issue against the code it will change, and the developer folds the findings into the plan and renders the **Clarify brief**. The **work round** runs between *Implement & stop* and the hand-back to the maintainer: the developer session hands a **hand-off packet** to the reviewers — a base reviewer, and a lens reviewer for each person- or model-facing surface the diff touches — each reads the tree against it and answers with a **return packet**, and the developer acts on the returns and renders the **hand-back brief**. The packets are data passed between the agents and are never shown to the maintainer; the briefs are the only things the maintainer reads. Written for the two AI roles and for the maintainer who reads the briefs.
 
 It does not cover the maintainer's own read of the diff, the comprehensive passes (`codebase_review.md`, `ia_review.md`, `ux_review.md`, `design_review.md`, `llm_review.md`, all on `review_machinery.md`), or a release gate.
 
@@ -8,11 +8,11 @@ It does not cover the maintainer's own read of the diff, the comprehensive passe
 
 **The plan round** runs when the plan has one of four shapes, the ones in which plans have shipped holes: a rule that must hold at more than one entry point; persisted, billed, auth or safety state; a wait, retry or failure the user sees; a decision that wants an ADR. A plan with none of them skips the round, and the Clarify brief says so; the plan is still written into the issue. One plan round per plan; what stays disputed after it is the maintainer's decision.
 
-**The work round** runs on every task after the local gate is green and before the hand-back, in both flows: the packet points at the uncommitted tree on `develop`, or at the branch's diff against `develop`. Nothing is pushed for it — the PR, when the work rides a branch, is opened at *Complete* as before. A second work round is bought only by a `Real bug` in the first. Anything still disputed after that goes to the maintainer, never to a third round between agents.
+**The work round** runs on every task after the local gate is green and before the hand-back, in both flows: the packet points at the uncommitted tree on `develop`, or at the branch's diff against `develop`. Nothing is pushed for it — the PR, when the work rides a branch, is opened at *Complete* as before. A second work round is bought only by a `Real bug` in the first, from the reviewer that found it. Anything still disputed after that goes to the maintainer, never to a third round between agents.
 
 A task with no issue is untracked, and nothing of it goes on the board. An untracked micro-task — one obvious change, nothing to decide — has no plan and skips both rounds, and its hand-back brief says so. Any other untracked task skips the plan round, having no issue to hold a plan, and runs the work round with an `untracked:` packet. Its hand-back brief is its only record, so it finishes in the session it started; one that needs a second session, or makes a decision worth keeping, gets an issue then and is tracked from there: its plan written at *Clarify*, its item on the board.
 
-The rounds answer what the gate cannot. Lint, format, the suite and the coverage floor are settled by the push hook, so no packet re-argues them; the reviewer's questions are the ones only a reader can answer — of a plan, what it leaves out before any code exists; of the tree, scope, decisions, invariants, tests, prose, docs, and what could go.
+The rounds answer what the gate cannot. Lint, format, the suite and the coverage floor are settled by the push hook, so no packet re-argues them; the reviewer's questions are the ones only a reader can answer — of a plan, what it leaves out before any code exists; of the tree, scope, decisions, invariants, tests, truth, docs and what could go, and what the comprehensive reviews would otherwise find in it later.
 
 ## The plan round
 
@@ -93,12 +93,26 @@ What the maintainer reads before any code, and the only thing of the plan round 
 
 ## The work round
 
-The developer session runs the whole round. The maintainer sees one line when the reviewer launches and the hand-back brief when the round ends; nothing else is printed. Which command starts either round and where the reviewer's instructions live is the repository's wiring, not this guide's.
+The developer session runs the whole round. The maintainer sees one line when the reviewers launch and the hand-back brief when the round ends; nothing else is printed. Which command starts either round and where the reviewer's instructions live is the repository's wiring, not this guide's.
 
-1. **Hand off.** The developer renders the hand-off packet and launches the reviewer as a fresh agent whose task is the packet: a subagent where the assistant can launch one, otherwise a fresh session the packet is pasted into, with the return pasted back. The tree is the reviewer's until the return arrives: no edit in between.
-2. **Review.** The reviewer reads the ticket and the tree, verifies every claim, and returns the return packet as its only output.
-3. **Act.** The developer fixes every finding the return marks required and re-runs the gate. A `Real bug` in the return buys a second round: a reply per finding id — `fixed <how>` / `disputed <why>` / `deferred #N` — to the same reviewer, which keeps its context, and its second return is acted on the same way. Without one, no reply is written: the brief's *Round* line carries the tally.
-4. **Hand back.** The developer renders the brief. The packets stay where the round produced them: the reviewer's task and its result.
+1. **Hand off.** The developer renders the hand-off packet and launches the reviewers its lenses call for (*Lens reviewers*), each as a fresh agent whose task is the packet with its own *Lens* line: a subagent where the assistant can launch one, otherwise a fresh session the packet is pasted into, with the return pasted back. The tree is the reviewers' until every return arrives: no edit in between.
+2. **Review.** Each reviewer reads the ticket and the tree, verifies the packet's claims — the base reviewer every claim, a lens reviewer those its questions rest on — asks its lens's questions, and returns the return packet as its only output.
+3. **Act.** The developer fixes every finding the returns mark required — one defect two returns report is one finding — and re-runs the gate. A `Real bug` in a return buys that reviewer a second round: a reply per finding id — `fixed <how>` / `disputed <why>` / `deferred #N` — to the same reviewer, which keeps its context, and its second return is acted on the same way. Without one, no reply is written: the brief's *Round* line carries the tally.
+4. **Hand back.** The developer renders the brief. The packets stay where the round produced them: each reviewer's task and its result.
+
+### Lens reviewers
+
+Every diff is read by the base reviewer. A diff that touches a surface one of the comprehensive reviews owns is also read by that surface's lens reviewer, which asks what those reviews would otherwise find months later, while the change is still in hand:
+
+| Lens          | Launched when the diff touches                                                   | Asks                                                                          |
+| ------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| base          | anything                                                                         | the work-round questions (*Reviewer rules*), then `codebase_review.md` § At task time |
+| person-facing | what a person reads or drives: `[web]` `[desktop]` `[tui]` `[cli]` `[bot]`       | § At task time of `ia_review.md`, `ux_review.md` and `design_review.md`       |
+| model-facing  | what a language model reads, or the eval that scores its replies: `[llm]`        | `llm_review.md` § At task time                                                |
+
+- The surface tags are `review_machinery.md`'s; which paths carry which tag is the repository's wiring.
+- The reviewers read the same tree at the same time, each with the hand-off packet and its own *Lens* line, and each answers with its own return packet.
+- A lens reviewer asks only its lens's questions, against the references they name — the intent doc's IA section, the design-language reference, the prompt documentation — and none of the base reviewer's, so no question is asked twice.
 
 ## Hand-off packet
 
@@ -106,6 +120,7 @@ Read by the reviewer. Claims with coordinates, never the diff: the reviewer read
 
 ```
 Review request: #<N> <title> | untracked: <one line of intent>
+Lens: base | person-facing | model-facing
 Flow: direct on develop, uncommitted (base <sha>) | branch <name> | PR #<M>
 Diff: git diff | git diff develop...HEAD | <the command or link that shows PR M's diff>
 New files: <paths, which git diff does not show> | none
@@ -142,8 +157,8 @@ Findings:
 | id | location    | severity | claim | evidence | required action |
 | R1 | <path:line> | Real bug | ...   | ...      | ...             |
 
-Verified clean: scope yes | decisions yes | invariants yes | tests yes | prose yes | docs yes | simplicity yes
-  (a finding id in place of "yes" where it is not)
+Verified clean: scope yes | decisions yes | invariants yes | tests yes | truth yes | docs yes | simplicity yes | code at task time yes
+  (a finding id in place of "yes" where it is not; a lens reviewer names its own questions by their leads)
 For the maintainer: <questions the reviewer could not settle; every Decision pending with a recommended option> | none
 ```
 
@@ -153,7 +168,7 @@ What the maintainer reads at the hand-back, and the only thing they read of the 
 
 ```
 **Hand-back #<N>** <title> | **Hand-back** untracked: <one line of intent>
-<approve | corrections | split: <what lands now, what is filed> | round skipped: untracked micro-task> · <k> round(s) · <develop, uncommitted on <sha> | branch <name> | PR #<M>> · gate <green | not run> · <n> decision(s) to answer | nothing to answer
+<approve | corrections | split: <what lands now, what is filed> | round skipped: untracked micro-task> · <k> round(s) · <base | base, person-facing | base, model-facing | base, person-facing, model-facing | no reviewer> · <develop, uncommitted on <sha> | branch <name> | PR #<M>> · gate <green | not run> · <n> decision(s) to answer | nothing to answer
 
 **In the tree**
 - Visible: <what a user or operator sees differently | nothing>
@@ -177,6 +192,7 @@ What the maintainer reads at the hand-back, and the only thing they read of the 
 **Next** <answer D1, then | > "lgtm". <non-routine Complete steps | Nothing unusual at Complete.>
 ```
 
+- The status line's verdict is the strictest of the returns — split over corrections over approve — and its lenses are the reviewers that read the tree; *Round* counts the findings of every return.
 - The first line is the task and the second its status; every lead is bold — *In the tree*, *Decisions pending* and *Taken alone* open a list on the next line, the rest carry their content on the same line; nothing before the first line, nothing after *Next*, and no headings, tables or fenced blocks inside.
 - "I" is the developer, "you" the maintainer. A row that rests on the reviewer says so in words — "the reviewer asked", "disputed: the reviewer holds A, I hold B" — never by id.
 - *In the tree* is the tree after the round's fixes: three bullets with those leads, one or two sentences each.
@@ -192,16 +208,16 @@ What the maintainer reads at the hand-back, and the only thing they read of the 
 - Every section is filled or says `none`. An empty *Decisions* is a claim too, and the reviewer checks it.
 - `NOT RUN` is honest: a gate that did not run in this session after the last edit runs before the packet or the brief is rendered, and what still could not run is listed with its reason.
 - Do not pre-argue findings; the reviewer has not made any.
-- The tree is the reviewer's while it reads: nothing is edited between launching the reviewer and reading its return.
+- The tree is the reviewers' while they read: nothing is edited between launching them and reading every return.
 - A disputed finding stays disputed into the brief. It is the maintainer's call, not a second argument to the reviewer.
-- The packets are never printed for the maintainer: the reviewer is launched with the hand-off as its task, and its result is the return.
+- The packets are never printed for the maintainer: each reviewer is launched with the hand-off as its task, and its result is its return.
 - The plan is in the issue before the plan round, and the maintainer's answers are in it before any code: a session that picks the task up cold continues from the issue, its ticked boxes and the tree, never from a conversation it did not see.
 - After acceptance the plan changes only by its *Departures*: what changed and why, written when it happens. A departure that is user-visible, hard to undo or changes scope stops for the maintainer first.
 
 ## Reviewer rules
 
 - A fresh agent with no author context, read-only on files: the developer's session shares the tree. Commands that read are allowed — the diff, the history, the ticket, the PR, the linter and the formatter in check mode. Anything that rewrites the tree or its index is not: a formatter or fixer that writes, a stash, a checkout, any edit. The test suite is the developer's too: two coverage runs on one tree share the coverage files, and the second erases the first's number. The repository's reviewer instructions name its commands. In the plan round the issue is read-only too: the reviewer never edits the plan.
-- In the work round the packet is the map; the tree is the territory. Read the whole diff by the command the packet gives and every new file it lists, in full. Verify every claim against them: read the test the packet says fails without the change, open the doc it says it updated, check the ticket box it says landed.
+- In the work round the packet is the map; the tree is the territory. Read the whole diff by the command the packet gives and every new file it lists, in full. The base reviewer verifies every claim against them: reads the test the packet says fails without the change, opens the doc it says it updated, checks the ticket box it says landed. A lens reviewer verifies only the claims its own questions rest on.
 - In the plan round the plan is the map and the code is the territory. Read the plan in full and every path it names, check each fact the packet says it rests on, and look for what the plan does not name: the rule's other callers, the other transports and write paths, whatever depends on the behaviour it changes.
 - In the plan round, ask, in this order:
   1. **Scale** — does each scenario say what the user sees at real scale, including while it waits, retries or fails?
@@ -211,14 +227,17 @@ What the maintainer reads at the hand-back, and the only thing they read of the 
   5. **Changes** — who depends on what the plan changes or removes, and is each one named?
   6. **Decisions** — is every choice the maintainer should make asked, with a recommended option, and none taken silently?
   7. **Reuse** — does existing code already do part of this, and is there a smaller shape?
-- In the work round, ask, in this order:
+- In the work round, the base reviewer asks, in this order:
   1. **Scope** — does the diff do what the accepted plan says, and only that, with every departure recorded under its *Departures*? Drive-by changes are findings even when correct.
   2. **Decisions** — would the maintainer have made each one the packet lists, and each one it omits?
-  3. **Invariants** — is every invariant the change relies on enforced by a test or a loader check, or only stated in prose?
-  4. **Tests** — does each scenario in the plan, and each other new behaviour, have a test that fails without it, and is the database real where it could be?
-  5. **Prose** — comments within budget, present tense, why not what, no tombstones or issue-number changelogs.
-  6. **Docs** — the change → doc mapping applied, and the CHANGELOG line one claim, user-visible, under the cap.
-  7. **Simplicity** — what could go, and does any abstraction the diff touches still earn its shape?
+  3. **Invariants** — is every invariant the change relies on enforced by a test or a loader check, or only stated in prose? Does each rule the diff adds hold at every sibling — the other entry point, writer, route, transport or reply site?
+  4. **Tests** — does each scenario in the plan, and each other new behaviour, have a test that fails without it, the refused, failed, empty and capped paths included, each asserting its true reason? Can every new test fail, with no skip, glob or parametrize that can run empty? Is the database real where it could be?
+  5. **Truth** — is every sentence the diff adds, or leaves beside what it changes, true of the code for each reader and state it reaches: copy, messages, help, model-facing text, docs, comments? Comments within budget, present tense, why not what, no tombstones or issue-number changelogs.
+  6. **Docs** — the change → doc mapping applied, the CHANGELOG line one claim, user-visible, under the cap, and nothing outside the diff still naming what it removed or renamed.
+  7. **Simplicity** — what could go, and does any abstraction the diff touches still earn its shape? Did the diff bolt a special case or a one-off flag onto a flow whose shape should change instead? Does a restructure delete concepts, or only move them?
+
+  Then it asks the code review's *At task time* questions (`codebase_review.md`).
+- A lens reviewer asks its lens's *At task time* questions (*Lens reviewers*), in the order each guide lists them, and none of the base reviewer's.
 - Every finding cites `path:line`, or in the plan round the plan's section, and says what breaks or which rule it breaks. A finding without evidence is a question, and goes under *For the maintainer*.
 - Name what was verified clean, so silence is never ambiguous.
 - Never fix, rewrite or propose a redesign; the round is a read. A simplification is a `Decision pending` with the smaller shape named.
@@ -227,4 +246,4 @@ What the maintainer reads at the hand-back, and the only thing they read of the 
 
 ## Where the packets land
 
-The packets are data between the two agents: they sit in the reviewer's task and its result, and are never printed for the maintainer or posted anywhere. The rounds are the team's own process, so nothing of them reaches GitHub, before the maintainer's approval or after — except the plan, which is not a packet: it lives in the issue, where the developer writes it and the maintainer accepts it, and a plan-round finding reaches GitHub only as the change it made to the plan. At *Complete*, a feature branch's PR body follows the repository's PR template, written for a reader who never saw the round: no packet field, finding id or reviewer verdict in it. What that reader needs from the round, such as a decision, a deviation or a follow-up, goes into the PR body or an issue in that reader's words. On `develop` the close-out comment may quote the brief's *In the tree* bullets.
+The packets are data between the agents: they sit in each reviewer's task and its result, and are never printed for the maintainer or posted anywhere. The rounds are the team's own process, so nothing of them reaches GitHub, before the maintainer's approval or after — except the plan, which is not a packet: it lives in the issue, where the developer writes it and the maintainer accepts it, and a plan-round finding reaches GitHub only as the change it made to the plan. At *Complete*, a feature branch's PR body follows the repository's PR template, written for a reader who never saw the round: no packet field, finding id or reviewer verdict in it. What that reader needs from the round, such as a decision, a deviation or a follow-up, goes into the PR body or an issue in that reader's words. On `develop` the close-out comment may quote the brief's *In the tree* bullets.

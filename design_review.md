@@ -19,7 +19,7 @@ Process is `review_machinery.md`'s and applies unchanged; the working document i
 end. The per-phase **"what can go?"** habit applies with force here — a design pass that only
 *adds* tokens and never *collapses* a forked variant didn't look hard enough.
 
-This doc defines only what differs: the stance, the phases, and the severity translation.
+This doc defines only what differs: the stance, the phases, the severity translation and its *At task time* questions.
 
 ## What this is *not*
 
@@ -236,6 +236,13 @@ breached.
   the maintainer hasn't picked are rows there, not prose under a heading of the pass's own invention.
 - **Close every action item** per the machinery — deferred surface-conformance work becomes
   job-sized children of the parent issue — and freeze the document.
+
+## At task time
+
+What a task's work round asks of one diff for this review (`task_review.md` § Lens reviewers): the classes of finding this review keeps meeting that a reader can see in the change that introduces them. The person-facing reviewer asks them, against the design-language reference. A class two reviews of this kind in a row meet with no question here gets one (`review_machinery.md` § Close-out).
+
+- **Conformance.** Does every component, data rendering and pattern the diff touches — lines it only moved included — match the design-language reference, with no raw value off its token scale (Phases 0 and 5)?
+- **State contract.** Does a new or changed component cover every state the shared contract defines: hover, focus, active, disabled, selected, loading, empty and error (Phase 4)?
 
 ## Severity, translated to the visual system
 

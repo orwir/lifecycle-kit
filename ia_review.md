@@ -17,8 +17,8 @@ Process is `review_machinery.md`'s and applies unchanged; the working document i
 
 The per-phase **"what can go?"** habit applies with force: a surface that grew one feature at a time hides screens to merge, figures to drop and commands to retire.
 
-This doc defines only what differs: the stance, the backbone, the phases, the verdict set and the
-severity translation.
+This doc defines only what differs: the stance, the backbone, the phases, the verdict set, the
+severity translation and its *At task time* questions.
 
 ## What this is *not*
 
@@ -226,6 +226,15 @@ Each row gets a verdict, mapped to a label (`review_machinery.md` § Severity vo
 
 - **Simplification ledger** and **Decision register**, per the shared machinery.
 - **A measurement plan for the next pass.** Record what the next review will need and this one lacked, with no personal data: which link a visit came from, and whether a task was completed.
+
+## At task time
+
+What a task's work round asks of one diff for this review (`task_review.md` § Lens reviewers): the classes of finding this review keeps meeting that a reader can see in the change that introduces them. The person-facing reviewer asks them, against the IA section of the intent doc and the vocabulary its close-out wrote back. A class two reviews of this kind in a row meet with no question here gets one (`review_machinery.md` § Close-out).
+
+- **One home.** Does the diff render in full a fact whose home is elsewhere, or show one fact twice on a page, instead of a reference to its home (Phases 2 and 4)?
+- **One name.** Does every reader-facing word the diff adds match the controlled vocabulary in every locale, with no new synonym and no word used for two things (Phase 6, *Labels*)?
+- **Figures.** Which reader's decision does each new figure serve, and does it name its unit and window, show a comparison, and offer the next action at its threshold (Phase 4 checklist)?
+- **Reach.** Can every reader a new screen, message or link is for reach it, does a link land where its reader can act, and does the navigation mark the place (Phase 6, *Front doors* and *Wayfinding*)?
 
 ## Severity, translated to information architecture
 

@@ -8,7 +8,7 @@ Surface tags as in `review_machinery.md` § Surface tags; untagged checks apply 
 
 Process is `review_machinery.md`'s and applies unchanged; the working document is `docs/reviews/YYYY-MM-ux-review.md`, and the labels are translated to surfaces at the end. The per-phase **"what can go?"** habit applies here too — a written one-line answer before any phase closes.
 
-This doc defines only what differs: the stance, the CUJ backbone, the phases, and the severity translation at the end.
+This doc defines only what differs: the stance, the CUJ backbone, the phases, its *At task time* questions, and the severity translation at the end.
 
 One addition to prioritisation: **fix order is label first, then the CUJ's frequency.** The labels are categories, not numbers; within one, a papercut on the daily journey outranks a broken corner on the quarterly one. Note the frequency next to each finding's CUJ.
 
@@ -169,6 +169,16 @@ The subtraction phase. Evidence first: the usage data from Phase 0's instrumenta
 - **Write CUJ changes back into `vision.md`** — journeys added, retired, or re-scoped. The next review starts from there, not from scratch.
 - **Self-enforcing rules where cheap, one assertion each:** `[bot]` help output lists every registered command; `[cli]` snapshot of `--json` output; `[web]` lint forbidding raw hex outside the token file.
 - **Close every action item** per the machinery — done, filed as a child of the parent issue, left on its checklist, reported privately or not taken — and freeze the document.
+
+## At task time
+
+What a task's work round asks of one diff for this review (`task_review.md` § Lens reviewers): the classes of finding this review keeps meeting that a reader can see in the change that introduces them. The person-facing reviewer asks them. A class two reviews of this kind in a row meet with no question here gets one (`review_machinery.md` § Close-out).
+
+- **Readers.** Which readers, roles, tiers and configurations reach the change, and what does each see — a control shown to someone who cannot use it included (Phases 1 and 2)?
+- **Failed, empty, boundary.** What does each region or reply the diff touches show when its read fails, finds nothing, or sits on a boundary — zero, one, the cap, an exact page — and does it name the next step (Phases 2 and 3)?
+- **Errors.** Does every new message say what happened, why and what next; does a destructive action use the canonical confirm; does the person's input survive the error (Phase 3)?
+- **Locale.** Does every string the diff shows a person — fallbacks and formatted values included — come from the reader's locale (Phase 4, *i18n*)?
+- **Accessibility floor.** Does each new control carry its native attribute, a unique label, focus entry and, where it changes state, an announcement, with no meaning carried by color alone (Phase 6)?
 
 ## Severity, translated to surfaces
 

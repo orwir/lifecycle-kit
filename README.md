@@ -31,8 +31,9 @@ pushed here (*Edit the canonical*); the other mirrors re-sync.
   with no author context (a subagent, where the assistant can launch one). The plan
   round, at Clarify, reads the plan in the issue against the code when the plan has a
   shape that has shipped holes before, and ends in the Clarify brief; the work round,
-  before the hand-back, reads the tree against the accepted plan and ends in the
-  hand-back brief. The packets between the agents, the briefs, and each role's rules;
+  before the hand-back, reads the tree against the accepted plan, with a lens reviewer
+  per person- or model-facing surface the diff touches, and ends in the hand-back
+  brief. The packets between the agents, the briefs, and each role's rules;
   the same rounds whether the work rides a PR or lands on the integration branch.
 - **`review_machinery.md`** — what every comprehensive review shares: the five kinds,
   the order they run in and when each is due; a parent issue per review; a lead with

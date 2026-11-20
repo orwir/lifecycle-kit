@@ -1,6 +1,6 @@
 # Codebase review template
 
-When the user asks for a comprehensive codebase review (multi-phase walk through every layer to catch drift, dead code, over-engineering, and quiet bugs after a heavy build phase), follow this template. It runs on `review_machinery.md`, its working document is `docs/reviews/YYYY-MM-codebase-review.md`, and it defines only what is particular to code: the stance, the phases and their sub-checks. Optimised for solo-maintained repos. The method is language-agnostic; the shell recipes are shown for a Python project, and [Project layout](#cross-phase-working-habits) says how to substitute your own toolchain.
+When the user asks for a comprehensive codebase review (multi-phase walk through every layer to catch drift, dead code, over-engineering, and quiet bugs after a heavy build phase), follow this template. It runs on `review_machinery.md`, its working document is `docs/reviews/YYYY-MM-codebase-review.md`, and it defines only what is particular to code: the stance, the phases and their sub-checks, and its *At task time* questions. Optimised for solo-maintained repos. The method is language-agnostic; the shell recipes are shown for a Python project, and [Project layout](#cross-phase-working-habits) says how to substitute your own toolchain.
 
 ## When to use this template
 
@@ -21,6 +21,7 @@ Concrete stance the reviewer holds throughout:
 
 - **For every load-bearing abstraction, the question is "does the surviving justification still demand this shape?"** Not "is the code clean?" Not "is the test coverage high?" If the shape outlives the rationale, the shape is residue regardless of how clean it reads. The [3.W Load-bearing assumption audit](#3w-load-bearing-assumption-audit) is the dedicated check.
 - **Default to the smaller code that solves the surviving problem.** A cache that exists because a decorator fired N times per request stops being justified when the underlying check fires once. A ContextVar that propagates data across layers stops being justified when the data can be passed explicitly. Surface the simplification with a decision-shape item; the maintainer chooses the new boundary.
+- **A restructure is measured by what it deletes.** A refactor that moves code without reducing the concepts a reader must hold is not a simplification: name what disappears, or keep looking for the smaller idea.
 - **Coupled residue lands together.** If removing the cache forces removing the decorator, treat them as one action item, not two — the split is the wrong axis. A half-removal often re-introduces the original perf or correctness problem the residue was masking.
 - **Watch for "no abstractions for single-use code."** Generic decorators, protocols, factories that have exactly one caller and one implementation are residue from a planned-but-cancelled second user. Either ship the second user or collapse the abstraction.
 
@@ -592,6 +593,16 @@ Explain the deltas — coverage drops on real new code at <100% are expected and
 - For every commit landed during the review, confirm the relevant doc was updated in the same commit.
 - One CHANGELOG line per user-visible change. Pure refactors don't touch CHANGELOG.
 - Skim every file the review touched for stale comments and docstrings — especially comments that referenced "the new X" or "as of #Y" before the review and now describe a state that has moved on.
+
+## At task time
+
+What a task's work round asks of one diff for this review (`task_review.md` § Lens reviewers): the classes of finding this review keeps meeting that a reader can see in the change that introduces them. The base reviewer asks them of every diff, after the work-round questions, which already cover siblings, failure paths, removals and growth. A class two reviews of this kind in a row meet with no question here gets one (`review_machinery.md` § Close-out).
+
+- **Trust boundary.** Where does input the diff newly accepts — text, a header, a provider's error, a model's output — reach a prompt, storage, a log, a page or a query, and is it escaped, bound, signed and authorized for every actor there (5.3–5.5, 5.7)?
+- **Bounds.** What bounds each input, collection, loop and in-memory map the diff adds, and what happens at zero, at the cap and past it (5.5; *Starter sub-checks*, runtime hygiene)?
+- **Personal data.** Does the diff store, log or export personal data, and do erasure, export and the published policy reach it (5.1, 5.8)?
+- **External calls.** Does each new call to another service have a timeout and a bounded retry that is safe to repeat (*Starter sub-checks*, every external call)?
+- **One position.** Does each new setting, flag or mode have a second position someone will use, and each new table or column both a writer and a reader (Phases 4 and 6)?
 
 ## Conventions checklist
 

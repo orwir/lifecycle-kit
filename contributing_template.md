@@ -66,10 +66,11 @@ has a shape that has shipped holes before, the plan round has a reviewer with
 no author context read it against the code, and the maintainer accepts it from
 the Clarify brief; a plan with no such shape and nothing to answer is clear,
 and the developer goes on. Before the hand-back, the work round has a reviewer
-read the tree against the accepted plan: the developer session renders a
-hand-off packet, launches a reviewer agent with it, acts on the return packet
-and renders the hand-back brief, in both flows. The packets pass between the
-two agents and stay there: nothing of a round is posted to GitHub but the plan
+read the tree against the accepted plan, with a lens reviewer beside it for each
+person- or model-facing surface the diff touches: the developer session renders
+a hand-off packet, launches the reviewer agents with it, acts on their return
+packets and renders the hand-back brief, in both flows. The packets pass between
+the agents and stay there: nothing of a round is posted to GitHub but the plan
 it shaped. The maintainer reads the briefs alone and answers their pending
 rows. The rest is already checked.
 

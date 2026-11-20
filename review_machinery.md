@@ -1,6 +1,6 @@
 # Review machinery
 
-What every comprehensive review shares, whatever it reviews: how a review is tracked and run, the working document, how findings are labelled, how action items close, the private route, the close-out and the Decision register. Written for whoever runs a review and for the maintainer who reads its record. Each kind's guide defines only what differs — its stance, backbone, phases, verdict set and severity translation; a task's own plan and work rounds are `task_review.md`, not this.
+What every comprehensive review shares, whatever it reviews: how a review is tracked and run, the working document, how findings are labelled, how action items close, the private route, the close-out and the Decision register. Written for whoever runs a review and for the maintainer who reads its record. Each kind's guide defines only what differs — its stance, backbone, phases, verdict set and severity translation — plus its *At task time* questions, which a task's work round asks of one diff on the kind's behalf; a task's own plan and work rounds are `task_review.md`, not this.
 
 ## The five kinds
 
@@ -207,6 +207,7 @@ The last phase of every kind. Each kind adds its own steps before these (a re-wa
 - **Simplification ledger.** Every removal and collapse from every phase in one ranked table: slug, what it removes, state. The top items not done this time are surfaced as decision shapes with register rows, so the maintainer leaves knowing the biggest simplifications even when none ship now. An empty ledger means the review didn't look; if that is truly the state of the surface, write the sentence saying so — never omit the section.
 - **Every action item closed** in one of its states, with the parent issue's children filed and its checklist written.
 - **Per-phase yield:** one line per phase with its findings by label and its unrun checks. The next review of the same kind reads it to choose where to read deep.
+- **Task-time yield:** the findings one change introduced, counted by the *At task time* question that should have caught them in that change's work round, and the classes no question covers. A finding counts against a question only when the repository's wiring would have launched that question's lens for the change; one that never reached its lens is a wiring fix, not a new question. A class no question covers that this review and the last of its kind both met gets a question in the kind's *At task time* (*Updating a guide*). The next review reads the count against its own: a falling one means the work round is catching them.
 - **Decision register**, filled as the document's last section.
 - **Freeze.** The document is not edited after close-out.
 
@@ -248,7 +249,7 @@ Before a phase or the review closes:
 - [ ] Action items are checkboxes keyed by unique slugs; letter-shaped ones offer `(A) / (B) / (C)` with a recommendation and have a register row.
 - [ ] Cross-phase blocks sit in the blocking phase.
 - [ ] Subagent claims were spot-checked before entering the findings.
-- [ ] At close-out every item is DONE, FILED, LEFT IN the parent, REPORTED PRIVATELY or NOT TAKEN; the ledger, the per-phase yield and the register are written; nothing exploitable is in the document.
+- [ ] At close-out every item is DONE, FILED, LEFT IN the parent, REPORTED PRIVATELY or NOT TAKEN; the ledger, the per-phase yield, the task-time yield and the register are written; nothing exploitable is in the document.
 - [ ] File and line references are links (`[path:line](path#L123)`); line anchors are fine in a frozen record.
 
 ## Updating a guide

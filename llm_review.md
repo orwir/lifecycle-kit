@@ -8,7 +8,7 @@ The whole guide is the `[llm]` surface (`review_machinery.md` § Surface tags).
 
 Process is `review_machinery.md`'s and applies unchanged; the working document is `docs/reviews/YYYY-MM-llm-review.md`, and the labels are translated at the end. The per-phase **"what can go?"** habit applies with force: always-on text is paid for on every request, and a surface grown one fix at a time hides clauses for cases that no longer occur.
 
-This doc defines only what differs: the stance, the backbone, the phases, the verdict set and the severity translation.
+This doc defines only what differs: the stance, the backbone, the phases, the verdict set, the severity translation and its *At task time* questions.
 
 ## What this is *not*
 
@@ -152,6 +152,16 @@ Before anything is cut or rewritten:
 
 - **Simplification ledger**, **Decision register** and every action item closed, per `review_machinery.md` § Close-out.
 - **A measurement plan for the next pass:** what this one could not read and the next one will need, with no personal data.
+
+## At task time
+
+What a task's work round asks of one diff for this review (`task_review.md` § Lens reviewers): the classes of finding this review keeps meeting that a reader can see in the change that introduces them. The model-facing reviewer asks them, against the product's prompt documentation and its eval cases. A class two reviews of this kind in a row meet with no question here gets one (`review_machinery.md` § Close-out).
+
+- **One rule, one home.** Is a rule the diff writes already stated in, or contradicted by, the instructions, a tool description, a schema field or a sibling return (Phase 1)?
+- **Rent.** Is the new text sent on every request, and if it serves a rare case, why is it not on the tool, return or conditional block that case reaches (Stance 2; Phase 2, *move*)?
+- **Provenance.** Does each line the diff adds name the eval case that reads it, and were the issue and cases behind each cut clause read before the cut (Phase 3)?
+- **Failure text.** What does the model read when the new path errors, times out or returns nothing, and does that text claim only what was established (Phase 5)?
+- **The instrument**, for a diff to the eval: does it replay the changed seam the way production now runs it, can each grader or pin it adds fail on the defect it names, and does every comparison pair readings from one build (Phase 4)?
 
 ## Verdicts and severity
 
