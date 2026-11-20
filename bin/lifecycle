@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# The kit's one command: runs tools/lifecycle with the first Python 3.11+ on PATH.
+kit="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+for py in python3 python; do
+  if command -v "$py" >/dev/null 2>&1 &&
+     "$py" -c 'import sys; sys.exit(sys.version_info < (3, 11))' 2>/dev/null; then
+    exec "$py" "$kit/tools/lifecycle" "$@"
+  fi
+done
+echo "lifecycle: needs Python 3.11 or later on PATH" >&2
+# Without Python the reviewer's guard cannot run, so the reviewer's command is refused.
+if [ "$1 $2" = "hook pre-bash" ] && grep -q '"agent_type" *: *"lifecycle:reviewer"'; then
+  exit 2
+fi
+exit 127

@@ -11,7 +11,7 @@ small v0.1 in use settle the rest.
 
 Companion to `project_kickstart.md`: the gauntlet ends exactly where the kickstart
 begins. Every idea lives in your ideas home (see *The ideas home*), one folder per
-idea, versioned and backed up from its first line; the gist README carries the
+idea, versioned and backed up from its first line; the method's README carries the
 agent bootstrap for setting the home up and capturing an idea into it. Each phase
 leaves its evidence where the kickstart will read it (see *Artifacts*), so
 graduation moves the folder out into its own repo as it is: `IDEA.md` freezes as
@@ -108,7 +108,7 @@ ideas/
 ├── AGENTS.md        where everything is, and how to capture, kill, graduate and check
 ├── archived.md      one line per killed idea -> its folder in archive/
 ├── graduated.md     one line per graduated idea -> its repo, status and next check
-├── docs/guides/     the gist mirror, shared by every idea
+├── docs/guides/     the kit's method, shared by every idea
 ├── active/          every idea still in the gauntlet, parked ones included
 │   └── <idea>/
 └── archive/         killed ideas, moved here whole
@@ -135,9 +135,9 @@ A new home starts from this one, adjusted to taste:
 
 Every idea still being weighed lives here, run through the idea gauntlet in
 `docs/guides/idea_gauntlet.md`, and `graduated.md` follows every project that left.
-`docs/guides/` mirrors the canonical gist. A guide changes here only inside the
-work that found it: re-sync first, and push the change to the gist when the work is
-approved, by the steps in `docs/guides/README.md`.
+`docs/guides/` is a copy of the lifecycle kit's method. A guide changes here only
+inside the work that found it, and goes to the kit when the work is approved, by the
+steps in `docs/guides/README.md`.
 
 ## Layout
 
@@ -185,7 +185,8 @@ archived.md)`, add the line to `archived.md` in the user's words, commit.
    `git push <new repo> graduate-<idea>:main`.
 2. Here: `git rm -r active/<idea>`, add a line to `graduated.md` with a next check
    four weeks out, commit.
-3. In the new repo: mirror the guides into `docs/guides/` and run the kickstart
+3. In the new repo: copy the guides into `docs/guides/` (`lifecycle upgrade --adopt`)
+   and run the kickstart
    (gauntlet Phase 4).
 
 ## Re-open
@@ -231,7 +232,7 @@ to know how stale.
 ## Template
 
 Copy everything below into `active/<idea>/IDEA.md` in your ideas home and fill as
-you go (the agent bootstrap in the gist README does this step for you).
+you go (the agent bootstrap in the method's README does this step for you).
 
 ```
 # Idea: {{name}}
@@ -375,7 +376,7 @@ learned, or KILL with reason "disproved: ____".
       breaker: "if v0.1 isn't in use after {{N}} sessions, I re-scope or kill",
       never a quiet extension.
 - [ ] Move this folder out of the ideas home into the project's own repo, under
-      its real name, with the guides mirrored into its docs/guides/; add its line
+      its real name, with the guides copied into its docs/guides/; add its line
       to graduated.md, with a next check four weeks out.
 - [ ] [sw] Run docs/guides/project_kickstart.md (an agent can drive it), seeded
       from the artifacts: done statement -> v0.1 milestone; IN list -> first
@@ -439,5 +440,5 @@ always a date, so every row still in play comes due.
 ## When to update this file
 
 Same rule as the rest of the set: if two ideas in a row needed the same hand-edit
-to the template, the template is wrong — fix it in the canonical gist, through the
-mirror of the project that found it.
+to the template, the template is wrong — fix it in the kit, through the
+copy of the project that found it.

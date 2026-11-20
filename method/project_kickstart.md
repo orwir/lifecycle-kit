@@ -4,7 +4,7 @@ A language-agnostic, tech-agnostic recipe for standing up a new project that sta
 
 Everything here is extracted from deployed production projects, not theory. Keep one of your own as the living reference (see *Keep a living reference* at the end).
 
-Upstream of this playbook sits `idea_gauntlet.md` (mirrored alongside it): the gauntlet decides *whether* a project gets built, and its filled instance — the idea's folder, moved out of the ideas home: `IDEA.md` at the root, with the evidence it links in `docs/product/` and `design/` — is this playbook's input. This playbook starts once the gauntlet's answer is yes, and hands day-to-day operation to `AGENTS.md` and the issue board.
+Upstream of this playbook sits `idea_gauntlet.md` (copied alongside it): the gauntlet decides *whether* a project gets built, and its filled instance — the idea's folder, moved out of the ideas home: `IDEA.md` at the root, with the evidence it links in `docs/product/` and `design/` — is this playbook's input. This playbook starts once the gauntlet's answer is yes, and hands day-to-day operation to `AGENTS.md` and the issue board.
 
 ---
 
@@ -164,7 +164,7 @@ git push
 
 The pre-push stage of the local hook config runs the identical lint, format-check, and test commands (with the coverage floor) that CI runs, so every push has already cleared the CI gate locally. CI itself re-runs on PRs as a backstop. Releases still go through a `develop → master` PR, so the auto-deploy gate on `master` stays intact. Broken commits on `develop` are a fix-forward or `git revert` problem, not a crisis — nothing is deployed.
 
-The hook is the mechanical gate; the read is `task_review.md` (mirrored alongside this playbook). Before a task is handed back, the developer session hands a packet to reviewer agents with no author context — subagents it launches, or fresh sessions where the tool has none — and renders a hand-back brief for the maintainer from their return packets: plain-text packets between the agents, and the same round whether the work rides a PR or lands on `develop` directly. The maintainer reads the brief and nothing else of the round, then the diff, with what a gate cannot check (scope, decisions, invariants, truth, docs) already read by reviewers the author could not steer. The same guide runs a plan round at *Clarify*, before any code: where the plan in the issue has one of the shapes that have shipped holes before, a reviewer with no author context reads it against the code, and the maintainer accepts it from a Clarify brief.
+The hook is the mechanical gate; the read is `task_review.md` (copied alongside this playbook). Before a task is handed back, the developer session hands a packet to reviewer agents with no author context — subagents it launches, or fresh sessions where the tool has none — and renders a hand-back brief for the maintainer from their return packets: plain-text packets between the agents, and the same round whether the work rides a PR or lands on `develop` directly. The maintainer reads the brief and nothing else of the round, then the diff, with what a gate cannot check (scope, decisions, invariants, truth, docs) already read by reviewers the author could not steer. The same guide runs a plan round at *Clarify*, before any code: where the plan in the issue has one of the shapes that have shipped holes before, a reviewer with no author context reads it against the code, and the maintainer accepts it from a Clarify brief.
 
 ### Feature-branch flow (escape hatch for riskier work)
 
@@ -460,7 +460,13 @@ If you use AI assistants to write code (Claude Code, Codex, Cursor, Gemini CLI, 
 
 **What to leave out:** long prose, justifications, history. The rules file is an operating contract; the rationale lives in `CONTRIBUTING.md` and this playbook.
 
-**Starting point:** `agents_template.md` (mirrored alongside this playbook in `docs/guides/`) is a copy-and-fill skeleton with the cross-project essence of these rules pre-filled. Drop it in as your new repo's `AGENTS.md`, replace the `{{placeholders}}`, prune the project-type-specific lines, and you have a working operating contract in ten minutes.
+**Starting point:** `agents_template.md` (copied alongside this playbook in `docs/guides/`) is a copy-and-fill skeleton with the cross-project essence of these rules pre-filled. Drop it in as your new repo's `AGENTS.md`, replace the `{{placeholders}}`, prune the project-type-specific lines, and you have a working operating contract in ten minutes.
+
+**The lifecycle kit carries the mechanics.** The method these guides describe ships with its machinery as the lifecycle kit (`orwir/lifecycle-kit`): the `lifecycle` command keeps `docs/guides/` pinned to a kit release, moves board cards to the top of their column, guards the protected branch at push and deploy, and says what a repository needs before its next task; the kit's skills run the review rounds, the close-out and the release for any agent that loads Agent Skills. A new project turns it on at day zero:
+
+- `.lifecycle.toml` at the root names its branches, board, gate commands and review lenses — the structured values the skills read. Everything else they need stays in `AGENTS.md`.
+- `lifecycle upgrade --adopt` copies the method into `docs/guides/` and writes `.lifecycle.lock`.
+- The agent's adapter: for Claude Code, the kit's marketplace and plugin turned on in the committed `.claude/settings.json`, by the lines in the kit's README.
 
 ---
 

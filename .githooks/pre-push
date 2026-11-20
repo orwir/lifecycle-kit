@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# The kit's gate, the same steps CI runs: lint, format, tests, the plugin manifests.
+set -e
+root="$(cd "$(dirname "$0")/.." && pwd)"
+ruff check "$root/tools" "$root/tests"
+ruff format --check "$root/tools" "$root/tests"
+python -m pytest "$root/tests" -q -p no:cacheprovider
+claude plugin validate "$root" --strict

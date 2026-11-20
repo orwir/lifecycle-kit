@@ -1,0 +1,12 @@
+{
+  "name": "lifecycle-kit",
+  "description": "The maintainer's project lifecycle kit for Claude Code.",
+  "owner": { "name": "orwir" },
+  "plugins": [
+    {
+      "name": "lifecycle",
+      "source": "./",
+      "description": "Plan and work review rounds, hand-back, close-out and release skills over the lifecycle kit's method and tools."
+    }
+  ]
+}
