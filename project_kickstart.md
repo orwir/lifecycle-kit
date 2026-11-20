@@ -636,7 +636,13 @@ git push -u origin master
 # 7. Labels + first milestone (see commands above)
 # 8. Project board (see commands above)
 
-# 9. Branch protection on master (JSON body — nested fields don't work with -F)
+# 9. Guard master. GitHub refuses branch protection (HTTP 403) on a private repo
+#    without a paid plan; where it does, two checks stand in. A pre-push hook that
+#    refuses a push whose target is master catches the everyday spellings. A first
+#    job in the deploy workflow that refuses to deploy a master head that is not
+#    the merge commit of a merged pull request into master holds however master
+#    moved: a deletion, a force push, or a ref moved through the API.
+# Where the plan allows protection (JSON body — nested fields don't work with -F);
 # "contexts" must match your CI job name exactly
 gh api -X PUT repos/<owner>/<repo>/branches/master/protection --input - <<'JSON'
 {
