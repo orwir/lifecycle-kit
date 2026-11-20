@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # The kit's gate, the same steps CI runs: lint, format, tests, the plugin manifests.
 set -e
-root="$(cd "$(dirname "$0")/.." && pwd)"
+# The checkout being pushed, not the hook's own folder: core.hooksPath may point every
+# worktree at one checkout's .githooks.
+root="$(git rev-parse --show-toplevel)"
 ruff check "$root/tools" "$root/tests"
 ruff format --check "$root/tools" "$root/tests"
 python -m pytest "$root/tests" -q -p no:cacheprovider
