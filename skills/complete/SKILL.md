@@ -1,0 +1,50 @@
+---
+name: complete
+description: Close out a task on the maintainer's explicit go-ahead ("lgtm", "complete the task") — guides to the kit, commit, push, close the issue, board to Done at the top, delete a merged branch
+argument-hint: "[issue number; empty for an untracked task]"
+---
+
+Task: $ARGUMENTS — the issue number, or empty for an untracked task (where nothing substitutes `$ARGUMENTS`, what the maintainer named).
+
+This is the *Complete* phase of AGENTS.md § Task workflow. It runs only on the maintainer's explicit go-ahead to complete this task, in their own latest message: "complete the task", "lgtm", "ship it" or the like. "go", "proceed", "start" or "implement" authorize code, never landing, and an earlier approval covers only what it named. Without one, stop and ask. With one, every step below runs as one batch, with no prompt between steps.
+
+`lifecycle` is the kit's command (on PATH with the kit's Claude plugin, otherwise `bin/lifecycle` in a checkout of the kit); `lifecycle config` gives the integration branch (`branches.integration`), the gate (`gate.commands`) and whether there is a board.
+
+## 1. Before anything lands
+
+- The gate — `gate.commands`, else AGENTS.md § Commands' lint and tests — passed in this session after the last edit; if not, run it now. A red gate stops the batch. A repository with no gate at all says so in the report.
+- `git status --short` lists only this task's files. Anything else is someone's in-progress work: leave it out and name it in the report.
+
+## 2. Guides
+
+When `lifecycle guides check` lists guides this task changed: `lifecycle guides push -m "<what changed and why, one line>"`. It replays each edit onto the kit's latest from the release its copy came from and releases them as a patch; a conflict stops the batch for the maintainer before anything lands. A pushed guide takes the released text, with any change another project made to it meanwhile, and `.lifecycle.lock` records the release: both ride the task's commit. A guide edit is never left unpushed past this step.
+
+## 3. Commit
+
+- Stage the task's files by name, the pushed guides and `.lifecycle.lock` among them when step 2 ran; never `git add -A`.
+- One Conventional Commit (AGENTS.md § Branching and commits): the body says why, names every decision taken alone and every departure, and ends `Closes #N` on a tracked task. Write the message to a file in a scratch folder outside the tree and pass it with `-F`.
+- A failing hook is fixed at its cause and the commit made again; never `--no-verify`, never amend a pushed commit.
+
+## 4. Land
+
+- **On the integration branch, or a worktree branch whose work lands on it directly:** `git push origin HEAD:<integration>`. The pre-push hook runs the gate. A push refused because the branch moved is rebased onto `origin/<integration>` and pushed again; a conflict stops for the maintainer.
+- **On a feature branch:** `git push -u origin <branch>`; `gh pr create --base <integration> --title "<subject>" --body-file <file>` with `.github/pull_request_template.md` filled for a reader who never saw the review rounds; read `gh pr checks <N>` until it is green; `gh pr merge --squash --delete-branch`.
+- Hooks that run the project's own tools need its environment: where the shell's interpreter is not the project's, put the project's environment first on `PATH` for the commit and the push (AGENTS.md § Commands).
+
+## 5. Close the issue
+
+- A pushed `Closes #N` closes the issue only when it lands on the repository's default branch (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`), and a PR merge only into it. Comment with `gh issue comment <N> --body-file <file>`; where the work landed on another branch, also `gh issue close <N>`.
+- The comment quotes at most the hand-back brief's *In the tree*: no round tally, verdict or finding id.
+
+## 6. Board
+
+When the settings name a board, `lifecycle board <N> Done` puts the card in Done, at the top. An untracked task has no card.
+
+## 7. Branches
+
+- A merged feature branch: `git checkout <integration> && git pull && git branch -d <branch> && git fetch --prune`. `--delete-branch` removed only the remote copy.
+- A worktree's own branch stays while its worktree exists, and goes with it.
+
+## 8. Report
+
+One line per step with its coordinates: the kit release the guides went out in, the commit, where it was pushed, the PR, the issue's state, the board column. Anything skipped says why. The repository's next upgrade waits until the installed kit has the release step 2 made; it is its own task, not this one.
