@@ -22,7 +22,7 @@ def _config() -> Config:
 def _doctor(args: argparse.Namespace) -> int:
     findings = doctor.check(_config(), latest=latest.latest_release())
     if args.json:
-        print(json.dumps([finding.as_dict() for finding in findings], indent=2))
+        print(json.dumps([finding.as_dict() for finding in findings], indent=2, ensure_ascii=False))
     for finding in [] if args.json else findings:
         print(f"{finding.level}: {finding.message}")
         for detail in finding.details:
@@ -35,7 +35,7 @@ def _doctor(args: argparse.Namespace) -> int:
 def _upgraded(args: argparse.Namespace) -> int:
     found = doctor.upgraded(_config(), args.base)
     if args.json:
-        print(json.dumps(found, indent=2))
+        print(json.dumps(found, indent=2, ensure_ascii=False))
     elif found is None:
         print("no upgrade the integration branch lacks")
     else:
@@ -167,7 +167,15 @@ def parser() -> argparse.ArgumentParser:
     return root
 
 
+def _utf8_streams() -> None:
+    """Agents read the output as UTF-8; Windows writes piped output in its ANSI page."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 def main(argv: Sequence[str] | None = None) -> int:
+    _utf8_streams()
     args = parser().parse_args(argv)
     if args.command == "guides" and args.action == "push" and not args.message:
         parser().error("guides push needs --message")
@@ -181,7 +189,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(KIT_ROOT.as_posix())
             return 0
         if args.command == "config":
-            print(json.dumps(_config().as_dict(), indent=2))
+            print(json.dumps(_config().as_dict(), indent=2, ensure_ascii=False))
             return 0
         handler = {
             "doctor": _doctor,

@@ -138,3 +138,21 @@ def test_upgraded_names_what_the_release_requires(monkeypatch, capsys, repo):
     monkeypatch.setattr(doctor, "upgraded", lambda config, base=None: found)
     code, out, _ = run(monkeypatch, capsys, ["upgraded"], cwd=repo.root)
     assert code == 0 and "required of this repository: add a hook" in out
+
+
+def test_output_is_utf8_whatever_the_console_page(tmp_path):
+    import os
+    import subprocess
+    import sys
+
+    folder = tmp_path / "проект"
+    folder.mkdir()
+    (folder / ".lifecycle.toml").write_text("", encoding="utf-8")
+    tools = Path(__file__).resolve().parents[1] / "tools" / "lifecycle"
+    result = subprocess.run(
+        [sys.executable, str(tools), "-C", str(folder), "config"],
+        capture_output=True,
+        env={**os.environ, "PYTHONIOENCODING": "cp1252"},
+        check=False,
+    )
+    assert result.returncode == 0 and "проект" in result.stdout.decode("utf-8")

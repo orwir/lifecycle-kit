@@ -2,6 +2,10 @@
 
 What each kit release changed, newest first. A guide push from a project adds its own line.
 
+## v0.2.1
+
+- `lifecycle` writes UTF-8 whatever the console's code page, so the session-start note shows non-ASCII text and cannot crash on it.
+
 ## v0.2.0
 
 - Repositories: where `.claude/settings.json` allow-lists the kit's read commands, add `Bash(lifecycle upgraded:*)` beside them.
