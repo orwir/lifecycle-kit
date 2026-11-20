@@ -2,6 +2,10 @@
 
 What each kit release changed, newest first. A guide push from a project adds its own line.
 
+## v0.3.1
+
+- A hung kit remote no longer holds `lifecycle doctor` and the session-start note on Windows past the release check's 3 s timeout, and the cut-off check leaves none of git's processes running.
+
 ## v0.3.0
 
 - Repositories: where `AGENTS.md` follows a template other than `agents_template.md` (an ideas home follows `idea_gauntlet.md`), list each template the repository follows, with the file it ports into, under `[templates]` in `.lifecycle.toml`, and drop the sentence in `AGENTS.md` that says which template it follows.

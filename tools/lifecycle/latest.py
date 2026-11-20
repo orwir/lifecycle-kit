@@ -4,8 +4,9 @@ A machine whose kit never updates itself (no credentials for the private remote,
 offline, auto-update off) would otherwise run an old kit with nothing saying so. One
 `git ls-remote` with a short timeout and no prompts answers it. The day is recorded
 before asking, so a failed or cut-short check is silent and still waits a day.
-Only git's stdout is captured: git's remote helper inherits its stderr, and on
-Windows a hung helper holding a captured stderr keeps the timeout from returning.
+The timeout cuts off git with everything it started (``bounded.run``): on Windows, Git's
+``git.exe`` launcher and a hung remote helper would otherwise hold the call for the
+helper's whole hang.
 """
 
 from __future__ import annotations
@@ -13,11 +14,10 @@ from __future__ import annotations
 import json
 import os
 import re
-import subprocess
 import time
 from pathlib import Path
 
-from . import kit_remote, release
+from . import bounded, kit_remote, release
 
 DAY_SECONDS = 24 * 60 * 60
 TIMEOUT_SECONDS = 3
@@ -50,19 +50,14 @@ def _write(entry: dict) -> None:
 
 def _ask() -> str | None:
     try:
-        listed = subprocess.run(
+        listed = bounded.run(
             ["git", "ls-remote", "--tags", "--refs", kit_remote()],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            stdin=subprocess.DEVNULL,
-            text=True,
             timeout=TIMEOUT_SECONDS,
             env={**os.environ, **_QUIET},
-            check=False,
         )
-    except (OSError, subprocess.TimeoutExpired):
+    except OSError:
         return None
-    if listed.returncode != 0:
+    if listed is None or listed.returncode != 0:
         return None
     versions = [m.group(1) for line in listed.stdout.splitlines() if (m := _TAG.search(line))]
     return max(versions, key=release) if versions else None
