@@ -80,19 +80,22 @@ drawing beside them. The loop:
    locale, both themes — plus the foundations behind it (a states/components gallery), from the
    shipped tokens rather than adjectives. What the round adds waits on a page of its own until
    the close, and a note says only what the drawing can't (both below); the case for the design
-   goes in the conversation. Competing variants sit side by side, or behind a toggle, until the
-   maintainer picks. A prototype simulates only what is judged by feel — a timer, a sync, a
+   goes in the conversation. Competing variants sit side by side, or behind a toggle set apart
+   from the state parameters (below), until the maintainer picks: a variant among the states
+   passes for one. A prototype simulates only what is judged by feel — a timer, a sync, a
    drag — and reaches every other state through a toggle that draws it: a prototype that
    re-implements the app's logic has to be ported again at every close.
 3. **Review.** End the round with a short summary in the conversation: what changed on the
    canvas, and each open decision as a question with a recommended answer. The maintainer
    judges by eye on the canvas, corrects, and approves the drawing with the plan it belongs
    to, in one approval; nothing is built before it.
-   A picked variant collapses into the screen's one file. Where the pick settled a genuine
-   fork — two defensible layouts for one region, two interaction models for one action — the
-   losing region stays beside the winner, labelled **NOT TAKEN**, with the trade-off and the
-   reason: it is what stops the option being proposed again in six months. Keep only the
-   region, as it stood at the pick; a whole-page variant with no fork in it still goes.
+   A picked variant collapses into the screen's one file, and the variants that lost go. Where
+   the pick settled a genuine fork — two defensible layouts for one region, two interaction
+   models for one action — the file's notes keep one line on the option not taken: what it
+   was, why it lost, and where the decision is recorded. The line, not a drawing, stops the
+   option being proposed again in six months: it sits on the file every round reads, while a
+   drawing of the loser is frozen at the pick, drifts from the system around it, and reads as
+   a state of the screen.
 4. **Build and reconcile.** The approved design is a **strong draft, not a spec**: reuse the
    *shipped* primitives over its near-duplicates, drop embellishments that fight the product,
    and let the platform overrule the drawing where it must — a control's real metrics, chrome
@@ -107,7 +110,7 @@ drawing beside them. The loop:
    it draws. Two checks over that table are worth a test: every shipped screen has a row, so
    a screen cannot ship undrawn, and no two rows claim the same screen.
 6. **Close.** Before the hand-back, bring the design file to the code the change will ship:
-   redraw each delta from the ledger, collapse each decided fork (its NOT TAKEN region stays),
+   redraw each delta from the ledger, collapse each decided fork to its line in the notes,
    move what the round added to its surface's page, fold in or delete every other file the
    round made (a spec for work still open stays until it ships), cut the notes back to what a
    note holds, and say so in one line. The maintainer then reads the drawing and the code
@@ -151,20 +154,55 @@ reviewed again when the two are finally merged. Scope belongs in the round, whic
 region it redraws, not in a file boundary. Two exceptions expire on their own — competing
 variants of one screen under review at the same time, which collapse when the maintainer
 picks, and a spec for unshipped work, which cannot merge into a file claiming to be the current
-state without making it lie, and folds in when the work ships. A NOT TAKEN region is no
-exception: it is labelled, sits with its surface, and claims no screen.
+state without making it lie, and folds in when the work ships.
 
 **Arrange the canvas by surface, never by round.** A round that adds its boards where the last
 one stopped files the canvas by history: one screen's states scatter across every round that
 touched it, and a board that grows shoves everything after it. Give each surface a page (a
-file, where the tool has no pages), with its states grouped by kind — connection, errors,
-updates — and the foundations a page of their own. What an open round adds waits on a page of
+file, where the tool has no pages), with its states grouped by the region of the screen they
+change (below), and the foundations a page of their own. What an open round adds waits on a page of
 its own, so the review sees the round alone; the close moves each board into its surface's
 group and removes the page. History lives in the canvas's versions and the tracker, never in
 the layout. A board per state that imports the surface's file shows states side by side at no
 upkeep, since it follows the file; toggles alone suit a surface whose combinations multiply
 (viewport × theme × role × locale). A new surface or platform gets a canvas of its own; split
 one only as it heads toward hundreds of boards.
+
+**Lay out every design file the same way**, so a reader learns the frame once and judges only
+the screen. Two kinds of parameter drive it, and they never share a control. A *view parameter*
+changes how the same state renders: viewport, theme, locale. A *state parameter* changes which
+state the screen is in: who reads it, what the data holds, what was just done. Top to bottom:
+
+- **Backdrop:** one neutral tone behind every frame, outside both themes, as a photo editor's
+  pasteboard is mid-grey, so the frame's edge shows in light and dark alike.
+- **Head:** the screen's name and its route, nothing more; the pairing keeps its sources.
+- **View bar:** the view parameters, the same ones in the same order and words on every file,
+  pinned while the file scrolls. A surface with one locale says it has one.
+- **Frame:** the screen at the chosen viewport, full height, in its real chrome. It never
+  scrolls inside itself: the file scrolls, and the frame sideways only on a narrower window.
+- **State rail:** beside the frame, pinned, with a scroll of its own; above the frame when the
+  window cannot hold both. Scenarios first, then the reader and any variable that changes the
+  whole screen (a tier, a plan), then one row per variable, grouped under the region of the
+  screen it changes, in the screen's order. An overlay (a dialog, a gate, a panel) is a row of
+  the region that opens it.
+  - A row holds two to five options, the default first; past five it is two variables.
+  - A row that does not apply now is disabled with its reason, never removed, so the rail does
+    not shift under the cursor.
+  - Two rows that fill one slot (the banner, the open overlay) never both light: picking one
+    clears the other or disables it with its reason, so the rail shows only what the frame
+    draws.
+  - An option that sets two variables at once is a scenario: up to six named presets for the
+    combinations that tell a story. The one last picked stays marked as changed once a row
+    moves off it, so the reader still sees where they started.
+- **Galleries:** a variable whose values differ only in copy (banners, refusals, toasts) is
+  drawn together under the frame, stacked at the frame's width, instead of as options, since
+  copy is judged by reading it together and the longest locale against the rest.
+- **Notes**, last (*What a note holds*).
+
+Build the bar and the rail once, in the template every file starts from, and let each file
+supply only its values: a control bar each file builds for itself grows its own words for the
+same control. A canvas of static frames keeps the same split, with the view parameters as its
+columns or variable modes and the state parameters as its rows.
 
 **A pairing with a stamp tells you when it went stale.** Hash each row's sources into the row
 when its design file closes; a script that recomputes the hash then names the design files
@@ -183,7 +221,8 @@ reader of the drawing would otherwise get wrong:
 
 - a decision that looks arbitrary: the call, and why it is load-bearing (would a competent
   developer tidy it away?);
-- an absence that was chosen: what was considered, and why it lost;
+- an absence that was chosen, a decided fork's losing option among them: what was considered,
+  why it lost, and where the decision is recorded;
 - what a value is of — its unit, window or source — where the drawing can't say;
 - what a failure looks like: which state is empty, which unavailable, and why they differ;
 - a gate: what arms it, and where it is enforced;
@@ -211,6 +250,14 @@ own, after its lists of explorations and future designs "got out of hand"
 ([thoughtbot](https://thoughtbot.com/blog/how-we-used-designops-and-figma-to-scale-our-team)).
 GitLab goes further than a notes card: notes "should be temporary in nature, and not need to
 persist" ([GitLab](https://design.gitlab.com/get-started/uik-annotation)).
+
+**Where the layout comes from.** Storybook draws the line between the two kinds of parameter:
+globals such as theme, locale and viewport apply across stories from a toolbar, while args are
+one story's inputs ([Storybook](https://storybook.js.org/docs/essentials/toolbars-and-globals)), and Chromatic
+saves combinations of the globals as named modes ([Chromatic](https://chromatic.com/docs/modes)).
+Teams that keep explorations move them off the working file into an archive
+([Viget](https://www.viget.com/articles/figma-workflow-on-the-viget-product-design-team/));
+on a canvas with history, its versions are that archive.
 
 ### 3. Evolve — when the trigger fires
 
