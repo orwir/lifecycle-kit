@@ -109,11 +109,16 @@ ideas/
 ├── archived.md      one line per killed idea -> its folder in archive/
 ├── graduated.md     one line per graduated idea -> its repo, status and next check
 ├── docs/guides/     the kit's method, shared by every idea
+├── .lifecycle.toml  the kit's settings: integration branch `main`, no protected branch
+├── .lifecycle.lock  the kit release docs/guides/ is pinned to
 ├── active/          every idea still in the gauntlet, parked ones included
 │   └── <idea>/
 └── archive/         killed ideas, moved here whole
     └── <YYYY-MM-DD>-<idea>/
 ```
+
+Where the home's agent has a plugin system, the home turns the kit's plugin on as a
+project does (the kit's README).
 
 - **Capture:** a new folder in `active/`, with `IDEA.md` from the template below.
 - **Park:** it stays in `active/`; its `IDEA.md` says until when.
@@ -159,12 +164,20 @@ steps in `docs/guides/README.md`.
 
 ## Checks
 
-At the start of a session, list the `graduated.md` rows whose next check has
-passed. For each, show the bet from its project's `docs/product/vision.md` where
-that can be read, and its sessions: the days with commits in its repo since the
-last check and since graduation, for the user to correct. Then ask the user to
-call each one: continue, re-scope, park, done or dead. Write the call into the row
-as the guide's *The logs* says.
+At the start of a session, run `lifecycle doctor --json` (the lifecycle kit's
+command: on the agent's PATH where the kit's plugin is on, otherwise `bin/lifecycle`
+in a checkout of the kit). A finding whose fix is `upgrade`: run the kit's upgrade
+skill first, as its own commit. A `block` whose fix is `adopt` or `update-kit`: tell
+the user what it printed. This file follows the template in `idea_gauntlet.md` § *The
+ideas home*, not `agents_template.md` or `contributing_template.md`: an upgrade that
+changes that template is what gets ported here.
+
+Then list the `graduated.md` rows whose next check has passed. For each, show the
+bet from its project's `docs/product/vision.md` where that can be read, and its
+sessions: the days with commits in its repo since the last check and since
+graduation, for the user to correct. Then ask the user to call each one: continue,
+re-scope, park, done or dead. Write the call into the row as the guide's *The logs*
+says.
 
 ## Capture
 
@@ -186,8 +199,7 @@ archived.md)`, add the line to `archived.md` in the user's words, commit.
 2. Here: `git rm -r active/<idea>`, add a line to `graduated.md` with a next check
    four weeks out, commit.
 3. In the new repo: copy the guides into `docs/guides/` (`lifecycle upgrade --adopt`)
-   and run the kickstart
-   (gauntlet Phase 4).
+   and run the kickstart (gauntlet Phase 4).
 
 ## Re-open
 

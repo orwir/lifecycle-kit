@@ -2,6 +2,10 @@
 
 What each kit release changed, newest first. A guide push from a project adds its own line.
 
+## v0.2.2
+
+- An ideas home runs lifecycle doctor at session start, names the kit's files in its layout, and says which template its AGENTS.md follows; the bootstrap names .lifecycle.toml
+
 ## v0.2.1
 
 - `lifecycle` writes UTF-8 whatever the console's code page, so the session-start note shows non-ASCII text and cannot crash on it.
