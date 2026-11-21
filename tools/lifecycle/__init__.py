@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 KIT_ROOT = Path(__file__).resolve().parents[2]
 METHOD = KIT_ROOT / "method"
@@ -25,6 +26,13 @@ def kit_remote() -> str:
     if override := os.environ.get("LIFECYCLE_KIT_REMOTE"):
         return override
     return json.loads(_MANIFEST.read_text(encoding="utf-8"))["repository"] + ".git"
+
+
+def kit_repository() -> str:
+    """The kit's ``owner/name`` on GitHub, from the manifest's repository: the prefix a kit
+    issue reference takes outside the kit, where a bare ``#N`` is the repository's own."""
+    url = json.loads(_MANIFEST.read_text(encoding="utf-8"))["repository"]
+    return urlparse(url).path.strip("/").removesuffix(".git")
 
 
 def is_kit(root: Path) -> bool:

@@ -1,8 +1,7 @@
-import re
 import subprocess
 
 from conftest import name_templates
-from lifecycle import doctor, guides
+from lifecycle import changelog, doctor, guides, kit_repository
 from lifecycle.guides import read_lock, upgrade, write_lock
 
 
@@ -102,18 +101,49 @@ def test_an_installed_kit_older_than_the_pin_needs_updating(repo):
     assert doctor.check(repo, installed="1.1.0")[0].fix == doctor.UPDATE_KIT
 
 
-def test_a_heading_in_another_shape_lends_its_entries_to_no_release(monkeypatch, tmp_path):
+def test_both_heading_shapes_are_read_and_another_lends_its_entries_to_none(monkeypatch, tmp_path):
     (tmp_path / "CHANGELOG.md").write_text(
-        "## v1.4.0 — dated\n\n- dropped\n\n## v1.3.0\n\n- taken\n", encoding="utf-8"
+        "## v1.5.0 — dated\n\n- dropped\n\n## [1.4.0] — 2026-11-21\n\n### Changed\n- dated\n\n"
+        "## v1.3.0\n\n- an older kit's push\n",
+        encoding="utf-8",
     )
     monkeypatch.setattr(doctor, "KIT_ROOT", tmp_path)
-    assert doctor.changes_since("1.2.0", "1.4.0") == ["taken"]
+    assert doctor.changes_since("1.2.0", "1.5.0") == ["dated", "an older kit's push"]
 
 
-def test_every_release_heading_in_the_kit_changelog_is_read():
-    lines = (doctor.KIT_ROOT / "CHANGELOG.md").read_text(encoding="utf-8").splitlines()
-    headings = [line for line in lines if line.startswith("## ")]
-    assert headings and all(doctor._HEADING.match(line) for line in headings)
+def test_every_release_heading_in_the_kit_changelog_and_upgrading_is_read():
+    for name in ("CHANGELOG.md", "UPGRADING.md"):
+        lines = (doctor.KIT_ROOT / name).read_text(encoding="utf-8").splitlines()
+        headings = [line for line in lines if line.startswith("## ")]
+        assert headings and all(changelog.release_of(line) for line in headings)
+
+
+def test_a_missing_upgrading_or_a_stray_heading_in_it_lists_no_steps(monkeypatch, tmp_path):
+    monkeypatch.setattr(doctor, "KIT_ROOT", tmp_path)
+    assert doctor.steps_since("0.0.0", "1.4.0") == []
+    (tmp_path / "UPGRADING.md").write_text(
+        "## [1.4.0] dated wrong\n\n- dropped in `a.toml`\n\n## [1.3.0] — 2026-11-21\n\n"
+        "- taken in `b.toml`\n",
+        encoding="utf-8",
+    )
+    assert doctor.steps_since("0.0.0", "1.4.0") == ["Upgrade 1.3.0: taken in `b.toml`"]
+
+
+def test_a_kit_issue_reads_as_the_kits_outside_it(repo, monkeypatch, tmp_path):
+    upgrade(repo, adopt=True)
+    (tmp_path / "CHANGELOG.md").write_text(
+        "## [1.3.0] — 2026-11-21\n\n### Fixed\n- a fix (#9)\n", encoding="utf-8"
+    )
+    (tmp_path / "UPGRADING.md").write_text(
+        "## [1.3.0] — 2026-11-21\n\n- add `x.json`, as #9 says\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(doctor, "KIT_ROOT", tmp_path)
+    (finding,) = doctor.check(repo, installed="1.3.0")
+    kit = kit_repository()
+    assert finding.details == (
+        f"Upgrade 1.3.0: add `x.json`, as {kit}#9 says",
+        f"a fix ({kit}#9)",
+    )
 
 
 def git(cwd, *args):
@@ -212,39 +242,64 @@ def test_one_remedy_is_said_once(repo):
     assert [f.fix for f in findings] == [doctor.UPDATE_KIT] and "is out" not in findings[0].message
 
 
-def test_repositories_lines_are_shown_past_the_cut(repo, monkeypatch, tmp_path):
+def test_the_steps_are_shown_past_the_cut_in_place_of_their_claims(repo, monkeypatch, tmp_path):
     upgrade(repo, adopt=True)
-    lines = "".join(f"- change {n}\n" for n in range(12)) + "- Repositories: add a hook\n"
+    lines = "".join(f"- change {n}\n" for n in range(12)) + "- Repositories: a hook\n"
     (tmp_path / "CHANGELOG.md").write_text(f"## v1.3.0\n\n{lines}", encoding="utf-8")
+    (tmp_path / "UPGRADING.md").write_text(
+        "## v1.3.0\n\n- add a hook in `.githooks/pre-push`\n", encoding="utf-8"
+    )
     monkeypatch.setattr(doctor, "KIT_ROOT", tmp_path)
     details = doctor.check(repo, installed="1.3.0")[0].details
-    assert details[0] == "Repositories: add a hook" and len(details) == doctor.CHANGES_SHOWN + 1
+    assert details[0] == "Upgrade 1.3.0: add a hook in `.githooks/pre-push`"
+    assert len(details) == doctor.CHANGES_SHOWN + 1 and "Repositories: a hook" not in details
+
+
+def test_a_finding_lists_the_steps_oldest_release_first(repo, monkeypatch, tmp_path):
+    upgrade(repo, adopt=True)
+    (tmp_path / "UPGRADING.md").write_text(
+        "## [1.4.0] — 2026-11-22\n\n- then `b.toml`\n- and `c.toml`\n\n"
+        "## [1.3.0] — 2026-11-21\n\n- first `a.toml`\n\n"
+        "## [1.2.0] — 2026-11-20\n\n- had `z.toml`\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(doctor, "KIT_ROOT", tmp_path)
+    assert doctor.check(repo, installed="1.4.0")[0].details == (
+        "Upgrade 1.3.0: first `a.toml`",
+        "Upgrade 1.4.0: then `b.toml`",
+        "Upgrade 1.4.0: and `c.toml`",
+    )
 
 
 def test_a_release_names_what_every_repository_must_change(repo, monkeypatch, tmp_path):
     committed_repo(repo, monkeypatch)
     (tmp_path / "CHANGELOG.md").write_text(
-        "## v1.3.0\n\n- Repositories: allow `lifecycle upgraded` in .claude/settings.json\n"
-        "- a change\n",
+        "## [1.3.0] — 2026-11-21\n\n### Changed\n- Repositories: allow `lifecycle upgraded`\n"
+        "- a change (#7)\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "UPGRADING.md").write_text(
+        "## [1.3.0] — 2026-11-21\n\n- allow `lifecycle upgraded` in .claude/settings.json\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(doctor, "KIT_ROOT", tmp_path)
     monkeypatch.setattr(guides, "kit_version", lambda: "1.3.0")
     (guides.METHOD / "task_review.md").write_text("# Task review, 1.3\n", encoding="utf-8")
     upgrade(repo)
-    assert doctor.upgraded(repo)["required"] == [
-        "allow `lifecycle upgraded` in .claude/settings.json"
-    ]
+    found = doctor.upgraded(repo)
+    step = "Upgrade 1.3.0: allow `lifecycle upgraded` in .claude/settings.json"
+    assert found["required"] == [step]
+    assert found["changes"] == [f"a change ({kit_repository()}#7)"]
 
 
-def test_every_repositories_line_names_the_file_it_changes():
-    lines = (doctor.KIT_ROOT / "CHANGELOG.md").read_text(encoding="utf-8").splitlines()
-    required = [line for line in lines if line.startswith("- " + doctor.REPOSITORIES)]
-    named = re.compile(r"`[^`\s]*[./][^`\s]*`")
-    assert required and all(named.search(line) for line in required)
+OWED = (
+    "## v1.3.0\n\n- a later line in `later.toml`\n\n"
+    "## v1.2.0\n\n- add `b.json`\n\n"
+    "## v1.1.0\n\n- add `a.cfg`\n"
+)
 
 
-def test_a_first_move_owes_every_repositories_line_up_to_its_release(repo, monkeypatch, tmp_path):
+def test_a_first_move_owes_every_step_up_to_its_release(repo, monkeypatch, tmp_path):
     for key in ("GIT_AUTHOR_NAME", "GIT_COMMITTER_NAME"):
         monkeypatch.setenv(key, "t")
     for key in ("GIT_AUTHOR_EMAIL", "GIT_COMMITTER_EMAIL"):
@@ -252,17 +307,13 @@ def test_a_first_move_owes_every_repositories_line_up_to_its_release(repo, monke
     git(repo.root, "init", "-q", "-b", "main")
     git(repo.root, "add", "-A")
     git(repo.root, "commit", "-q", "-m", "before the kit")
-    (tmp_path / "CHANGELOG.md").write_text(
-        "## v1.3.0\n\n- Repositories: a later line in `later.toml`\n\n"
-        "## v1.2.0\n\n- Repositories: add `b.json`\n- a change\n\n"
-        "## v1.1.0\n\n- Repositories: add `a.cfg`\n",
-        encoding="utf-8",
-    )
+    (tmp_path / "CHANGELOG.md").write_text("## v1.2.0\n\n- a change\n", encoding="utf-8")
+    (tmp_path / "UPGRADING.md").write_text(OWED, encoding="utf-8")
     monkeypatch.setattr(doctor, "KIT_ROOT", tmp_path)
     upgrade(repo, adopt=True)
     found = doctor.upgraded(repo)
     assert (found["from"], found["to"], found["changes"]) == (None, "1.2.0", [])
-    assert found["required"] == ["add `b.json`", "add `a.cfg`"]
+    assert found["required"] == ["Upgrade 1.1.0: add `a.cfg`", "Upgrade 1.2.0: add `b.json`"]
 
 
 def test_templates_installed_whole_follow_the_mapping(repo, monkeypatch):
@@ -290,15 +341,10 @@ def test_a_method_folder_without_the_kits_manifest_is_any_repository(kit_checkou
     assert [f.fix for f in doctor.check(kit_checkout, installed="9.9.9")] == [doctor.ADOPT]
 
 
-def test_a_repo_not_on_the_kit_is_shown_every_line_it_will_owe(repo, monkeypatch, tmp_path):
-    (tmp_path / "CHANGELOG.md").write_text(
-        "## v1.3.0\n\n- Repositories: a later line in `later.toml`\n\n"
-        "## v1.2.0\n\n- Repositories: add `b.json`\n- a change\n\n"
-        "## v1.1.0\n\n- Repositories: add `a.cfg`\n",
-        encoding="utf-8",
-    )
+def test_a_repo_not_on_the_kit_is_shown_every_step_it_will_owe(repo, monkeypatch, tmp_path):
+    (tmp_path / "UPGRADING.md").write_text(OWED, encoding="utf-8")
     monkeypatch.setattr(doctor, "KIT_ROOT", tmp_path)
-    owed = ("Repositories: add `b.json`", "Repositories: add `a.cfg`")
+    owed = ("Upgrade 1.1.0: add `a.cfg`", "Upgrade 1.2.0: add `b.json`")
     (finding,) = doctor.check(repo, installed="1.2.0")
     assert (finding.fix, finding.details) == (doctor.ADOPT, owed)
     (repo.guides_dir / ".gist-revision").write_text("abc\n", encoding="utf-8")

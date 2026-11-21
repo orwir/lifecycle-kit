@@ -12,11 +12,11 @@ network read, the newest release on the kit's remote, comes in from the caller
 from __future__ import annotations
 
 import json
-import re
 import subprocess
 from dataclasses import dataclass, field
 
-from . import KIT_ROOT, is_kit, kit_version
+from . import KIT_ROOT, is_kit, kit_repository, kit_version
+from . import changelog as _changelog
 from . import guides as _guides
 from . import release as _release
 from .config import Config
@@ -42,9 +42,9 @@ UPDATE_COMMAND = (
     "Claude: `claude plugin marketplace update lifecycle-kit` and "
     "`claude plugin update lifecycle@lifecycle-kit`, then `/reload-plugins` in a running session"
 )
+#: The changelog's marker for a change every repository makes; its steps are UPGRADING.md's.
 REPOSITORIES = "Repositories: "
-
-_HEADING = re.compile(r"^## v(\d+\.\d+\.\d+)\s*$")
+UPGRADE_STEP = "Upgrade"
 
 
 @dataclass(frozen=True)
@@ -65,47 +65,58 @@ class Finding:
         }
 
 
+def _entries(name: str, after: str, upto: str) -> list[tuple[str, list[str]]]:
+    """A kit file's releases after ``after`` up to ``upto``, newest first, each entry's
+    ``#N`` naming the kit's issue: these lines are read in other repositories."""
+    repository = kit_repository()
+    return [
+        (version, [_changelog.qualify(entry, repository) for entry in entries])
+        for version, entries in _changelog.sections(KIT_ROOT / name, after, upto)
+    ]
+
+
 def changes_since(pinned: str, installed: str) -> list[str]:
     """The kit CHANGELOG's entries for the releases after ``pinned`` up to ``installed``.
 
-    Any ``## `` line ends a release's entries, so a heading in another shape drops its
-    own entries rather than lending them to the release above it.
+    A ``Repositories:`` entry is left out: its steps, from ``steps_since``, stand in for it.
     """
-    changelog = KIT_ROOT / "CHANGELOG.md"
-    if not changelog.is_file():
-        return []
-    entries, taking = [], False
-    for line in changelog.read_text(encoding="utf-8").splitlines():
-        if line.startswith("## "):
-            heading = _HEADING.match(line)
-            taking = bool(heading) and (
-                _release(pinned) < _release(heading.group(1)) <= _release(installed)
-            )
-            continue
-        if taking and line.startswith("- "):
-            entries.append(line[2:])
-    return entries
+    return [
+        entry
+        for _, entries in _entries("CHANGELOG.md", pinned, installed)
+        for entry in entries
+        if not entry.startswith(REPOSITORIES)
+    ]
+
+
+def steps_since(pinned: str, installed: str) -> list[str]:
+    """``UPGRADING.md``'s steps for the releases after ``pinned`` up to ``installed``: what
+    each asks of every repository beyond its guides and templates, oldest release first,
+    the order they are made in. Each opens ``Upgrade <release>:``, since a step can speak
+    of its release and a first move runs several releases' steps together."""
+    return [
+        f"{UPGRADE_STEP} {version}: {step}"
+        for version, steps in reversed(_entries("UPGRADING.md", pinned, installed))
+        for step in steps
+    ]
 
 
 def _required(installed: str) -> tuple[str, ...]:
-    """Every ``Repositories:`` line up to ``installed``: what a first move onto the kit owes,
-    which the upgrade skill reads before the upgrade, since some change the settings it reads."""
-    return tuple(e for e in changes_since("0.0.0", installed) if e.startswith(REPOSITORIES))
+    """Every step up to ``installed``: what a first move onto the kit owes, which the
+    upgrade skill reads before the upgrade, since some change the settings it reads."""
+    return tuple(steps_since("0.0.0", installed))
 
 
-def _shown(entries: list[str]) -> tuple[str, ...]:
-    """The entries a session sees: every ``Repositories:`` line, then the rest up to the cap."""
-    required = [e for e in entries if e.startswith(REPOSITORIES)]
-    others = [e for e in entries if not e.startswith(REPOSITORIES)]
+def _shown(changes: list[str], required: list[str]) -> tuple[str, ...]:
+    """The lines a session sees: every step, then the changes up to the cap."""
     room = max(CHANGES_SHOWN - len(required), 0)
-    rest = len(others) - room
+    rest = len(changes) - room
     more = [f"… and {rest} more in CHANGELOG.md (`lifecycle where`)"] if rest > 0 else []
-    return (*required, *others[:room], *more)
+    return (*required, *changes[:room], *more)
 
 
 def _behind(lock: Lock, installed: str, pushed_pending: str | None) -> Finding:
     pinned, current = _release(lock.kit), _release(installed)
-    changes = _shown(changes_since(lock.kit, installed))
+    changes = _shown(changes_since(lock.kit, installed), steps_since(lock.kit, installed))
     minor = pinned[:2] < current[:2]
     if pushed_pending:
         return Finding(
@@ -296,13 +307,13 @@ def upgraded(config: Config, base: str | None = None) -> dict | None:
     ]
     previous = before.get("kit") if before else None
     changes = changes_since(previous, lock.kit) if previous else []
-    # A first move has no release to measure from: every line the kit has required applies.
-    owed = changes if previous else changes_since("0.0.0", lock.kit)
+    # A first move has no release to measure from: every step the kit has asked for applies.
+    owed = steps_since(previous or "0.0.0", lock.kit)
     return {
         "from": previous,
         "to": lock.kit,
         "changes": changes,
-        "required": [c.removeprefix(REPOSITORIES) for c in owed if c.startswith(REPOSITORIES)],
+        "required": owed,
         "guides": rewritten,
         "deleted": deleted,
         "installed": installed,

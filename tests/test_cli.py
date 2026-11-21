@@ -131,14 +131,22 @@ def test_doctor_says_a_newer_kit_is_out(monkeypatch, capsys, repo):
     assert code == 0 and "kit 1.4.0 is out" in out
 
 
-def test_upgraded_names_what_the_release_requires(monkeypatch, capsys, repo):
+def test_upgraded_names_each_step_the_release_requires_on_its_own_line(monkeypatch, capsys, repo):
     from lifecycle import doctor
 
-    found = {"from": "1.2.0", "to": "1.3.0", "changes": [], "required": ["add a hook"],
+    required = ["add a hook; then run it", "set `x` in `a.toml`"]
+    found = {"from": "1.2.0", "to": "1.3.0", "changes": [], "required": required,
              "guides": [], "deleted": [], "installed": []}  # fmt: skip
     monkeypatch.setattr(doctor, "upgraded", lambda config, base=None: found)
     code, out, _ = run(monkeypatch, capsys, ["upgraded"], cwd=repo.root)
-    assert code == 0 and "required of this repository: add a hook" in out
+    assert code == 0
+    assert (
+        "required of this repository:\n  - add a hook; then run it\n  - set `x` in `a.toml`\n"
+        in out
+    )
+    found["required"] = []
+    code, out, _ = run(monkeypatch, capsys, ["upgraded"], cwd=repo.root)
+    assert "required of this repository: none\n" in out
 
 
 def test_output_is_utf8_whatever_the_console_page(tmp_path):

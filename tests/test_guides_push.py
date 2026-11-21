@@ -32,7 +32,9 @@ def kit(tmp_path, monkeypatch):
     (work / ".claude-plugin").mkdir()
     for path in guides.METHOD.iterdir():
         (work / "method" / path.name).write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
-    (work / "CHANGELOG.md").write_text("# Changelog\n\n## v1.2.0\n\n- first\n", encoding="utf-8")
+    (work / "CHANGELOG.md").write_text(
+        "# Changelog\n\n---\n\n## [1.2.0] — 2026-11-20\n\n### Added\n- first\n", encoding="utf-8"
+    )
     (work / ".claude-plugin" / "plugin.json").write_text("{}", encoding="utf-8")
     git(work, "init", "-q", "-b", "main")
     git(work, "add", "-A")
@@ -55,7 +57,8 @@ def read(path):
     return path.read_text(encoding="utf-8")
 
 
-def test_an_edit_lands_on_main_as_a_patch_release(repo, kit, tmp_path):
+def test_an_edit_lands_on_main_as_a_patch_release(repo, kit, tmp_path, monkeypatch):
+    monkeypatch.setattr(guides, "_today", lambda: "2026-11-22")
     upgrade(repo, adopt=True)
     (repo.guides_dir / "task_review.md").write_text("# Task review, better\n", encoding="utf-8")
     assert push(repo, "task_review: say it better") == (["task_review.md"], "1.2.2")
@@ -64,9 +67,10 @@ def test_an_edit_lands_on_main_as_a_patch_release(repo, kit, tmp_path):
     assert read(check / "method" / "agents_template.md") == "# AGENTS, later\n"
     assert json.loads(read(check / ".claude-plugin" / "plugin.json"))["version"] == "1.2.2"
     assert "v1.2.2" in git(check, "tag")
-    changelog = read(check / "CHANGELOG.md")
-    assert changelog.index("## v1.2.2\n\n- task_review: say it better") < changelog.index(
-        "## v1.2.0"
+    assert read(check / "CHANGELOG.md") == (
+        "# Changelog\n\n---\n\n## [1.2.2] — 2026-11-22\n\n"
+        "### Changed\n- task_review: say it better\n\n"
+        "## [1.2.0] — 2026-11-20\n\n### Added\n- first\n"
     )
     lock = read_lock(repo.root)
     assert (lock.kit, lock.pushed, local_edits(repo, lock)) == (
@@ -85,6 +89,26 @@ def test_a_second_push_builds_on_the_first(repo, kit, tmp_path):
     assert read(clone(kit, tmp_path / "check") / "method" / "task_review.md") == (
         "# Task review, best\n"
     )
+
+
+@pytest.mark.parametrize(
+    ("line", "reason"),
+    [
+        ("task_review: " + "x" * 120, "133 characters, over the cap of 120"),
+        ("task_review: say it better; and shorter", "welded"),
+        ("task_review: say it better (#12)", "an issue number"),
+    ],
+)
+def test_a_line_that_breaks_the_changelogs_style_is_refused_before_cloning(
+    repo, kit, monkeypatch, line, reason
+):
+    upgrade(repo, adopt=True)
+    (repo.guides_dir / "task_review.md").write_text("# Task review, better\n", encoding="utf-8")
+    cloned = []
+    monkeypatch.setattr(guides, "_git", lambda *args: cloned.append(args))
+    with pytest.raises(GuidesError, match=reason):
+        push(repo, line)
+    assert cloned == [] and local_edits(repo, read_lock(repo.root)) == ["task_review.md"]
 
 
 def test_a_conflict_stops_the_push(repo, kit):

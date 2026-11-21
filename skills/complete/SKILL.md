@@ -13,11 +13,11 @@ This is the *Complete* phase of AGENTS.md § Task workflow. It runs only on the 
 ## 1. Before anything lands
 
 - The gate — `gate.commands`, else AGENTS.md § Commands' lint and tests — passed in this session after the last edit; if not, run it now. A red gate stops the batch. A repository with no gate at all says so in the report.
-- `git status --short` lists only this task's files, and an upgrade's when `lifecycle upgraded` reports one, the files its `Repositories:` changes name included. Anything else is someone's in-progress work: leave it out and name it in the report.
+- `git status --short` lists only this task's files, and an upgrade's when `lifecycle upgraded` reports one, the files its upgrade steps name included. Anything else is someone's in-progress work: leave it out and name it in the report.
 
 ## 2. Guides
 
-When `lifecycle guides check` lists guides this task changed: `lifecycle guides push -m "<what changed and why, one line>"`. Write the line in the kit's words: every repository on the kit reads it in its session-start notes and *Upgrade* lines, so it names no project's own issue or surface. It replays each edit onto the kit's latest from the release its copy came from and releases them as a patch; a conflict stops the batch for the maintainer before anything lands. A pushed guide takes the released text, with any change another project made to it meanwhile, and `.lifecycle.lock` records the release: both ride the task's commit. A guide edit is never left unpushed past this step.
+When `lifecycle guides check` lists guides this task changed: `lifecycle guides push -m "<what changed>"`. The line is the patch's entry in the kit's changelog, so it follows that changelog's style: one claim of at most 120 characters, no reason, no issue number. The push refuses a line over the cap, one with a semicolon or a lone dash, and one with a `#N`. Write it in the kit's words: every repository on the kit reads it in its session-start notes and *Upgrade* lines, so it names no project's own issue or surface. It replays each edit onto the kit's latest from the release its copy came from and releases them as a patch; a conflict stops the batch for the maintainer before anything lands. A pushed guide takes the released text, with any change another project made to it meanwhile, and `.lifecycle.lock` records the release: both ride the task's commit. A guide edit is never left unpushed past this step.
 
 ## 3. Commit
 

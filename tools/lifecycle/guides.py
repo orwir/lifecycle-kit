@@ -15,9 +15,11 @@ import json
 import subprocess
 import tempfile
 from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
 
 from . import METHOD, is_kit, kit_remote, kit_version, release
+from . import changelog as _changelog
 from .config import Config
 
 LOCK = ".lifecycle.lock"
@@ -270,13 +272,19 @@ def _git(cwd: str, *args: str) -> str:
     return result.stdout.strip()
 
 
+def _today() -> str:
+    return date.today().isoformat()
+
+
 def _note_release(clone: Path, version: str, message: str) -> None:
+    """The release above the newest in the kit's changelog, dated today: a guide push
+    changes wording, so its line goes under Changed."""
     changelog = clone / CHANGELOG
     if not changelog.is_file():
         return
     body = text(changelog)
     at = body.find("\n## ")
-    entry = f"\n## v{version}\n\n- {message}\n"
+    entry = f"\n{_changelog.heading(version, _today())}\n\n### Changed\n- {message}\n"
     body = body + entry if at < 0 else body[:at] + entry + body[at:]
     changelog.write_text(body, encoding="utf-8", newline="\n")
 
@@ -357,6 +365,16 @@ def push(config: Config, message: str) -> tuple[list[str], str]:
         raise GuidesError(
             "deleted here: " + ", ".join(deleted) + ". Restore them; a guide leaves the "
             "method in the kit itself, never from one project's copy."
+        )
+    broken = _changelog.entry_violations(message)
+    if _changelog.names_issue(message):
+        broken.append("an issue number (#N), which every repository would read as the kit's")
+    if broken:
+        raise GuidesError(
+            "the line is the kit's changelog entry and breaks its style: "
+            + "; ".join(broken)
+            + f". Write what changed as one claim of at most {_changelog.CAP} characters, "
+            "with no issue number."
         )
     with tempfile.TemporaryDirectory() as tmp:
         _git(tmp, "clone", "-q", kit_remote(), ".")

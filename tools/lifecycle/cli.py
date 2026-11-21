@@ -43,7 +43,9 @@ def _upgraded(args: argparse.Namespace) -> int:
         print(f"kit {found['from'] or 'none'} -> {found['to']}")
         for change in found["changes"]:
             print(f"  - {change}")
-        print("required of this repository: " + ("; ".join(found["required"]) or "none"))
+        print("required of this repository:" + ("" if found["required"] else " none"))
+        for step in found["required"]:
+            print(f"  - {step}")
         print("guides rewritten: " + (", ".join(found["guides"]) or "none"))
         print("guides deleted: " + (", ".join(found["deleted"]) or "none"))
         print("templates installed whole: " + (", ".join(found["installed"]) or "none"))
@@ -165,7 +167,9 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--dry-run", action="store_true")
     p = sub.add_parser("guides", help="this repository's guide edits: list them, or push them")
     p.add_argument("action", choices=("check", "push"))
-    p.add_argument("-m", "--message", help="the kit commit's one line: what changed and why")
+    p.add_argument(
+        "-m", "--message", help="the kit commit's line and changelog entry: what changed, one claim"
+    )
     p = sub.add_parser("board", help="put an issue's card in a board column, at the top")
     p.add_argument("issue", type=int)
     p.add_argument("column", choices=board.COLUMNS)
