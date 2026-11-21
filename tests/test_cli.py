@@ -2,6 +2,7 @@ import io
 import json
 from pathlib import Path
 
+import pytest
 from lifecycle import cli, hook
 
 
@@ -52,16 +53,16 @@ def test_a_broken_guard_blocks_only_the_reviewer(monkeypatch, capsys):
     assert run(monkeypatch, capsys, ["hook", "pre-bash"], stdin=reviewer)[0] == 2
 
 
-def test_the_push_guard_reads_the_protected_branch(monkeypatch, capsys, repo):
-    monkeypatch.delenv("PRE_COMMIT_REMOTE_BRANCH", raising=False)
+def test_the_guards_are_gone(monkeypatch, capsys, repo):
     monkeypatch.chdir(repo.root)
-    monkeypatch.setattr("sys.stdin", io.StringIO("refs/heads/x a refs/heads/master b\n"))
-    assert cli.main(["guard", "push"]) == 1
+    with pytest.raises(SystemExit) as exited:
+        cli.main(["guard", "push"])
+    assert exited.value.code == 2 and "invalid choice: 'guard'" in capsys.readouterr().err
 
 
 def test_config_prints_the_resolved_settings(monkeypatch, capsys, repo):
     code, out, _ = run(monkeypatch, capsys, ["config"], cwd=repo.root)
-    assert code == 0 and json.loads(out)["branches"]["protected"] == "master"
+    assert code == 0 and json.loads(out)["branches"] == {"integration": "main"}
 
 
 def test_dash_c_runs_in_another_directory(monkeypatch, capsys, repo, tmp_path):

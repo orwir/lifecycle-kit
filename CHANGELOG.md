@@ -2,6 +2,23 @@
 
 What each kit release changed, newest first. A guide push from a project adds its own line.
 
+## v0.4.0
+
+- Repositories: on GitHub and in every clone (its `.git/config`), a repository with a production branch and an integration branch moves to one `main`, as its own upgrade run alone: a task in flight waits with its files in the tree, and nothing else lands until the release that ends the move. `git fetch --prune origin`, then check that `origin/<production>` is an ancestor of `origin/<integration>`; where it is not, stop and list `git log origin/<integration>..origin/<production>`. On the maintainer's go-ahead, delete the production branch on GitHub, rename the integration branch to `main` there, and let a GitHub environment that limits deployments to the production branch take `main` and `hotfix/*`. In each clone: `git branch -D <production>`, `git branch -m <integration> main`, `git fetch --prune origin`, `git branch -u origin/main main`, `git remote set-head origin -a`. Land the rest of this release's lines on `main`. The release that ends the move is the maintainer's to ask for; as the first through the new workflow, the release skill probes the workflow before it ships.
+- Repositories: in `.lifecycle.toml`, delete `protected` under `[branches]`, set `integration = "main"` where it names another branch, and add `[release]` with `workflow = "release.yml"` where the repository ships releases by a workflow.
+- Repositories: in `.github/workflows/`, the workflow that ran on a push to the production branch becomes `release.yml` by `project_kickstart.md` § CI/CD recipe: dispatched on the reviewed commit, its refusal steps named as there, one run at a time, the tag created last. A check that ran only on the release PR moves into it, a job that guarded the production branch goes, and `ci.yml` runs on pushes to `main`.
+- Repositories: in `.github/workflows/`, the git hooks (`.pre-commit-config.yaml` or `.githooks/`), `scripts/`, `README.md` and `docs/` outside `docs/adr/`, every other name of the old branches becomes `main` (`origin/develop`, badges and links included), and a push guard, a deploy guard or a branch-sync script is deleted with its tests.
+- Repositories: in `.claude/settings.json`, a rule that denies a push to the production branch becomes one that asks before `gh workflow run`, `lifecycle release` and `bin/lifecycle release`.
+- Repositories: an ADR in `docs/adr/` that records the release-PR trigger gets a successor ADR for the release workflow; the accepted one is not edited.
+- The method keeps one long-lived branch, `main`: the release PR, its fast-forward and the hotfix forward-merge are gone.
+- A release is a version-bump commit on `main`, reviewed on a compare link, then shipped by a dispatched workflow that creates the tag.
+- `lifecycle release <commit>` dispatches the release workflow on a reviewed commit, watches the run and says why it was refused.
+- A hotfix ships from a `hotfix/*` branch cut from the last tag, then merges into `main` with a merge commit, never squashed.
+- `lifecycle guard` is gone: a push ships nothing, so no branch is left to guard.
+- `branches.integration` defaults to `main`, and `branches.protected` is read and ignored until a repository removes it.
+- The upgrade skill makes a `Repositories:` change outside the tree first, in a run of its own, on the maintainer's go-ahead.
+- `task_review.md` names the integration branch where it said `develop`.
+
 ## v0.3.1
 
 - On Windows, a hung kit remote no longer holds `lifecycle doctor` and the session-start note past the release check's 3 s timeout.

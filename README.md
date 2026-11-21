@@ -7,7 +7,7 @@ The maintainer's project lifecycle in one versioned repository: the method every
 | Layer | Holds | Run by |
 |---|---|---|
 | `method/` | the guides: kickstart, task review, the review kinds, the templates | anyone who reads |
-| `tools/lifecycle/` | the `lifecycle` command: settings, doctor, upgrade, guide push, board, guards, hooks | any agent, a git hook, CI, a person |
+| `tools/lifecycle/` | the `lifecycle` command: settings, doctor, upgrade, guide push, board, release, hooks | any agent, a git hook, CI, a person |
 | `skills/`, `agents/` | clarify, review, handback, complete, release, upgrade; the read-only reviewer | any agent that loads Agent Skills |
 | `.claude-plugin/`, `hooks/`, `bin/` | the Claude Code adapter: marketplace, plugin manifest, hook wiring, the command on PATH | Claude Code |
 
@@ -30,8 +30,7 @@ A guide edit starts in the repository whose task found it, is reviewed in that t
 ```toml
 # .lifecycle.toml
 [branches]
-integration = "develop"   # where tasks land
-protected = "master"      # takes only release-PR merges; the push and deploy guards hold it
+integration = "main"      # the one long-lived branch: where tasks land and releases are cut
 
 [board]                   # omit when the repository tracks no board
 owner = "orwir"
@@ -45,6 +44,9 @@ targeted = "dotnet test {root} --filter {tests}"
 
 [guides]
 path = "docs/guides"
+
+[release]                 # omit when the repository ships no release by a workflow
+workflow = "release.yml"  # what `lifecycle release <commit>` dispatches on the reviewed commit
 
 [review]
 allow = ["dotnet format --verify-no-changes"]   # read-only checks the reviewer may run

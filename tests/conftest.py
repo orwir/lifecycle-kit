@@ -39,7 +39,7 @@ def repo(tmp_path, monkeypatch):
     monkeypatch.setattr(guides, "kit_version", lambda: "1.2.0")
     root = tmp_path / "repo"
     (root / "docs" / "guides").mkdir(parents=True)
-    (root / ".lifecycle.toml").write_text('[branches]\nprotected = "master"\n', encoding="utf-8")
+    (root / ".lifecycle.toml").write_text('[branches]\nintegration = "main"\n', encoding="utf-8")
     return load(root)
 
 
@@ -54,7 +54,7 @@ def kit_checkout(tmp_path):
         '{"name": "lifecycle", "version": "9.9.9"}\n', encoding="utf-8"
     )
     (root / ".lifecycle.toml").write_text(
-        '[branches]\nintegration = "main"\nprotected = ""\n\n[guides]\npath = "method"\n',
+        '[branches]\nintegration = "main"\n\n[guides]\npath = "method"\n',
         encoding="utf-8",
     )
     return load(root)

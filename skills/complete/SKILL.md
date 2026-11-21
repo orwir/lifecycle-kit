@@ -29,6 +29,7 @@ When `lifecycle guides check` lists guides this task changed: `lifecycle guides 
 ## 4. Land
 
 - **On the integration branch, or a worktree branch whose work lands on it directly:** `git push origin HEAD:<integration>`, or the push AGENTS.md § Task workflow gives in its place. The pre-push hook runs the gate. A push refused because the branch moved is rebased onto `origin/<integration>` and pushed again; a conflict stops for the maintainer.
+- **On a `hotfix/<name>` branch:** `git push -u origin <branch>`, and nothing more: no PR and no merge. Write step 5's comment, naming the branch, and skip the rest of steps 5 to 7: the release ships the branch, and its merge into the integration branch closes the issue by its `Closes #N`; the release skill moves the card and deletes the branch.
 - **On a feature branch:** `git push -u origin <branch>`; `gh pr create --base <integration> --title "<subject>" --body-file <file>` with `.github/pull_request_template.md` filled for a reader who never saw the review rounds; read `gh pr checks <N>` until it is green; `gh pr merge --squash --delete-branch`.
 - Hooks that run the project's own tools need its environment: where the shell's interpreter is not the project's, put the project's environment first on `PATH` for the commit and the push (AGENTS.md § Commands).
 

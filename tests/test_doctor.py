@@ -155,7 +155,7 @@ def committed_repo(repo, monkeypatch):
     for key in ("GIT_AUTHOR_EMAIL", "GIT_COMMITTER_EMAIL"):
         monkeypatch.setenv(key, "t@t")
     upgrade(repo, adopt=True)
-    git(repo.root, "init", "-q", "-b", "develop")
+    git(repo.root, "init", "-q", "-b", "main")
     git(repo.root, "add", "-A")
     git(repo.root, "commit", "-q", "-m", "on 1.2.0")
 
@@ -249,7 +249,7 @@ def test_a_first_move_owes_every_repositories_line_up_to_its_release(repo, monke
         monkeypatch.setenv(key, "t")
     for key in ("GIT_AUTHOR_EMAIL", "GIT_COMMITTER_EMAIL"):
         monkeypatch.setenv(key, "t@t")
-    git(repo.root, "init", "-q", "-b", "develop")
+    git(repo.root, "init", "-q", "-b", "main")
     git(repo.root, "add", "-A")
     git(repo.root, "commit", "-q", "-m", "before the kit")
     (tmp_path / "CHANGELOG.md").write_text(

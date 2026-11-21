@@ -26,11 +26,14 @@ DEFAULT_TEMPLATES = {
 }
 
 _SCHEMA: dict[str, set[str]] = {
-    "": {"branches", "board", "gate", "guides", "review", "templates"},
+    "": {"branches", "board", "gate", "guides", "release", "review", "templates"},
+    # protected: retired in 0.4.0 with the protected branch, read and ignored until the
+    # Repositories: line removes it from each repository.
     "branches": {"integration", "protected"},
     "board": {"owner", "number"},
     "gate": {"commands", "targeted"},
     "guides": {"path"},
+    "release": {"workflow"},
     "review": {"allow", "lenses"},
     "lens": {"paths", "read"},
 }
@@ -49,13 +52,14 @@ class Lens:
 @dataclass(frozen=True)
 class Config:
     root: Path
-    integration: str = "develop"
-    protected: str | None = "master"
+    integration: str = "main"
     board_owner: str | None = None
     board_number: int | None = None
     gate: tuple[str, ...] = ()
     targeted: str | None = None
     guides: str = "docs/guides"
+    #: The workflow ``lifecycle release`` dispatches, by its file name.
+    release_workflow: str | None = None
     reviewer_allow: tuple[str, ...] = ()
     lenses: dict[str, Lens] = field(default_factory=dict)
     templates: dict[str, str] = field(default_factory=lambda: dict(DEFAULT_TEMPLATES))
@@ -69,10 +73,11 @@ class Config:
     def as_dict(self) -> dict:
         return {
             "root": str(self.root),
-            "branches": {"integration": self.integration, "protected": self.protected},
+            "branches": {"integration": self.integration},
             "board": {"owner": self.board_owner, "number": self.board_number},
             "gate": {"commands": list(self.gate), "targeted": self.targeted},
             "guides": {"path": self.guides},
+            "release": {"workflow": self.release_workflow},
             "review": {
                 "allow": list(self.reviewer_allow),
                 "lenses": {
@@ -131,7 +136,7 @@ def _templates(value: object) -> dict[str, str]:
 
 def parse(data: dict, root: Path) -> Config:
     _check_keys(data, "", "the top level")
-    for section in ("branches", "board", "gate", "guides", "review"):
+    for section in ("branches", "board", "gate", "guides", "release", "review"):
         if section in data:
             if not isinstance(data[section], dict):
                 raise ConfigError(f"{FILE}: [{section}] must be a table")
@@ -155,13 +160,13 @@ def parse(data: dict, root: Path) -> Config:
         raise ConfigError(f"{FILE}: [board] needs both owner and number")
     return Config(
         root=root,
-        integration=branches.get("integration", "develop"),
-        protected=branches.get("protected", "master") or None,
+        integration=branches.get("integration", "main"),
         board_owner=board.get("owner"),
         board_number=board.get("number"),
         gate=_strings(gate.get("commands", []), "[gate] commands"),
         targeted=gate.get("targeted"),
         guides=data.get("guides", {}).get("path", "docs/guides"),
+        release_workflow=data.get("release", {}).get("workflow") or None,
         reviewer_allow=_strings(review.get("allow", []), "[review] allow"),
         lenses=lenses,
         templates=templates,

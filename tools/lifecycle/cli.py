@@ -5,10 +5,11 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
 import sys
 from collections.abc import Sequence
 
-from . import KIT_ROOT, board, doctor, guard, guides, hook, kit_version, latest
+from . import KIT_ROOT, board, doctor, guides, hook, kit_version, latest, ship
 from .config import Config, ConfigError, load
 
 
@@ -107,17 +108,24 @@ def _board(args: argparse.Namespace) -> int:
     return 0
 
 
-def _guard(args: argparse.Namespace) -> int:
+def _release(args: argparse.Namespace) -> int:
     config = _config()
-    if not config.protected:
-        return 0
-    if args.which == "push":
-        return guard.push(config.protected, sys.stdin if not sys.stdin.isatty() else [])
-    repo = args.repo or os.environ.get("GITHUB_REPOSITORY")
-    sha = args.sha or os.environ.get("GITHUB_SHA")
-    if not repo or not sha:
-        raise ConfigError("--repo and --sha are required outside GitHub Actions")
-    return guard.deploy(config.protected, repo, sha)
+    if not config.release_workflow:
+        raise ConfigError(
+            ".lifecycle.toml names no [release] workflow: this repository ships no release by it"
+        )
+    resolved = subprocess.run(
+        ["git", "-C", str(config.root), "rev-parse", "--verify", f"{args.commit}^{{commit}}"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if resolved.returncode != 0:
+        raise ConfigError(f"{args.commit} is not a commit in this repository")
+    ref = args.ref or config.integration
+    code, line = ship.release(config.release_workflow, ref, resolved.stdout.strip())
+    print(f"release: {line}", file=sys.stdout if code == ship.SHIPPED else sys.stderr)
+    return code
 
 
 def _hook(args: argparse.Namespace) -> int:
@@ -161,10 +169,9 @@ def parser() -> argparse.ArgumentParser:
     p = sub.add_parser("board", help="put an issue's card in a board column, at the top")
     p.add_argument("issue", type=int)
     p.add_argument("column", choices=board.COLUMNS)
-    p = sub.add_parser("guard", help="the protected branch's push and deploy guards")
-    p.add_argument("which", choices=("push", "deploy"))
-    p.add_argument("--repo")
-    p.add_argument("--sha")
+    p = sub.add_parser("release", help="ship a reviewed commit by the release workflow, watched")
+    p.add_argument("commit", help="the head the release review read")
+    p.add_argument("--ref", help="the branch to dispatch on (default: the integration branch)")
     p = sub.add_parser("hook", help="an agent hook: the event as JSON on stdin")
     p.add_argument("event", choices=("pre-bash", "session-start"))
     return root
@@ -200,10 +207,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             "upgrade": _upgrade,
             "guides": _guides,
             "board": _board,
-            "guard": _guard,
+            "release": _release,
             "hook": _hook,
         }[args.command]
         return handler(args)
-    except (ConfigError, guides.GuidesError, board.BoardError) as error:
+    except (ConfigError, guides.GuidesError, board.BoardError, ship.ReleaseError) as error:
         print(f"lifecycle: {error}", file=sys.stderr)
         return 1

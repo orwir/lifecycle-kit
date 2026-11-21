@@ -6,12 +6,21 @@ from lifecycle.config import DEFAULT_TEMPLATES, ConfigError, load, parse
 def test_defaults_when_the_file_is_empty(tmp_path):
     (tmp_path / ".lifecycle.toml").write_text("", encoding="utf-8")
     config = load(tmp_path)
-    assert (config.integration, config.protected, config.guides) == (
-        "develop",
-        "master",
-        "docs/guides",
-    )
-    assert config.board_owner is None and config.gate == ()
+    assert (config.integration, config.guides) == ("main", "docs/guides")
+    assert config.board_owner is None and config.gate == () and config.release_workflow is None
+
+
+def test_the_retired_protected_branch_is_read_and_ignored(tmp_path):
+    config = parse({"branches": {"integration": "main", "protected": "master"}}, tmp_path)
+    assert config.as_dict()["branches"] == {"integration": "main"}
+
+
+def test_the_release_workflow_is_named_by_its_file(tmp_path):
+    config = parse({"release": {"workflow": "release.yml"}}, tmp_path)
+    assert config.release_workflow == "release.yml"
+    assert config.as_dict()["release"] == {"workflow": "release.yml"}
+    with pytest.raises(ConfigError, match="'file'"):
+        parse({"release": {"file": "release.yml"}}, tmp_path)
 
 
 def test_found_from_a_subdirectory(tmp_path):
