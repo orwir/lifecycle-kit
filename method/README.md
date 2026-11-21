@@ -140,10 +140,15 @@ the rest of the task.
 1. **Edit the copy** inside the task. The task's hand-back names the push to the kit
    as a step of its *Complete*; `lifecycle guides check` lists the edited guides.
 2. **Push at *Complete***, on the task's go-ahead and before its commit:
-   `lifecycle guides push -m "<what changed>"`, the line in the kit's words, since every
-   project on the kit reads it: it is the patch's entry in the kit's changelog, one claim
-   with no reason and no issue number, which the push holds to the changelog's style. It
-   applies the edits
+   `lifecycle guides push -F <file>`, the file written outside the tree, as a commit
+   message is. Its first line is what changed, in the kit's words, since every project on
+   the kit reads it: the patch's entry in the kit's changelog, one claim with no reason
+   and no issue, which the push holds to the changelog's style. Below a blank line comes
+   the reason: the gap or failure the edit closes, in the kit's words too, so the kit
+   commit's body tells a later review of the guide why the clause exists without opening
+   the project. Neither names an issue in any form. The push refuses a file with no line
+   or no reason, and an issue in either in a form GitHub links: `#N`, `owner/repo#N`,
+   `GH-N` or a link. It applies the edits
    onto the release the copy is pinned to, replays them onto the kit's latest, and
    releases them as a patch; a conflict stops the push before anything lands, and goes
    back to the maintainer.

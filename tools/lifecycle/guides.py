@@ -29,6 +29,11 @@ GIST_REVISION = ".gist-revision"
 #: The gist commit the kit's method was imported from; a mirror past it holds gist pushes
 #: the kit never took, which a move to the kit would silently revert.
 GIST_IMPORTED = "f3b9b7ead40849e7375ff3b26de4a3506b15065b"
+NO_ISSUE = (
+    "which the kit's words never carry: in the kit's history #N and GH-N name the kit's own "
+    "issues, owner/repo#N and a link a project's, and a closing keyword before any of them "
+    "closes that issue once the kit's main takes it"
+)
 CANONICAL = (
     "this is the kit's own repository: its method/ is the canonical method, changed by the "
     "kit's own commits"
@@ -342,9 +347,11 @@ def _carry(config: Config, lock: Lock, edits: list[str]) -> dict[str, str]:
         }
 
 
-def push(config: Config, message: str) -> tuple[list[str], str]:
+def push(config: Config, message: str, why: str) -> tuple[list[str], str]:
     """Take this repository's guide edits into the kit as a patch release.
 
+    ``message`` is the kit commit's subject and the release's changelog entry; ``why`` is
+    the commit's body, so the kit's own history says why each pushed clause exists.
     Each edit is replayed onto the kit's latest from the release its copy came from, so
     a copy that fell behind never reverts anyone's change; a conflict stops the push.
     Main must sit on its release's tag, or the patch would ship unreleased work under a
@@ -366,15 +373,34 @@ def push(config: Config, message: str) -> tuple[list[str], str]:
             "deleted here: " + ", ".join(deleted) + ". Restore them; a guide leaves the "
             "method in the kit itself, never from one project's copy."
         )
+    message = message.strip()
+    if not message:
+        raise GuidesError(
+            "no line: the message file's first line is what changed, one claim for the kit's "
+            "changelog, then a blank line and the reason."
+        )
     broken = _changelog.entry_violations(message)
-    if _changelog.names_issue(message):
-        broken.append("an issue number (#N), which every repository would read as the kit's")
+    found = _changelog.issue_named(message)
+    if found:
+        broken.append(f"an issue reference ({found}), {NO_ISSUE}")
     if broken:
         raise GuidesError(
             "the line is the kit's changelog entry and breaks its style: "
             + "; ".join(broken)
             + f". Write what changed as one claim of at most {_changelog.CAP} characters, "
-            "with no issue number."
+            "with no issue."
+        )
+    why = why.strip()
+    if not why:
+        raise GuidesError(
+            "no reason: write why the guides changed below the line, after a blank line. "
+            "It is the kit commit's body, where a later review of the guide finds it."
+        )
+    found = _changelog.issue_named(why)
+    if found:
+        raise GuidesError(
+            f"the reason names an issue ({found}), {NO_ISSUE}. Say in the kit's words what the "
+            "edit closes."
         )
     with tempfile.TemporaryDirectory() as tmp:
         _git(tmp, "clone", "-q", kit_remote(), ".")
@@ -408,7 +434,19 @@ def push(config: Config, message: str) -> tuple[list[str], str]:
             *([CHANGELOG] if (Path(tmp) / CHANGELOG).is_file() else []),
         ]
         _git(tmp, "add", "-A", *released)
-        _git(tmp, "commit", "-q", "-m", message, "-m", f"Released as v{new}.")
+        # Pinned, so a machine's commit.cleanup=strip cannot drop a reason line opening with #.
+        _git(
+            tmp,
+            "commit",
+            "-q",
+            "--cleanup=whitespace",
+            "-m",
+            message,
+            "-m",
+            why,
+            "-m",
+            f"Released as v{new}.",
+        )
         _git(tmp, "tag", f"v{new}")
         _git(tmp, "push", "-q", "--atomic", "origin", "HEAD:main", f"v{new}")
     for name, body in merged.items():

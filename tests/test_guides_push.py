@@ -2,8 +2,10 @@ import json
 import subprocess
 
 import pytest
-from lifecycle import guides
+from lifecycle import cli, guides
 from lifecycle.guides import GuidesError, local_edits, push, read_lock, upgrade
+
+WHY = "A review asked for it."
 
 
 def git(cwd, *args):
@@ -61,7 +63,7 @@ def test_an_edit_lands_on_main_as_a_patch_release(repo, kit, tmp_path, monkeypat
     monkeypatch.setattr(guides, "_today", lambda: "2026-11-22")
     upgrade(repo, adopt=True)
     (repo.guides_dir / "task_review.md").write_text("# Task review, better\n", encoding="utf-8")
-    assert push(repo, "task_review: say it better") == (["task_review.md"], "1.2.2")
+    assert push(repo, "task_review: say it better", WHY) == (["task_review.md"], "1.2.2")
     check = clone(kit, tmp_path / "check")
     assert read(check / "method" / "task_review.md") == "# Task review, better\n"
     assert read(check / "method" / "agents_template.md") == "# AGENTS, later\n"
@@ -83,9 +85,9 @@ def test_an_edit_lands_on_main_as_a_patch_release(repo, kit, tmp_path, monkeypat
 def test_a_second_push_builds_on_the_first(repo, kit, tmp_path):
     upgrade(repo, adopt=True)
     (repo.guides_dir / "task_review.md").write_text("# Task review, better\n", encoding="utf-8")
-    push(repo, "first")
+    push(repo, "first", WHY)
     (repo.guides_dir / "task_review.md").write_text("# Task review, best\n", encoding="utf-8")
-    assert push(repo, "second") == (["task_review.md"], "1.2.3")
+    assert push(repo, "second", WHY) == (["task_review.md"], "1.2.3")
     assert read(clone(kit, tmp_path / "check") / "method" / "task_review.md") == (
         "# Task review, best\n"
     )
@@ -96,7 +98,10 @@ def test_a_second_push_builds_on_the_first(repo, kit, tmp_path):
     [
         ("task_review: " + "x" * 120, "133 characters, over the cap of 120"),
         ("task_review: say it better; and shorter", "welded"),
-        ("task_review: say it better (#12)", "an issue number"),
+        ("task_review: say it better (#12)", r"an issue reference \(#12\)"),
+        ("task_review: say it better (orwir/murmur#12)", r"reference \(orwir/murmur#12\)"),
+        ("", "no line"),
+        ("   ", "no line"),
     ],
 )
 def test_a_line_that_breaks_the_changelogs_style_is_refused_before_cloning(
@@ -107,7 +112,75 @@ def test_a_line_that_breaks_the_changelogs_style_is_refused_before_cloning(
     cloned = []
     monkeypatch.setattr(guides, "_git", lambda *args: cloned.append(args))
     with pytest.raises(GuidesError, match=reason):
-        push(repo, line)
+        push(repo, line, WHY)
+    assert cloned == [] and local_edits(repo, read_lock(repo.root)) == ["task_review.md"]
+
+
+@pytest.mark.parametrize(
+    ("why", "reason"),
+    [
+        ("", "no reason"),
+        ("  \n\n ", "no reason"),
+        ("A review missed it, see #12.", r"names an issue \(#12\)"),
+        ("Closes orwir/murmur#12.", r"names an issue \(orwir/murmur#12\)"),
+        ("Closes GH-12.", r"names an issue \(GH-12\)"),
+        ("See skills/complete/SKILL.md#2-guides.", r"names an issue \(complete/SKILL\.md#2\)"),
+        (
+            "Closes https://github.com/orwir/murmur/issues/12.",
+            r"\(github\.com/orwir/murmur/issues/12\)",
+        ),
+    ],
+)
+def test_a_missing_reason_or_one_naming_an_issue_is_refused_before_cloning(
+    repo, kit, monkeypatch, why, reason
+):
+    upgrade(repo, adopt=True)
+    (repo.guides_dir / "task_review.md").write_text("# Task review, better\n", encoding="utf-8")
+    cloned = []
+    monkeypatch.setattr(guides, "_git", lambda *args: cloned.append(args))
+    with pytest.raises(GuidesError, match=reason):
+        push(repo, "task_review: say it better", why)
+    assert cloned == [] and local_edits(repo, read_lock(repo.root)) == ["task_review.md"]
+
+
+def test_the_reason_reaches_the_kit_commit_word_for_word(repo, kit, tmp_path, monkeypatch, capsys):
+    # The machine strips comment lines from messages, which the push must not inherit.
+    monkeypatch.setenv("GIT_CONFIG_COUNT", "1")
+    monkeypatch.setenv("GIT_CONFIG_KEY_0", "commit.cleanup")
+    monkeypatch.setenv("GIT_CONFIG_VALUE_0", "strip")
+    upgrade(repo, adopt=True)
+    (repo.guides_dir / "task_review.md").write_text("# Task review, better\n", encoding="utf-8")
+    reason = (
+        "A reviewer read `task_review.md#2-guides` and missed the $HOME case, colour #1f2937.\n"
+        "# the line above stays\n\n"
+        "A second paragraph, `quoted`."
+    )
+    message = tmp_path / "message.txt"
+    body = f"task_review: say it better\n\n{reason}\n".replace("\n", "\r\n")
+    message.write_text(body, encoding="utf-8", newline="")
+    monkeypatch.chdir(repo.root)
+    assert cli.main(["guides", "push", "-F", str(message)]) == 0
+    assert "as kit v1.2.2" in capsys.readouterr().out
+    check = clone(kit, tmp_path / "check")
+    assert git(check, "log", "-1", "--format=%B").rstrip("\n") == (
+        f"task_review: say it better\n\n{reason}\n\nReleased as v1.2.2."
+    )
+    assert "### Changed\n- task_review: say it better\n\n## [1.2.0]" in read(check / "CHANGELOG.md")
+
+
+@pytest.mark.parametrize("body", ["\n\nA reason.\n", " \n\nA reason.\n"])
+def test_a_message_file_with_no_line_is_refused_before_cloning(
+    repo, kit, tmp_path, monkeypatch, capsys, body
+):
+    upgrade(repo, adopt=True)
+    (repo.guides_dir / "task_review.md").write_text("# Task review, better\n", encoding="utf-8")
+    message = tmp_path / "message.txt"
+    message.write_text(body, encoding="utf-8")
+    cloned = []
+    monkeypatch.setattr(guides, "_git", lambda *args: cloned.append(args))
+    monkeypatch.chdir(repo.root)
+    assert cli.main(["guides", "push", "-F", str(message)]) == 1
+    assert "no line" in capsys.readouterr().err
     assert cloned == [] and local_edits(repo, read_lock(repo.root)) == ["task_review.md"]
 
 
@@ -115,7 +188,7 @@ def test_a_conflict_stops_the_push(repo, kit):
     upgrade(repo, adopt=True)
     (repo.guides_dir / "agents_template.md").write_text("# AGENTS, mine\n", encoding="utf-8")
     with pytest.raises(GuidesError, match="conflict"):
-        push(repo, "agents_template: mine")
+        push(repo, "agents_template: mine", WHY)
     assert local_edits(repo, read_lock(repo.root)) == ["agents_template.md"]
 
 
@@ -128,13 +201,13 @@ def test_unreleased_work_on_main_stops_the_push(repo, kit, tmp_path):
     upgrade(repo, adopt=True)
     (repo.guides_dir / "task_review.md").write_text("# Task review, better\n", encoding="utf-8")
     with pytest.raises(GuidesError, match="no release carries"):
-        push(repo, "x")
+        push(repo, "x", WHY)
 
 
 def test_an_upgrade_waits_for_the_release_that_took_the_push(repo, kit, monkeypatch):
     upgrade(repo, adopt=True)
     (repo.guides_dir / "task_review.md").write_text("# Task review, better\n", encoding="utf-8")
-    push(repo, "task_review: say it better")
+    push(repo, "task_review: say it better", WHY)
     monkeypatch.setattr(guides, "kit_version", lambda: "1.2.1")
     with pytest.raises(GuidesError, match="update the installed kit"):
         upgrade(repo)
@@ -150,18 +223,18 @@ def test_a_deleted_guide_is_not_pushed(repo, kit):
     upgrade(repo, adopt=True)
     (repo.guides_dir / "task_review.md").unlink()
     with pytest.raises(GuidesError, match="Restore"):
-        push(repo, "drop it")
+        push(repo, "drop it", WHY)
 
 
 def test_nothing_to_push(repo, kit):
     upgrade(repo, adopt=True)
-    assert push(repo, "x") == ([], "1.2.0")
+    assert push(repo, "x", WHY) == ([], "1.2.0")
 
 
 def test_an_edit_merges_with_another_projects_change_to_the_same_guide(repo, kit, tmp_path):
     upgrade(repo, adopt=True)
     (repo.guides_dir / "guide.md").write_text("a\nb\nc\nd\nE\n", encoding="utf-8")
-    assert push(repo, "guide: end better") == (["guide.md"], "1.2.2")
+    assert push(repo, "guide: end better", WHY) == (["guide.md"], "1.2.2")
     assert read(clone(kit, tmp_path / "check") / "method" / "guide.md") == "A\nb\nc\nd\nE\n"
     assert read(repo.guides_dir / "guide.md") == "A\nb\nc\nd\nE\n"
     assert local_edits(repo, read_lock(repo.root)) == []
@@ -170,10 +243,10 @@ def test_an_edit_merges_with_another_projects_change_to_the_same_guide(repo, kit
 def test_a_later_push_never_reverts_what_the_first_one_carried(repo, kit, tmp_path):
     upgrade(repo, adopt=True)
     (repo.guides_dir / "task_review.md").write_text("# Task review, better\n", encoding="utf-8")
-    push(repo, "first")
+    push(repo, "first", WHY)
     (repo.guides_dir / "agents_template.md").write_text("# AGENTS, mine\n", encoding="utf-8")
     with pytest.raises(GuidesError, match="conflict"):
-        push(repo, "second")
+        push(repo, "second", WHY)
     assert read(clone(kit, tmp_path / "check") / "method" / "agents_template.md") == (
         "# AGENTS, later\n"
     )
@@ -218,7 +291,7 @@ def test_a_carried_edit_pushes_from_the_new_release(repo, kit, monkeypatch, tmp_
     (repo.guides_dir / "task_review.md").write_text("# Task review, better\n", encoding="utf-8")
     installed_kit(monkeypatch, "1.2.1")
     upgrade(repo)
-    assert push(repo, "task_review: say it better") == (["task_review.md"], "1.2.2")
+    assert push(repo, "task_review: say it better", WHY) == (["task_review.md"], "1.2.2")
     assert read(clone(kit, tmp_path / "check") / "method" / "task_review.md") == (
         "# Task review, better\n"
     )
@@ -257,4 +330,4 @@ def test_a_template_edit_the_task_carries_is_not_overwritten(repo, kit, monkeypa
 
 def test_the_kits_own_repository_pushes_nothing(kit_checkout):
     with pytest.raises(GuidesError, match="canonical"):
-        push(kit_checkout, "a guide edit")
+        push(kit_checkout, "a guide edit", WHY)

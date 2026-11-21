@@ -26,6 +26,14 @@ HEADING = re.compile(
 _REF = re.compile(r"\s*\(#\d+(?:, #\d+)*\)$")
 _DASH = re.compile(r"\s[-\N{EN DASH}\N{EM DASH}]\s")
 _ISSUE = re.compile(r"(?<![\w/])#(\d+)")
+#: The forms GitHub links as an issue, so the forms a closing keyword reaches. A colour
+#: (``#1f2937``) or an anchor on a file name (``SKILL.md#2-guides``) is not one; a folder
+#: before it (``complete/SKILL.md#2``) reads as ``owner/repo#N``, refused with the match quoted.
+_LINKED_ISSUE = re.compile(
+    r"(?<![\w/])#\d+\b|[\w.-]+/[\w.-]+#\d+\b|\bGH-\d+\b"
+    r"|github\.com/[^/\s]+/[^/\s]+/(?:issues|pull)/\d+",
+    re.I,
+)
 
 
 def heading(version: str, day: str) -> str:
@@ -69,9 +77,11 @@ def violations(section: list[str]) -> list[str]:
     return found
 
 
-def names_issue(entry: str) -> bool:
-    """Whether ``entry`` carries a bare ``#N``, which every repository reads as the kit's."""
-    return bool(_ISSUE.search(entry))
+def issue_named(text: str) -> str | None:
+    """The first issue ``text`` names in a form GitHub links (``#N``, ``owner/repo#N``,
+    ``GH-N`` or a link), which a guide push's words may not carry, or None."""
+    found = _LINKED_ISSUE.search(text)
+    return found.group(0) if found else None
 
 
 def qualify(entry: str, repository: str) -> str:

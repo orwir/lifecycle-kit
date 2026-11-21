@@ -32,7 +32,7 @@ A kit issue runs the two review rounds every repository on the kit runs (`method
 
 ## Branching and commits
 
-Work lands on `main`, from a worktree branch or directly; no branch is protected. One Conventional Commit per task (`feat:`, `fix:`, `docs:`, `refactor:`); the complete skill says what its body holds. A guide push from a project commits under its own one-line message.
+Work lands on `main`, from a worktree branch or directly; no branch is protected. One Conventional Commit per task (`feat:`, `fix:`, `docs:`, `refactor:`); the complete skill says what its body holds. A guide push from a project commits under its own line, with its reason as the body.
 
 ## Change → docs
 

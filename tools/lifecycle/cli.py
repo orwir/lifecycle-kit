@@ -8,6 +8,7 @@ import os
 import subprocess
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 
 from . import KIT_ROOT, board, doctor, guides, hook, kit_version, latest, ship
 from .config import Config, ConfigError, load
@@ -83,6 +84,22 @@ def _upgrade(args: argparse.Namespace) -> int:
     return 0
 
 
+def _message_file(path: str) -> tuple[str, str]:
+    """A guide push's line and reason, from a file: no shell rewrites a file, where an
+    inline argument loses its backticks, ``$`` or second line."""
+    try:
+        body = Path(path).read_text(encoding="utf-8-sig")
+    except (OSError, UnicodeDecodeError) as error:
+        raise guides.GuidesError(f"cannot read the message file {path}: {error}") from error
+    line, _, rest = body.partition("\n")
+    if rest.split("\n", 1)[0].strip():
+        raise guides.GuidesError(
+            f"{path}: the line is the file's first line alone, and a blank line comes before "
+            "the reason"
+        )
+    return line.strip(), rest
+
+
 def _guides(args: argparse.Namespace) -> int:
     config = _config()
     if args.action == "check":
@@ -90,7 +107,7 @@ def _guides(args: argparse.Namespace) -> int:
         edits = guides.local_edits(config, lock) if lock else []
         print("\n".join(edits) if edits else "no guide edits")
         return 0
-    pushed, new = guides.push(config, args.message)
+    pushed, new = guides.push(config, *_message_file(args.file))
     if not pushed:
         print("no guide edits to push")
         return 0
@@ -168,8 +185,13 @@ def parser() -> argparse.ArgumentParser:
     p = sub.add_parser("guides", help="this repository's guide edits: list them, or push them")
     p.add_argument("action", choices=("check", "push"))
     p.add_argument(
-        "-m", "--message", help="the kit commit's line and changelog entry: what changed, one claim"
+        "-F",
+        "--file",
+        help="the push's message file: its first line the kit commit's subject and changelog "
+        "entry (what changed, one claim), then a blank line and the reason, the commit's body",
     )
+    # Points a guides copy from before 0.6.0, which still says -m, at -F; goes at the next major.
+    p.add_argument("-m", "--message", help=argparse.SUPPRESS)
     p = sub.add_parser("board", help="put an issue's card in a board column, at the top")
     p.add_argument("issue", type=int)
     p.add_argument("column", choices=board.COLUMNS)
@@ -191,8 +213,13 @@ def _utf8_streams() -> None:
 def main(argv: Sequence[str] | None = None) -> int:
     _utf8_streams()
     args = parser().parse_args(argv)
-    if args.command == "guides" and args.action == "push" and not args.message:
-        parser().error("guides push needs --message")
+    if args.command == "guides" and args.message is not None:
+        parser().error(
+            "guides push takes its message as a file now: -F <file>, the line, a blank line, "
+            "then the reason"
+        )
+    if args.command == "guides" and args.action == "push" and not args.file:
+        parser().error("guides push needs --file (-F): the line, a blank line, then the reason")
     if args.directory:
         os.chdir(args.directory)
     try:

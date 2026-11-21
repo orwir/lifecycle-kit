@@ -51,7 +51,7 @@ def test_reads_pass(command):
     [
         ("git stash", UNKNOWN),
         ("lifecycle upgrade", UNKNOWN),
-        ("lifecycle guides push -m x", UNKNOWN),
+        ("lifecycle guides push -F message.txt", UNKNOWN),
         ("git checkout -- a.py", UNKNOWN),
         ("git -c alias.x=!rm diff", UNKNOWN),
         ("git diff --output=patch.txt", UNKNOWN),

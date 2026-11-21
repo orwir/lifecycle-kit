@@ -60,6 +60,32 @@ def test_the_guards_are_gone(monkeypatch, capsys, repo):
     assert exited.value.code == 2 and "invalid choice: 'guard'" in capsys.readouterr().err
 
 
+def test_a_guide_push_without_its_message_file_is_a_usage_error(monkeypatch, capsys, repo):
+    monkeypatch.chdir(repo.root)
+    with pytest.raises(SystemExit) as exited:
+        cli.main(["guides", "push"])
+    assert exited.value.code == 2 and "needs --file (-F)" in capsys.readouterr().err
+
+
+def test_a_guide_push_by_the_old_line_option_is_pointed_at_the_file(monkeypatch, capsys, repo):
+    monkeypatch.chdir(repo.root)
+    with pytest.raises(SystemExit) as exited:
+        cli.main(["guides", "push", "-m", "guide: a line"])
+    assert exited.value.code == 2 and "takes its message as a file now: -F" in (
+        capsys.readouterr().err
+    )
+
+
+def test_a_guide_push_stops_on_a_message_file_it_cannot_take(monkeypatch, capsys, repo, tmp_path):
+    missing = tmp_path / "missing.txt"
+    code, _, err = run(monkeypatch, capsys, ["guides", "push", "-F", str(missing)], cwd=repo.root)
+    assert code == 1 and f"cannot read the message file {missing}" in err
+    wrapped = tmp_path / "wrapped.txt"
+    wrapped.write_text("guide: a line\nwrapped onto a second\n\nwhy\n", encoding="utf-8")
+    code, _, err = run(monkeypatch, capsys, ["guides", "push", "-F", str(wrapped)], cwd=repo.root)
+    assert code == 1 and "the file's first line alone" in err
+
+
 def test_config_prints_the_resolved_settings(monkeypatch, capsys, repo):
     code, out, _ = run(monkeypatch, capsys, ["config"], cwd=repo.root)
     assert code == 0 and json.loads(out)["branches"] == {"integration": "main"}

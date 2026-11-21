@@ -8,6 +8,16 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## [0.6.0] — 2026-11-21
+
+### Changed
+- `lifecycle guides push -F <file>` takes the changelog line and, below it, the reason the kit commit keeps as its body (#19)
+- `lifecycle guides push` refuses a message with no line or no reason, or one naming an issue in a form GitHub links (#19)
+- The method's README and the complete skill say what a push's reason holds: the gap the edit closes, in the kit's words (#19)
+
+### Removed
+- `lifecycle guides push -m`, which the message file replaces (#19)
+
 ## [0.5.0] — 2026-11-21
 
 ### Added
