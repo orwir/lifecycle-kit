@@ -14,8 +14,8 @@ from pathlib import Path
 from . import doctor, latest, readonly
 from .config import ConfigError, load
 
-# The plugin-scoped name Claude Code's docs give a plugin subagent's events; a live
-# session has not shown it yet, so the guard rests on the docs until one does.
+# The plugin-scoped name Claude Code gives a plugin subagent's events, as its docs say;
+# a live session showed it on 2026-11-21, when the guard refused a reviewer's command.
 REVIEWER = "lifecycle:reviewer"
 #: The same name found in an event that cannot be parsed, so the guard still fails closed.
 REVIEWER_EVENT = re.compile(rb'"agent_type"\s*:\s*"lifecycle:reviewer"')
