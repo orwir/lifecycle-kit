@@ -10,7 +10,7 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from . import KIT_ROOT, board, doctor, guides, hook, kit_version, latest, ship
+from . import KIT_ROOT, board, doctor, guides, hook, kit_version, ship
 from .config import Config, ConfigError, load
 
 
@@ -22,7 +22,7 @@ def _config() -> Config:
 
 
 def _doctor(args: argparse.Namespace) -> int:
-    findings = doctor.check(_config(), latest=latest.latest_release())
+    findings = doctor.check(_config())
     if args.json:
         print(json.dumps([finding.as_dict() for finding in findings], indent=2, ensure_ascii=False))
     for finding in [] if args.json else findings:
@@ -190,8 +190,6 @@ def parser() -> argparse.ArgumentParser:
         help="the push's message file: its first line the kit commit's subject and changelog "
         "entry (what changed, one claim), then a blank line and the reason, the commit's body",
     )
-    # Points a guides copy from before 0.6.0, which still says -m, at -F; goes at the next major.
-    p.add_argument("-m", "--message", help=argparse.SUPPRESS)
     p = sub.add_parser("board", help="put an issue's card in a board column, at the top")
     p.add_argument("issue", type=int)
     p.add_argument("column", choices=board.COLUMNS)
@@ -213,11 +211,6 @@ def _utf8_streams() -> None:
 def main(argv: Sequence[str] | None = None) -> int:
     _utf8_streams()
     args = parser().parse_args(argv)
-    if args.command == "guides" and args.message is not None:
-        parser().error(
-            "guides push takes its message as a file now: -F <file>, the line, a blank line, "
-            "then the reason"
-        )
     if args.command == "guides" and args.action == "push" and not args.file:
         parser().error("guides push needs --file (-F): the line, a blank line, then the reason")
     if args.directory:

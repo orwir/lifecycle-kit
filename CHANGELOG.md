@@ -8,6 +8,19 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## [0.7.0] — 2026-11-21
+
+### Changed
+- Repositories: docs that credit the kit with refusing a `cd <absolute path>` prefix or a here-string drop that credit (#20)
+- The upgrade skill's clean `lifecycle doctor` reading no longer allows for a newer-kit note (#20)
+- `docs/guide.md` says how the plugin and a clone of the kit each take a new release (#20)
+
+### Removed
+- `lifecycle doctor` no longer asks the kit's remote once a day whether a newer release is out (#20)
+- A gist mirror no longer moves onto the kit by its `.gist-revision`: it adopts like any copy (#20)
+- The kit's hook no longer refuses a here-string or a `cd <absolute path>` prefix in a session's command (#20)
+- `lifecycle guides push` no longer takes `-m` (#20)
+
 ## [0.6.0] — 2026-11-21
 
 ### Changed

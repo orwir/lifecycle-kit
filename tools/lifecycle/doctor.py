@@ -4,9 +4,8 @@ A repository behind the installed kit by a minor or major release blocks a revie
 round: the skills it would run were written for a newer method and contract than
 its copy describes. A patch release only changed guide wording, so it is a note.
 Each finding names its fix, and a tracked task's clarify runs the upgrade as its first
-step; an untracked task meets a minor or major one at its work round. The one
-network read, the newest release on the kit's remote, comes in from the caller
-(``latest.latest_release``), so the checks here stay offline.
+step; an untracked task meets a minor or major one at its work round. Every check
+is offline: nothing here asks the kit's remote.
 """
 
 from __future__ import annotations
@@ -21,7 +20,6 @@ from . import guides as _guides
 from . import release as _release
 from .config import Config
 from .guides import (
-    GIST_REVISION,
     LOCK,
     Lock,
     local_edits,
@@ -140,27 +138,6 @@ def _behind(lock: Lock, installed: str, pushed_pending: str | None) -> Finding:
     return Finding(BLOCK if minor else NOTE, message, UPGRADE, changes)
 
 
-def _newer_out(installed: str, latest: str | None) -> list[Finding]:
-    if not latest or _release(latest) <= _release(installed):
-        return []
-    return [
-        Finding(
-            NOTE,
-            f"kit {latest} is out and this machine has {installed}: update it ({UPDATE_COMMAND})",
-            UPDATE_KIT,
-        )
-    ]
-
-
-def check(config: Config, installed: str | None = None, latest: str | None = None) -> list[Finding]:
-    """``latest`` is the newest release on the kit's remote, when the caller asked for it."""
-    installed = installed or kit_version()
-    findings = _repository(config, installed)
-    if any(finding.fix == UPDATE_KIT for finding in findings):
-        return findings
-    return _newer_out(installed, latest) + findings
-
-
 def _kit(config: Config, installed: str) -> list[Finding]:
     """The kit's own repository pins no copy of the method, so it needs no lock. Its rounds
     run on the installed plugin, though: older than the release on the integration branch,
@@ -184,22 +161,12 @@ def _kit(config: Config, installed: str) -> list[Finding]:
     ]
 
 
-def _repository(config: Config, installed: str) -> list[Finding]:
+def check(config: Config, installed: str | None = None) -> list[Finding]:
+    installed = installed or kit_version()
     if is_kit(config.root):
         return _kit(config, installed)
     lock = read_lock(config.root)
     if lock is None:
-        if (config.guides_dir / GIST_REVISION).is_file():
-            return [
-                Finding(
-                    BLOCK,
-                    "the guides still mirror the gist: moving onto the kit is its own task, by "
-                    f"{UPGRADE_SKILL} (the `.lifecycle.toml` changes below first, then "
-                    "`lifecycle upgrade`, then the templates)",
-                    ADOPT,
-                    _required(installed),
-                )
-            ]
         return [
             Finding(
                 BLOCK,

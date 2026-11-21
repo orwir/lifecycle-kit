@@ -46,18 +46,11 @@ def test_dry_run_writes_nothing(repo):
     assert not (repo.guides_dir / "task_review.md").exists()
 
 
-def test_a_gist_mirror_with_edits_is_refused(repo, monkeypatch):
+def test_a_gist_mirror_is_a_copy_with_no_record(repo):
     (repo.guides_dir / ".gist-revision").write_text("abc\n", encoding="utf-8")
-    monkeypatch.setattr(guides, "_gist_mirror_edits", lambda config, rev: ["README.md"])
-    with pytest.raises(GuidesError, match="gist mirror"):
+    with pytest.raises(GuidesError, match="no record of where its guides came from"):
         upgrade(repo)
-
-
-def test_a_clean_gist_mirror_moves_to_the_kit(repo, monkeypatch):
-    (repo.guides_dir / ".gist-revision").write_text("abc\n", encoding="utf-8")
-    monkeypatch.setattr(guides, "_gist_mirror_edits", lambda config, rev: [])
-    upgrade(repo)
-    assert not (repo.guides_dir / ".gist-revision").exists()
+    upgrade(repo, adopt=True)
     assert read_lock(repo.root).kit == "1.2.0"
 
 

@@ -22,8 +22,7 @@ for _name in _GIT_LOCAL:
 
 @pytest.fixture(autouse=True)
 def no_network(tmp_path, monkeypatch):
-    """No test reaches the kit's real remote: the daily release check finds nothing."""
-    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "cache"))
+    """No test reaches the kit's real remote: a guide push clones a remote that is not there."""
     monkeypatch.setenv("LIFECYCLE_KIT_REMOTE", str(tmp_path / "no-kit.git"))
 
 

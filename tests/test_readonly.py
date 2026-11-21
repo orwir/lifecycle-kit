@@ -50,6 +50,7 @@ def test_reads_pass(command):
     ("command", "reason"),
     [
         ("git stash", UNKNOWN),
+        ("cd /x && ls", UNKNOWN),
         ("lifecycle upgrade", UNKNOWN),
         ("lifecycle guides push -F message.txt", UNKNOWN),
         ("git checkout -- a.py", UNKNOWN),

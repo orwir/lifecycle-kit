@@ -90,9 +90,6 @@ runs the upgrade makes each one. A repository behind the installed kit
 upgrades as a tracked task's first step, and the task's briefs say what the upgrade
 brought; it lands as its own commit ahead of the task's where it can.
 
-A copy from before the kit holds a `.gist-revision`: the first `upgrade` checks it
-against the gist it came from and refuses if it holds an edit the gist never took.
-
 ## Bootstrap a new idea (agent instructions)
 
 When pointed at this method and asked to bootstrap or prepare the gauntlet:

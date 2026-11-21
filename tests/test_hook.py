@@ -6,23 +6,12 @@ def bash(command, **event):
     return hook.pre_bash({"tool_input": {"command": command}, **event})
 
 
-def test_a_here_string_is_blocked():
-    assert bash("git commit -m @'\nsubject\n'@") == hook.HERESTRING
-    assert bash('x = @"\nbody\n"@') == hook.HERESTRING
+def test_a_sessions_here_string_passes_the_kits_hook():
+    assert bash("git commit -m @'\nsubject\n'@") is None
 
 
-def test_an_at_sign_inside_quotes_is_not_a_here_string():
-    assert bash("ssh deploy@'host' && echo 'done'@home") is None
-
-
-def test_cd_to_an_absolute_path_is_blocked():
-    assert bash("cd /d/projects/x && git status") == hook.CD_ABSOLUTE
-    assert bash('cd "C:\\Users\\x" && ls') == hook.CD_ABSOLUTE
-    assert bash("cd ~/x") == hook.CD_ABSOLUTE
-
-
-def test_a_relative_cd_passes():
-    assert bash("cd docs && ls") is None
+def test_a_sessions_cd_prefix_passes_the_kits_hook():
+    assert bash("cd /d/projects/x && git status") is None
 
 
 def test_the_main_session_may_write():
@@ -63,15 +52,6 @@ def test_session_start_lists_what_the_kit_changed(repo, monkeypatch, tmp_path):
     monkeypatch.setattr(hook.doctor, "kit_version", lambda: "1.3.0")
     text = hook.session_start({"cwd": str(repo.root)})
     assert "the next task upgrades first" in text and "\n  - a change" in text
-
-
-def test_session_start_says_a_newer_kit_is_out(repo, monkeypatch):
-    from lifecycle import latest
-
-    upgrade(repo, adopt=True)
-    monkeypatch.setattr(hook.doctor, "kit_version", lambda: "1.2.0")
-    monkeypatch.setattr(latest, "latest_release", lambda: "1.4.0")
-    assert "kit 1.4.0 is out" in hook.session_start({"cwd": str(repo.root)})
 
 
 def test_session_start_is_quiet_in_the_kits_own_repository(kit_checkout):

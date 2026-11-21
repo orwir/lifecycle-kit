@@ -24,11 +24,6 @@ from .config import Config
 
 LOCK = ".lifecycle.lock"
 CHANGELOG = "CHANGELOG.md"
-GIST = "https://gist.github.com/d288ef4ec7dcb37a4cd3e9ae2019c037.git"
-GIST_REVISION = ".gist-revision"
-#: The gist commit the kit's method was imported from; a mirror past it holds gist pushes
-#: the kit never took, which a move to the kit would silently revert.
-GIST_IMPORTED = "f3b9b7ead40849e7375ff3b26de4a3506b15065b"
 NO_ISSUE = (
     "which the kit's words never carry: in the kit's history #N and GH-N name the kit's own "
     "issues, owner/repo#N and a link a project's, and a closing keyword before any of them "
@@ -108,41 +103,6 @@ def pushed_release(lock: Lock) -> str | None:
     return max(lock.pushed.values(), key=release) if lock.pushed else None
 
 
-def check_imported(clone: str, revision: str) -> None:
-    """Refuse a gist mirror whose revision the kit's import does not contain."""
-    contained = subprocess.run(
-        ["git", "-C", clone, "merge-base", "--is-ancestor", revision, GIST_IMPORTED],
-        capture_output=True,
-        check=False,
-    )
-    if contained.returncode != 0:
-        raise GuidesError(
-            f"the mirror is at gist {revision[:7]}, which the kit's import ({GIST_IMPORTED[:7]}) "
-            "does not contain: the kit takes those gist changes first, or the move reverts them."
-        )
-
-
-def _gist_mirror_edits(config: Config, revision: str) -> list[str]:
-    """Files a gist mirror changed since ``revision``: the README's check, before the kit."""
-    with tempfile.TemporaryDirectory() as tmp:
-        clone = subprocess.run(
-            ["git", "clone", "-q", GIST, tmp], capture_output=True, text=True, check=False
-        )
-        if clone.returncode != 0:
-            raise GuidesError(f"cannot clone the gist to check the mirror: {clone.stderr.strip()}")
-        check_imported(tmp, revision)
-        subprocess.run(["git", "-C", tmp, "checkout", "-q", revision], check=True)
-        names = subprocess.run(
-            ["git", "-C", tmp, "ls-files"], capture_output=True, text=True, check=True
-        ).stdout.split()
-        return [
-            name
-            for name in names
-            if (config.guides_dir / name).is_file()
-            and text(config.guides_dir / name) != text(Path(tmp) / name)
-        ]
-
-
 def _check_upgradable(config: Config, lock: Lock | None, adopt: bool) -> list[str] | None:
     """The edits to carry (often none), or None when there is nothing to do.
 
@@ -183,15 +143,6 @@ def _check_upgradable(config: Config, lock: Lock | None, adopt: bool) -> list[st
                 "as a guide of its own: rename the repository's file, then upgrade."
             )
         return edits
-    gist_revision = config.guides_dir / GIST_REVISION
-    if gist_revision.is_file():
-        edits = _gist_mirror_edits(config, text(gist_revision).strip())
-        if edits:
-            raise GuidesError(
-                "the gist mirror has unpushed edits: " + ", ".join(edits) + ". Push them to the "
-                "gist by its README's Edit the canonical, then upgrade."
-            )
-        return []
     if not adopt:
         raise GuidesError(
             "this repository has no record of where its guides came from. Compare them with "
@@ -266,7 +217,6 @@ def upgrade(config: Config, adopt: bool = False, dry_run: bool = False) -> Chang
         for target, name in ((t, n) for n, t in config.templates.items() if t in installs):
             (config.root / target).write_text(text(METHOD / name), encoding="utf-8", newline="\n")
         write_lock(config.root, new)
-        (config.guides_dir / GIST_REVISION).unlink(missing_ok=True)
     return Changes(sorted(changed), installs)
 
 

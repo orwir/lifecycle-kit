@@ -29,7 +29,7 @@ In Claude Code the skills are `/lifecycle:<name>`; with another agent, ask for t
 4. **Review** (`/lifecycle:review <N>`). The work round, ending in the hand-back brief.
 5. **"lgtm".** The agent lands it: the commit, the push, the issue closed, and any guide edit sent back to the kit as a release.
 
-A change with no issue skips step 2 and runs step 4 with no number; one obvious change with nothing to decide skips both rounds, and its brief says so. Releases run by the release skill (`/lifecycle:release`), which stops for your "proceed" before it ships. When the kit moves on, the session start says so and the next task upgrades first; ask the agent to upgrade any time with the upgrade skill.
+A change with no issue skips step 2 and runs step 4 with no number; one obvious change with nothing to decide skips both rounds, and its brief says so. Releases run by the release skill (`/lifecycle:release`), which stops for your "proceed" before it ships. When this machine's kit takes a new release, the session start says so and the next task upgrades first; ask the agent to upgrade any time with the upgrade skill.
 
 ## More
 

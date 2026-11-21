@@ -252,24 +252,6 @@ def test_a_later_push_never_reverts_what_the_first_one_carried(repo, kit, tmp_pa
     )
 
 
-def test_a_gist_mirror_past_the_import_is_refused(tmp_path, monkeypatch):
-    for key in ("GIT_AUTHOR_NAME", "GIT_COMMITTER_NAME"):
-        monkeypatch.setenv(key, "t")
-    for key in ("GIT_AUTHOR_EMAIL", "GIT_COMMITTER_EMAIL"):
-        monkeypatch.setenv(key, "t@t")
-    gist = tmp_path / "gist"
-    gist.mkdir()
-    git(gist, "init", "-q", "-b", "main")
-    git(gist, "commit", "-q", "--allow-empty", "-m", "imported")
-    imported = git(gist, "rev-parse", "HEAD").strip()
-    git(gist, "commit", "-q", "--allow-empty", "-m", "pushed after the import")
-    later = git(gist, "rev-parse", "HEAD").strip()
-    monkeypatch.setattr(guides, "GIST_IMPORTED", imported)
-    guides.check_imported(str(gist), imported)
-    with pytest.raises(GuidesError, match="does not contain"):
-        guides.check_imported(str(gist), later)
-
-
 def installed_kit(monkeypatch, version, **files):
     for name, body in files.items():
         (guides.METHOD / name).write_text(body, encoding="utf-8")

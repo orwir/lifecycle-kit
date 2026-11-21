@@ -6,6 +6,10 @@ newest first, one step per line, each naming the file it changes. `lifecycle doc
 upgrade skill makes them. The release's `Repositories:` entries in [CHANGELOG.md](CHANGELOG.md)
 say in one claim each what its steps do.
 
+## [0.7.0] — 2026-11-21
+
+- in `AGENTS.md` and `CONTRIBUTING.md`, a sentence that only credits the lifecycle kit, its plugin or its hook with refusing a `cd <absolute path>` prefix or a PowerShell here-string goes, and one that holds a rule as well keeps the rule and drops the credit: the rule stays where the repository already states it, with its own reason, and names no machine's hook.
+
 ## [0.4.0] — 2026-11-21
 
 - on GitHub and in every clone (its `.git/config`), a repository with a production branch and an integration branch moves to one `main`, as its own upgrade run alone: a task in flight waits with its files in the tree, and nothing else lands until the release that ends the move. `git fetch --prune origin`, then check that `origin/<production>` is an ancestor of `origin/<integration>`; where it is not, stop and list `git log origin/<integration>..origin/<production>`. On the maintainer's go-ahead, delete the production branch on GitHub, rename the integration branch to `main` there, and let a GitHub environment that limits deployments to the production branch take `main` and `hotfix/*`. In each clone: `git branch -D <production>`, `git branch -m <integration> main`, `git fetch --prune origin`, `git branch -u origin/main main`, `git remote set-head origin -a`. Land the rest of this release's lines on `main`. The release that ends the move is the maintainer's to ask for; as the first through the new workflow, the release skill probes the workflow before it ships.

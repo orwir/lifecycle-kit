@@ -39,10 +39,10 @@ def test_a_repo_not_on_the_kit_blocks(repo):
     assert levels(doctor.check(repo, installed="1.2.0")) == [doctor.BLOCK]
 
 
-def test_a_gist_mirror_stops_for_its_own_move(repo):
+def test_a_gist_mirror_is_a_copy_with_no_record(repo):
     (repo.guides_dir / ".gist-revision").write_text("abc\n", encoding="utf-8")
     (finding,) = doctor.check(repo, installed="1.2.0")
-    assert "gist" in finding.message and finding.fix == doctor.ADOPT
+    assert "not on the kit yet" in finding.message and finding.fix == doctor.ADOPT
 
 
 def test_a_finding_names_its_fix_and_what_changed(repo, monkeypatch, tmp_path):
@@ -227,21 +227,6 @@ def test_a_guide_the_kit_dropped_is_listed_as_deleted(repo, monkeypatch):
     assert doctor.upgraded(repo)["deleted"] == ["agents_template.md"]
 
 
-def test_a_newer_kit_out_is_a_note_that_stops_nothing(repo):
-    upgrade(repo, adopt=True)
-    (finding,) = doctor.check(repo, installed="1.2.0", latest="1.3.0")
-    assert (finding.level, finding.fix) == (doctor.NOTE, doctor.UPDATE_KIT)
-    assert "1.3.0 is out" in finding.message
-    assert doctor.check(repo, installed="1.2.0", latest="1.2.0") == []
-    assert doctor.check(repo, installed="1.2.0", latest="1.1.9") == []
-
-
-def test_one_remedy_is_said_once(repo):
-    upgrade(repo, adopt=True)
-    findings = doctor.check(repo, installed="1.1.0", latest="1.3.0")
-    assert [f.fix for f in findings] == [doctor.UPDATE_KIT] and "is out" not in findings[0].message
-
-
 def test_the_steps_are_shown_past_the_cut_in_place_of_their_claims(repo, monkeypatch, tmp_path):
     upgrade(repo, adopt=True)
     lines = "".join(f"- change {n}\n" for n in range(12)) + "- Repositories: a hook\n"
@@ -328,8 +313,6 @@ def test_templates_installed_whole_follow_the_mapping(repo, monkeypatch):
 
 def test_the_kits_own_repository_asks_for_no_lock(kit_checkout):
     assert doctor.check(kit_checkout, installed="9.9.9") == []
-    (finding,) = doctor.check(kit_checkout, installed="9.9.9", latest="10.0.0")
-    assert finding.fix == doctor.UPDATE_KIT
 
 
 def test_a_method_folder_without_the_kits_manifest_is_any_repository(kit_checkout):
@@ -347,9 +330,6 @@ def test_a_repo_not_on_the_kit_is_shown_every_step_it_will_owe(repo, monkeypatch
     owed = ("Upgrade 1.1.0: add `a.cfg`", "Upgrade 1.2.0: add `b.json`")
     (finding,) = doctor.check(repo, installed="1.2.0")
     assert (finding.fix, finding.details) == (doctor.ADOPT, owed)
-    (repo.guides_dir / ".gist-revision").write_text("abc\n", encoding="utf-8")
-    (finding,) = doctor.check(repo, installed="1.2.0")
-    assert "gist" in finding.message and (finding.fix, finding.details) == (doctor.ADOPT, owed)
 
 
 def test_the_kit_notes_an_installed_kit_older_than_its_release(kit_checkout, monkeypatch):
@@ -360,7 +340,7 @@ def test_the_kit_notes_an_installed_kit_older_than_its_release(kit_checkout, mon
     git(kit_checkout.root, "init", "-q", "-b", "main")
     git(kit_checkout.root, "add", "-A")
     git(kit_checkout.root, "commit", "-q", "-m", "v9.9.9")
-    (finding,) = doctor.check(kit_checkout, installed="9.9.8", latest="9.9.9")
+    (finding,) = doctor.check(kit_checkout, installed="9.9.8")
     assert (finding.level, finding.fix) == (doctor.NOTE, doctor.UPDATE_KIT)
     assert "main is at 9.9.9" in finding.message and "9.9.8" in finding.message
     assert doctor.check(kit_checkout, installed="9.9.9") == []

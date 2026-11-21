@@ -1,5 +1,6 @@
 import io
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -36,10 +37,11 @@ def test_upgrade_names_changed_templates(monkeypatch, capsys, repo):
     assert code == 0 and "templates changed" in out and "agents_template.md" in out
 
 
-def test_the_pre_bash_hook_blocks_with_exit_2(monkeypatch, capsys):
-    event = json.dumps({"tool_input": {"command": "cd /tmp && ls"}})
-    code, _, err = run(monkeypatch, capsys, ["hook", "pre-bash"], stdin=event)
-    assert code == 2 and "cd <absolute path>" in err
+def test_the_pre_bash_hook_blocks_with_exit_2(monkeypatch, capsys, repo):
+    event = {"tool_input": {"command": "git stash"}, "agent_type": hook.REVIEWER}
+    event["cwd"] = str(repo.root)
+    code, _, err = run(monkeypatch, capsys, ["hook", "pre-bash"], stdin=json.dumps(event))
+    assert code == 2 and "BLOCKED for the reviewer" in err
 
 
 def test_a_broken_guard_blocks_only_the_reviewer(monkeypatch, capsys):
@@ -65,15 +67,6 @@ def test_a_guide_push_without_its_message_file_is_a_usage_error(monkeypatch, cap
     with pytest.raises(SystemExit) as exited:
         cli.main(["guides", "push"])
     assert exited.value.code == 2 and "needs --file (-F)" in capsys.readouterr().err
-
-
-def test_a_guide_push_by_the_old_line_option_is_pointed_at_the_file(monkeypatch, capsys, repo):
-    monkeypatch.chdir(repo.root)
-    with pytest.raises(SystemExit) as exited:
-        cli.main(["guides", "push", "-m", "guide: a line"])
-    assert exited.value.code == 2 and "takes its message as a file now: -F" in (
-        capsys.readouterr().err
-    )
 
 
 def test_a_guide_push_stops_on_a_message_file_it_cannot_take(monkeypatch, capsys, repo, tmp_path):
@@ -147,16 +140,6 @@ def test_upgraded_reports_a_first_upgrade_from_no_lock(monkeypatch, capsys, repo
     assert code == 0 and "kit none -> 1.2.0" in out
 
 
-def test_doctor_says_a_newer_kit_is_out(monkeypatch, capsys, repo):
-    from lifecycle import doctor, guides, latest
-
-    guides.upgrade(repo, adopt=True)
-    monkeypatch.setattr(doctor, "kit_version", lambda: "1.2.0")
-    monkeypatch.setattr(latest, "latest_release", lambda: "1.4.0")
-    code, out, _ = run(monkeypatch, capsys, ["doctor"], cwd=repo.root)
-    assert code == 0 and "kit 1.4.0 is out" in out
-
-
 def test_upgraded_names_each_step_the_release_requires_on_its_own_line(monkeypatch, capsys, repo):
     from lifecycle import doctor
 
@@ -215,3 +198,21 @@ def test_config_prints_the_templates(monkeypatch, capsys, repo):
     code, out, _ = run(monkeypatch, capsys, ["config"], cwd=repo.root)
     templates = json.loads(out)["templates"]
     assert code == 0 and templates["pr_template.md"] == ".github/pull_request_template.md"
+
+
+def test_doctor_and_session_start_ask_no_remote(monkeypatch, capsys, repo):
+    from lifecycle import guides
+
+    started = []
+    real = subprocess.Popen
+
+    class Recorded(real):
+        def __init__(self, args, *rest, **kwargs):
+            started.append(args if isinstance(args, str) else " ".join(map(str, args)))
+            super().__init__(args, *rest, **kwargs)
+
+    guides.upgrade(repo, adopt=True)
+    monkeypatch.setattr(subprocess, "Popen", Recorded)
+    assert run(monkeypatch, capsys, ["doctor"], cwd=repo.root)[0] == 0
+    hook.session_start({"cwd": str(repo.root)})
+    assert [command for command in started if "ls-remote" in command] == []
