@@ -508,7 +508,7 @@ If you use AI assistants to write code (Claude Code, Codex, Cursor, Gemini CLI, 
 
 - `.lifecycle.toml` at the root names its integration branch, board, gate commands, release workflow and review lenses — the structured values the skills read. Everything else they need stays in `AGENTS.md`.
 - `lifecycle upgrade --adopt` copies the method into `docs/guides/` and writes `.lifecycle.lock`.
-- The agent's adapter: for Claude Code, the kit's marketplace and plugin turned on in the committed `.claude/settings.json`, by the lines in the kit's README.
+- The agent's adapter: for Claude Code, the kit's marketplace and plugin turned on in the committed `.claude/settings.json`, by the kit's `docs/guide.md` (*Put a repository on the kit*).
 
 ---
 

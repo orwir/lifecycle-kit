@@ -2,6 +2,11 @@
 
 What each kit release changed, newest first. A guide push from a project adds its own line.
 
+## v0.4.1
+
+- `project_kickstart.md` and `idea_gauntlet.md` send turning the kit on to the kit's `docs/guide.md`, where its setup and settings moved.
+- The kit's README is a front page with an install prompt any agent follows.
+
 ## v0.4.0
 
 - Repositories: on GitHub and in every clone (its `.git/config`), a repository with a production branch and an integration branch moves to one `main`, as its own upgrade run alone: a task in flight waits with its files in the tree, and nothing else lands until the release that ends the move. `git fetch --prune origin`, then check that `origin/<production>` is an ancestor of `origin/<integration>`; where it is not, stop and list `git log origin/<integration>..origin/<production>`. On the maintainer's go-ahead, delete the production branch on GitHub, rename the integration branch to `main` there, and let a GitHub environment that limits deployments to the production branch take `main` and `hotfix/*`. In each clone: `git branch -D <production>`, `git branch -m <integration> main`, `git fetch --prune origin`, `git branch -u origin/main main`, `git remote set-head origin -a`. Land the rest of this release's lines on `main`. The release that ends the move is the maintainer's to ask for; as the first through the new workflow, the release skill probes the workflow before it ships.

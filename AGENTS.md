@@ -1,6 +1,6 @@
 # Agent instructions — lifecycle-kit
 
-You are working in `orwir/lifecycle-kit`: the maintainer's project lifecycle — the method in `method/`, the `lifecycle` command in `tools/`, and the skills, reviewer and Claude Code adapter over them ([README.md](README.md)). Every repository on the kit runs what lands here, so a change here is a change to all of them.
+You are working in `orwir/lifecycle-kit`: the maintainer's project lifecycle — the method in `method/`, the `lifecycle` command in `tools/`, and the skills, reviewer and Claude Code adapter over them ([docs/guide.md](docs/guide.md#how-the-kit-is-built)). Every repository on the kit runs what lands here, so a change here is a change to all of them.
 
 **Hard gates:** never commit, push or tag without the maintainer's explicit go-ahead; never bypass hooks with `--no-verify`; never commit or print secrets.
 
@@ -38,8 +38,9 @@ Work lands on `main`, from a worktree branch or directly; no branch is protected
 
 | Change | Also update |
 |---|---|
-| a `lifecycle` subcommand, its output, or a skill's steps | `README.md` where it describes them |
-| a `.lifecycle.toml` key | `README.md` § Settings |
+| a `lifecycle` subcommand, its output, or a skill's steps | `README.md` and `docs/guide.md` where they describe them |
+| how a repository goes on the kit | `docs/guide.md` § Put a repository on the kit, and the README's install prompt |
+| a `.lifecycle.toml` key | `docs/guide.md` § Settings |
 | anything a repository picks up | a line under the release in `CHANGELOG.md` |
 | a change every repository must make beyond its guides and templates | a `Repositories:` line naming the file it changes |
 | a guide added, renamed or removed | its line in `method/README.md` |

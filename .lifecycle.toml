@@ -19,8 +19,12 @@ allow = [
   "claude plugin validate . --strict",
 ]
 
+[review.lenses.person-facing]
+paths = ["README.md", "docs/"]
+read = ["method/project_kickstart.md, principle 3 and its README.md row — documentation is layered by audience; the README is a front page: what, install, where to find more"]
+
 [review.lenses.model-facing]
-paths = ["skills/", "agents/"]
+paths = ["skills/", "agents/", "docs/guide.md"]
 read = [
   "AGENTS.md § Rules — skills keep to the portable Agent Skills subset; mechanics live in the tools, words in the skills",
   "method/task_review.md — a rule a skill restates keeps its one home in the guide",

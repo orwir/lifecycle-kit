@@ -1,88 +1,38 @@
 # lifecycle-kit
 
-The maintainer's project lifecycle in one versioned repository: the method every project follows, the mechanics that carry it out, and a thin Claude Code plugin over both. It is for the maintainer's own repositories first; how it is shared comes later. It does not hold anything one project owns: a project's design language, its release checklist and its `AGENTS.md` stay in that project.
+How your projects run, from an idea to its releases, kept in one place: the method every repository follows, and the agent skills and command that carry it out. It is private and built for your own repositories, so this page is written for you.
 
-## Layers
+- **A plan reviewed before the code.** A task's plan goes into its issue. Where it has a shape that has shipped holes before, a reviewer agent with none of the author's context reads it against the code first.
+- **The work reviewed before you read it.** Once the gate is green, fresh reviewers read the diff against the plan, one more for each surface a person or a model reads. You read one hand-back brief: what changed, what was checked, what is yours to decide.
+- **Nothing lands without your word.** The agent commits, pushes, closes the issue and ships a release only on your go-ahead.
+- **Every repository on one method.** Each keeps a copy of the guides pinned to a kit release, and a session start says when it is behind. A guide improved in one project comes back here and reaches the rest at their next upgrade.
 
-| Layer | Holds | Run by |
-|---|---|---|
-| `method/` | the guides: kickstart, task review, the review kinds, the templates | anyone who reads |
-| `tools/lifecycle/` | the `lifecycle` command: settings, doctor, upgrade, guide push, board, release, hooks | any agent, a git hook, CI, a person |
-| `skills/`, `agents/` | clarify, review, handback, complete, release, upgrade; the read-only reviewer | any agent that loads Agent Skills |
-| `.claude-plugin/`, `hooks/`, `bin/` | the Claude Code adapter: marketplace, plugin manifest, hook wiring, the command on PATH | Claude Code |
+## Install
 
-The skills keep to what every Agent Skills tool reads; anything only Claude Code understands sits in the adapter. Outside Claude Code, the command is `bin/lifecycle` in a checkout of the kit (`bin/lifecycle.cmd` from cmd or PowerShell), and `lifecycle where` names the kit's folder, so an agent finds the reviewer definition in `agents/`. The tools are standard-library Python 3.11 or later, so they run wherever a repository does.
+Paste this into your agent, Claude Code or any other, started in the repository:
 
-## A repository on the kit
-
-Three files hold a repository's side of it:
-
-- `.lifecycle.toml` — hand-written settings (below).
-- `.lifecycle.lock` — written by `lifecycle upgrade` (the kit release the repository is on and the digest of each guide it copied) and by `lifecycle guides push` (each guide pushed since, with the release that took it, which the next upgrade waits for).
-- the guides folder (`docs/guides/` by default) — a copy of `method/` at that release, so the repository reads on its own, on GitHub and for any agent.
-
-`lifecycle doctor` runs at every session start through the plugin and names each finding's fix, with what the kit changed since the repository's release. A repository behind the installed kit upgrades as a tracked task's first step, on any release; an untracked task meets a minor or major one at its work round. The upgrade replaces each file a template ports into that the repository kept word for word (usually the issue and PR templates), and the agent ports the rest and makes each change a `Repositories:` line of the kit's CHANGELOG requires; it lands as its own commit ahead of the task's where it can. Once a day, `doctor` also asks the kit's remote for its newest release, and says so when this machine's kit is older.
-
-A guide edit starts in the repository whose task found it, is reviewed in that task's diff, and goes to the kit at the task's *Complete* with `lifecycle guides push`, which replays it onto the kit's latest and releases it as a patch.
-
-### Settings
-
-```toml
-# .lifecycle.toml
-[branches]
-integration = "main"      # the one long-lived branch: where tasks land and releases are cut
-
-[board]                   # omit when the repository tracks no board
-owner = "orwir"
-number = 9
-
-[gate]                    # the local gate, in order
-commands = ["scripts/check.sh"]
-# A targeted run on a worktree of the base, to prove a new test fails without the change:
-# {root} is the worktree, {tests} the new tests in the form the command takes (here a filter).
-targeted = "dotnet test {root} --filter {tests}"
-
-[guides]
-path = "docs/guides"
-
-[release]                 # omit when the repository ships no release by a workflow
-workflow = "release.yml"  # what `lifecycle release <commit>` dispatches on the reviewed commit
-
-[review]
-allow = ["dotnet format --verify-no-changes"]   # read-only checks the reviewer may run
-
-[review.lenses.person-facing]
-paths = ["src/App/"]
-read = ["docs/guides/design_language.md — every new screen line reuses its components"]
-
-# [templates]             # an ideas home's; a project omits it for its five (below)
-# "idea_gauntlet.md" = "AGENTS.md"   # the template, and the file it ports into
+```text
+Put this repository on my lifecycle kit, the private GitHub repository
+orwir/lifecycle-kit: read its docs/guide.md with gh and follow
+"Put a repository on the kit". Commit nothing.
 ```
 
-Without `[templates]`, a repository follows a project's templates: `agents_template.md` → `AGENTS.md`, `contributing_template.md` → `CONTRIBUTING.md`, and the issue and PR templates → `.github/ISSUE_TEMPLATE/bug.md`, `.github/ISSUE_TEMPLATE/task.md` and `.github/pull_request_template.md`. Naming any lists every template the repository follows: an ideas home follows only the one in `idea_gauntlet.md`, as the commented lines show.
+The agent sets the kit up on this machine if it is missing, turns it on in the repository, writes the repository's settings from what it finds there, asking you what it cannot tell, copies the method in, ports its templates into the repository's `AGENTS.md`, `CONTRIBUTING.md` and issue and PR templates, and hands you the diff. Anything outside the repository, such as a branch on GitHub, waits for your go-ahead. A new project starts from its idea instead: your ideas home moves the idea into the new repository and runs the method's kickstart, which does this same setup.
 
-### Turning it on in Claude Code
+## A task, end to end
 
-Once per machine, with git able to read the private repository (`gh auth setup-git`, or Git Credential Manager):
+In Claude Code the skills are `/lifecycle:<name>`; with another agent, ask for the skill by name ("run the lifecycle kit's clarify skill on issue 12").
 
-```
-claude plugin marketplace add orwir/lifecycle-kit
-claude plugin install lifecycle@lifecycle-kit
-```
+1. **Open an issue** from the task template.
+2. **Clarify** (`/lifecycle:clarify <N>`). The agent writes the plan into the issue, runs the plan round, and hands you the Clarify brief. Answer what it asks and say "go".
+3. **The work.** The agent builds it and runs the gate.
+4. **Review** (`/lifecycle:review <N>`). The work round, ending in the hand-back brief.
+5. **"lgtm".** The agent lands it: the commit, the push, the issue closed, and any guide edit sent back to the kit as a release.
 
-The plugin is off by default. A repository turns it on in its committed `.claude/settings.json`:
+A change with no issue skips step 2 and runs step 4 with no number; one obvious change with nothing to decide skips both rounds, and its brief says so. Releases run by the release skill (`/lifecycle:release`), which stops for your "proceed" before it ships. When the kit moves on, the session start says so and the next task upgrades first; ask the agent to upgrade any time with the upgrade skill.
 
-```json
-{
-  "extraKnownMarketplaces": {
-    "lifecycle-kit": { "source": { "source": "github", "repo": "orwir/lifecycle-kit" }, "autoUpdate": true }
-  },
-  "enabledPlugins": { "lifecycle@lifecycle-kit": true }
-}
-```
+## More
 
-Then `.lifecycle.toml`, and `lifecycle upgrade` (`--adopt` for guides with no recorded source). The skills are `/lifecycle:clarify`, `/lifecycle:review`, `/lifecycle:handback`, `/lifecycle:complete`, `/lifecycle:release` and `/lifecycle:upgrade`; the reviewer is the `lifecycle:reviewer` agent.
-
-## Working on the kit
-
-The kit runs its own task rounds, as every repository on it does: its `.lifecycle.toml` and `.claude/settings.json` turn them on, and `lifecycle doctor` knows the kit's own repository by its manifest, so its `method/`, the canonical method, needs no lock; there it notes instead when the installed plugin, which runs the rounds, is older than the release on `main`. [AGENTS.md](AGENTS.md) says how a kit task runs.
+- [docs/guide.md](docs/guide.md): what the kit keeps in a repository, how it stays current, every setting, and how the kit is built.
+- [method/](method/README.md): the guides themselves, from an idea's gauntlet to releases and reviews.
+- [AGENTS.md](AGENTS.md): changing the kit itself.
