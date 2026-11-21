@@ -2,6 +2,10 @@
 
 What each kit release changed, newest first. A guide push from a project adds its own line.
 
+## v0.4.2
+
+- The release workflow recipe's ship job reads the live branch head and tags again before it builds, so a re-run of an old failed run cannot deploy over a newer release
+
 ## v0.4.1
 
 - `project_kickstart.md` and `idea_gauntlet.md` send turning the kit on to the kit's `docs/guide.md`, where its setup and settings moved.
