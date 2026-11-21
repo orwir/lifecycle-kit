@@ -32,6 +32,8 @@ _SCHEMA: dict[str, set[str]] = {
     "branches": {"integration", "protected"},
     "board": {"owner", "number"},
     "gate": {"commands", "targeted"},
+    # path: retired in 0.8.0 with the copy of the method; read only to find a copy from
+    # before it, which the next upgrade deletes. A later release stops reading it.
     "guides": {"path"},
     "release": {"workflow"},
     "review": {"allow", "lenses"},

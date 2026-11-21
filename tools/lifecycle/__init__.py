@@ -7,7 +7,6 @@ Standard library only, Python 3.11 or later, so it runs wherever a repository do
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -21,13 +20,6 @@ def kit_version() -> str:
     return json.loads(_MANIFEST.read_text(encoding="utf-8"))["version"]
 
 
-def kit_remote() -> str:
-    """Where the kit is pushed: the manifest's repository, or ``LIFECYCLE_KIT_REMOTE``."""
-    if override := os.environ.get("LIFECYCLE_KIT_REMOTE"):
-        return override
-    return json.loads(_MANIFEST.read_text(encoding="utf-8"))["repository"] + ".git"
-
-
 def kit_repository() -> str:
     """The kit's ``owner/name`` on GitHub, from the manifest's repository: the prefix a kit
     issue reference takes outside the kit, where a bare ``#N`` is the repository's own."""
@@ -37,7 +29,7 @@ def kit_repository() -> str:
 
 def is_kit(root: Path) -> bool:
     """Whether ``root`` is a checkout of the kit itself, whose ``method/`` is the canonical
-    method rather than a pinned copy: its manifest names the plugin this kit is, whichever
+    method: its manifest names the plugin this kit is, whichever
     copy of the kit is running (a plugin cache or the checkout)."""
     manifest = root / ".claude-plugin" / "plugin.json"
     if not (root / "method").is_dir() or not manifest.is_file():

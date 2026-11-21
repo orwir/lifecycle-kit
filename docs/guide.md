@@ -29,24 +29,23 @@ Agent instructions. Commit nothing: the maintainer reads the diff and gives the 
 
    Claude Code loads it on `/reload-plugins`: ask the maintainer to run it, and go on once `lifecycle version` answers. If it never answers, stop and report what it printed. A new session holds none of this: there the maintainer pastes the install prompt again, and the steps go on from the first one not done.
 4. **Write `.lifecycle.toml`** at the root, by *Settings* below, from what the repository says: its integration branch, a board its `CONTRIBUTING.md` or `AGENTS.md` names, the gate its git hooks or CI run, a release workflow in `.github/workflows/`, the paths a person or a model reads. Leave out a table the repository has no use for, and ask the maintainer what the repository does not settle.
-5. **Run the upgrade skill** (`/lifecycle:upgrade` in Claude Code, `skills/upgrade/SKILL.md` otherwise). It copies the method in, ports the templates into the repository's own files, and makes each step of the kit's `UPGRADING.md` that applies here, as `lifecycle doctor` prints them; a step that changes something outside the tree, such as a branch on GitHub, waits for the maintainer's go-ahead, as the skill says. Two things it does not say yet for a first move:
-   - `lifecycle doctor` prints "not on the kit yet" and points at `lifecycle upgrade --help`. Follow the skill, not that pointer, or the template ports and the upgrade steps are skipped.
-   - At the skill's step 2 a first move runs `lifecycle upgrade --adopt`, since a plain `lifecycle upgrade` refuses a repository with no `.lifecycle.lock`. `--adopt` overwrites each guide named as one in the kit's `method/`: where one already in the folder differs from the kit, show the difference to the maintainer first, who takes it into the kit or drops it. A project's own guide, such as `design_language.md`, stays as it is.
+5. **Run the upgrade skill** (`/lifecycle:upgrade` in Claude Code, `skills/upgrade/SKILL.md` otherwise). A first move compares each guide in the repository named like one in the kit's `method/` with the kit's and shows the maintainer every difference, then runs `lifecycle upgrade --adopt`, which deletes those files: the repository reads the kit's guides from the installed kit, and its own guides, such as `design_language.md`, stay. It ports the templates into the repository's own files and makes each step of the kit's `UPGRADING.md` that applies here, as `lifecycle doctor` prints them; a later step can undo an earlier one, so it makes their net effect. A step that changes something outside the tree, such as a branch on GitHub, waits for the maintainer's go-ahead, as the skill says.
 6. **Hand back** by the upgrade skill's last step, naming as well the settings files written at steps 3 and 4 and what the maintainer was asked. The work round it runs adds `.lifecycle.toml` and `.claude/settings.json` to its diff, so a reviewer reads the settings every later round runs on.
 
 ## What a repository holds
 
-Three files hold a repository's side of it:
+Two files hold a repository's side of it, beside the files its templates port into:
 
 - `.lifecycle.toml`: hand-written settings (*Settings*).
-- `.lifecycle.lock`: written by `lifecycle upgrade` (the kit release the repository is on and the digest of each guide it copied) and by `lifecycle guides push` (each guide pushed since, with the release that took it, which the next upgrade waits for).
-- the guides folder (`docs/guides/` by default): a copy of `method/` at that release, so the repository reads on its own, on GitHub and for any agent.
+- `.lifecycle.lock`: written by `lifecycle upgrade`, holding the kit release the repository last upgraded to and the text of each template it follows at that release.
+
+The guides are not copied in: every agent reads them from the installed kit, in `method/` of the folder `lifecycle where` prints, and links on GitHub point at the kit. A repository's own guides, such as `design_language.md`, keep their folder.
 
 ## Staying current
 
-`lifecycle doctor` runs at every session start through the plugin, and before a task by the repository's `AGENTS.md` where no plugin runs it. It names each finding's fix, with what the kit changed since the repository's release. A repository behind the installed kit upgrades as a tracked task's first step, on any release; an untracked task meets a minor or major one at its work round. The upgrade replaces each file a template ports into that the repository kept word for word (usually the issue and PR templates), and the agent ports the rest and makes each step the kit's `UPGRADING.md` asks of every repository, which `doctor` prints oldest release first; it lands as its own commit ahead of the task's where it can. This machine's kit takes a new release on its own route from step 1: the plugin by the marketplace's `autoUpdate` that step 3 turns on, and a clone by a pull (`git -C <clone> pull`) that the agent's instructions run before a task. Nothing checks the kit's remote for you, so a clone that is never pulled stays on its release.
+`lifecycle doctor` runs at every session start through the plugin, and before a task by the repository's `AGENTS.md` where no plugin runs it. A release that changes only guide wording, a skill or the tools asks nothing of a repository: it reads the release at once. One that changes a template the repository follows, or writes a step in the kit's `UPGRADING.md`, asks for an upgrade, and `doctor` names its fix with the steps, the templates and what the kit changed. The upgrade runs alone, with its own round and commit, before a task's plan or an untracked task's first edit; one that comes due while a task's edits are in the tree waits until that task lands. It replaces each file a template ports into that the repository kept word for word (usually the issue and PR templates), and the agent ports the rest and makes each step, oldest release first. This machine's kit takes a new release on its own route from step 1: the plugin by the marketplace's `autoUpdate` that step 3 turns on, and a clone by a pull (`git -C <clone> pull`) that the agent's instructions run before a task. Nothing checks the kit's remote for you, so a clone that is never pulled stays on its release.
 
-A guide edit starts in the repository whose task found it, is reviewed in that task's diff, and goes to the kit at the task's *Complete* with `lifecycle guides push`, which replays it onto the kit's latest and releases it as a patch. It takes a message file, `lifecycle guides push -F <file>`: the first line is the patch's entry in the kit's changelog, and the reason below a blank line is the kit commit's body, so the kit's history says why each pushed clause exists. The push refuses a line that breaks the changelog's style (over 120 characters, or a second claim welded on by a semicolon or a dash), a file with no line or no reason, and an issue named in either in a form GitHub links (`#N`, `owner/repo#N`, `GH-N` or a link). The rule is no issue at all, in the kit's words.
+A gap a task finds in one of the kit's guides is filed on the kit as an issue when it is found, and the kit's own task changes the guide (`method/README.md` § Change a guide).
 
 ## Settings
 
@@ -65,9 +64,6 @@ commands = ["scripts/check.sh"]
 # {root} is the worktree, {tests} the new tests in the form the command takes (here a filter).
 targeted = "dotnet test {root} --filter {tests}"
 
-[guides]
-path = "docs/guides"
-
 [release]                 # omit when the repository ships no release by a workflow
 workflow = "release.yml"  # what `lifecycle release <commit>` dispatches on the reviewed commit
 
@@ -79,17 +75,19 @@ paths = ["src/App/"]
 read = ["docs/guides/design_language.md — every new screen line reuses its components"]
 
 # [templates]             # an ideas home's; a project omits it for its five (below)
-# "idea_gauntlet.md" = "AGENTS.md"   # the template, and the file it ports into
+# "ideas_home_template.md" = "AGENTS.md"   # the template, and the file it ports into
 ```
 
-Without `[templates]`, a repository follows a project's templates: `agents_template.md` → `AGENTS.md`, `contributing_template.md` → `CONTRIBUTING.md`, and the issue and PR templates → `.github/ISSUE_TEMPLATE/bug.md`, `.github/ISSUE_TEMPLATE/task.md` and `.github/pull_request_template.md`. Naming any lists every template the repository follows: an ideas home follows only the one in `idea_gauntlet.md`, as the commented lines show.
+Without `[templates]`, a repository follows a project's templates: `agents_template.md` → `AGENTS.md`, `contributing_template.md` → `CONTRIBUTING.md`, and the issue and PR templates → `.github/ISSUE_TEMPLATE/bug.md`, `.github/ISSUE_TEMPLATE/task.md` and `.github/pull_request_template.md`. Naming any lists every template the repository follows: an ideas home follows only `ideas_home_template.md`, as the commented lines show.
+
+`[guides] path` is retired: it named the folder that held a copy of the method before 0.8.0, and the upgrade reads it only to find that copy (`docs/guides/` by default). A later release stops reading it.
 
 ## How the kit is built
 
 | Layer | Holds | Run by |
 |---|---|---|
 | `method/` | the guides: kickstart, task review, the review kinds, the templates | anyone who reads |
-| `tools/lifecycle/` | the `lifecycle` command: settings, doctor, upgrade, guide push, board, release, hooks | any agent, a git hook, CI, a person |
+| `tools/lifecycle/` | the `lifecycle` command: settings, doctor, upgrade, board, release, hooks | any agent, a git hook, CI, a person |
 | `skills/`, `agents/` | clarify, review, handback, complete, release, upgrade; the read-only reviewer | any agent that loads Agent Skills |
 | `.claude-plugin/`, `hooks/`, `bin/` | the Claude Code adapter: marketplace, plugin manifest, hook wiring, the command on PATH | Claude Code |
 

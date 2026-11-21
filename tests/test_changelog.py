@@ -77,11 +77,6 @@ def test_every_upgrade_step_sits_on_one_line():
     assert wrapped == []
 
 
-def test_the_cap_the_push_line_is_told_is_the_cap_the_push_holds():
-    for path in (KIT_ROOT / "skills" / "complete" / "SKILL.md", KIT_ROOT / "docs" / "guide.md"):
-        assert f"{CAP} characters" in path.read_text(encoding="utf-8"), path
-
-
 def test_an_entry_outside_every_group_is_named():
     assert changelog.violations(["", "- loose (#1)", "### Added", "- grouped (#2)"]) == [
         "in no group: loose (#1)"

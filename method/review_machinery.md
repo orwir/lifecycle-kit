@@ -254,4 +254,4 @@ Before a phase or the review closes:
 
 ## Updating a guide
 
-Two reviews in a row needing the same hand-edit means the guide is wrong: fix it in the kit, through the copy of the project that found it. The rule holds for this file and for every kind's guide.
+Two reviews in a row needing the same hand-edit means the guide is wrong: file it as an issue on the kit from the review that found it. The rule holds for this file and for every kind's guide.

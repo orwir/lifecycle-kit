@@ -26,15 +26,30 @@ def test_doctor_prints_each_finding_and_its_details(monkeypatch, capsys, repo, t
 
     guides.upgrade(repo, adopt=True)
     (tmp_path / "CHANGELOG.md").write_text("## v1.3.0\n\n- a change\n", encoding="utf-8")
+    (tmp_path / "UPGRADING.md").write_text("## v1.3.0\n\n- add `x.json`\n", encoding="utf-8")
     monkeypatch.setattr(doctor, "KIT_ROOT", tmp_path)
     monkeypatch.setattr(doctor, "kit_version", lambda: "1.3.0")
     code, out, _ = run(monkeypatch, capsys, ["doctor"], cwd=repo.root)
     assert code == 0 and out.startswith("block:") and "\n  - a change" in out
 
 
-def test_upgrade_names_changed_templates(monkeypatch, capsys, repo):
+def test_doctor_says_nothing_of_a_release_that_asks_nothing(monkeypatch, capsys, repo, tmp_path):
+    from lifecycle import doctor, guides
+
+    guides.upgrade(repo, adopt=True)
+    (tmp_path / "CHANGELOG.md").write_text("## v1.3.0\n\n- a change\n", encoding="utf-8")
+    monkeypatch.setattr(doctor, "KIT_ROOT", tmp_path)
+    monkeypatch.setattr(doctor, "kit_version", lambda: "1.3.0")
+    code, out, _ = run(monkeypatch, capsys, ["doctor"], cwd=repo.root)
+    assert code == 0 and out.startswith("on kit ") and out.endswith(", nothing to do\n")
+
+
+def test_a_first_upgrade_names_each_template_to_port_and_where_to_read_it(
+    monkeypatch, capsys, repo
+):
     code, out, _ = run(monkeypatch, capsys, ["upgrade", "--adopt"], cwd=repo.root)
-    assert code == 0 and "templates changed" in out and "agents_template.md" in out
+    assert code == 0 and out.startswith("kit none -> 1.2.0\n")
+    assert "port agents_template.md -> AGENTS.md, read whole: " in out
 
 
 def test_the_pre_bash_hook_blocks_with_exit_2(monkeypatch, capsys, repo):
@@ -60,23 +75,6 @@ def test_the_guards_are_gone(monkeypatch, capsys, repo):
     with pytest.raises(SystemExit) as exited:
         cli.main(["guard", "push"])
     assert exited.value.code == 2 and "invalid choice: 'guard'" in capsys.readouterr().err
-
-
-def test_a_guide_push_without_its_message_file_is_a_usage_error(monkeypatch, capsys, repo):
-    monkeypatch.chdir(repo.root)
-    with pytest.raises(SystemExit) as exited:
-        cli.main(["guides", "push"])
-    assert exited.value.code == 2 and "needs --file (-F)" in capsys.readouterr().err
-
-
-def test_a_guide_push_stops_on_a_message_file_it_cannot_take(monkeypatch, capsys, repo, tmp_path):
-    missing = tmp_path / "missing.txt"
-    code, _, err = run(monkeypatch, capsys, ["guides", "push", "-F", str(missing)], cwd=repo.root)
-    assert code == 1 and f"cannot read the message file {missing}" in err
-    wrapped = tmp_path / "wrapped.txt"
-    wrapped.write_text("guide: a line\nwrapped onto a second\n\nwhy\n", encoding="utf-8")
-    code, _, err = run(monkeypatch, capsys, ["guides", "push", "-F", str(wrapped)], cwd=repo.root)
-    assert code == 1 and "the file's first line alone" in err
 
 
 def test_config_prints_the_resolved_settings(monkeypatch, capsys, repo):
@@ -123,39 +121,30 @@ def test_upgrade_names_installed_templates_and_leaves_them_off_the_port_list(
     installed = repo.root / ".github" / "pull_request_template.md"
     installed.parent.mkdir(parents=True)
     installed.write_text("a\nb\nc\nd\n", encoding="utf-8")
+    (repo.root / "AGENTS.md").write_text("# AGENTS\nours\n", encoding="utf-8")
     (guides.METHOD / "pr_template.md").write_text("a\nb\nc\nD\n", encoding="utf-8")
     (guides.METHOD / "agents_template.md").write_text("# AGENTS, new\n", encoding="utf-8")
     monkeypatch.setattr(guides, "kit_version", lambda: "1.3.0")
     code, out, _ = run(monkeypatch, capsys, ["upgrade"], cwd=repo.root)
-    assert code == 0 and "installed unchanged from the old template: .github/" in out
-    port_line = next(line for line in out.splitlines() if line.startswith("templates changed"))
-    assert "agents_template.md" in port_line and "pr_template.md" not in port_line
+    assert code == 0 and "replaced with the new template, unchanged since the old: .github/" in out
+    assert "port agents_template.md -> AGENTS.md, by what the template changed:" in out
+    assert "-# AGENTS\n+# AGENTS, new\n" in out and "port pr_template.md" not in out
 
 
-def test_upgraded_reports_a_first_upgrade_from_no_lock(monkeypatch, capsys, repo):
-    from lifecycle import guides
+def test_the_move_from_copies_names_what_it_deletes(monkeypatch, capsys, repo):
+    from conftest import copy_era
 
-    guides.upgrade(repo, adopt=True)
-    code, out, _ = run(monkeypatch, capsys, ["upgraded"], cwd=repo.root)
-    assert code == 0 and "kit none -> 1.2.0" in out
+    copy_era(repo, kit="1.2.0")
+    code, out, _ = run(monkeypatch, capsys, ["upgrade"], cwd=repo.root)
+    assert code == 0 and "deleted the kit's copy in docs/guides: agents_template.md" in out
 
 
-def test_upgraded_names_each_step_the_release_requires_on_its_own_line(monkeypatch, capsys, repo):
-    from lifecycle import doctor
-
-    required = ["add a hook; then run it", "set `x` in `a.toml`"]
-    found = {"from": "1.2.0", "to": "1.3.0", "changes": [], "required": required,
-             "guides": [], "deleted": [], "installed": []}  # fmt: skip
-    monkeypatch.setattr(doctor, "upgraded", lambda config, base=None: found)
-    code, out, _ = run(monkeypatch, capsys, ["upgraded"], cwd=repo.root)
-    assert code == 0
-    assert (
-        "required of this repository:\n  - add a hook; then run it\n  - set `x` in `a.toml`\n"
-        in out
-    )
-    found["required"] = []
-    code, out, _ = run(monkeypatch, capsys, ["upgraded"], cwd=repo.root)
-    assert "required of this repository: none\n" in out
+def test_the_removed_subcommands_are_usage_errors(monkeypatch, capsys, repo):
+    monkeypatch.chdir(repo.root)
+    for argv in (["upgraded"], ["guides", "check"], ["guides", "push", "-F", "x"]):
+        with pytest.raises(SystemExit) as exited:
+            cli.main(argv)
+        assert exited.value.code == 2 and "invalid choice" in capsys.readouterr().err
 
 
 def test_output_is_utf8_whatever_the_console_page(tmp_path):
@@ -176,12 +165,6 @@ def test_output_is_utf8_whatever_the_console_page(tmp_path):
     assert result.returncode == 0 and "проект" in result.stdout.decode("utf-8")
 
 
-def test_the_port_line_names_each_template_with_its_target(monkeypatch, capsys, repo):
-    code, out, _ = run(monkeypatch, capsys, ["upgrade", "--adopt"], cwd=repo.root)
-    port_line = next(line for line in out.splitlines() if line.startswith("templates changed"))
-    assert code == 0 and "agents_template.md -> AGENTS.md" in port_line
-
-
 def test_named_templates_replace_the_defaults_on_the_port_line(monkeypatch, capsys, repo):
     from conftest import name_templates
     from lifecycle import guides
@@ -189,9 +172,8 @@ def test_named_templates_replace_the_defaults_on_the_port_line(monkeypatch, caps
     name_templates(repo, '"idea_gauntlet.md" = "AGENTS.md"\n')
     (guides.METHOD / "idea_gauntlet.md").write_text("# Gauntlet\n", encoding="utf-8")
     code, out, _ = run(monkeypatch, capsys, ["upgrade", "--adopt"], cwd=repo.root)
-    port_line = next(line for line in out.splitlines() if line.startswith("templates changed"))
-    assert code == 0 and "idea_gauntlet.md -> AGENTS.md" in port_line
-    assert "agents_template.md" not in port_line
+    assert code == 0 and "port idea_gauntlet.md -> AGENTS.md" in out
+    assert "agents_template.md" not in out
 
 
 def test_config_prints_the_templates(monkeypatch, capsys, repo):
@@ -216,3 +198,20 @@ def test_doctor_and_session_start_ask_no_remote(monkeypatch, capsys, repo):
     assert run(monkeypatch, capsys, ["doctor"], cwd=repo.root)[0] == 0
     hook.session_start({"cwd": str(repo.root)})
     assert [command for command in started if "ls-remote" in command] == []
+
+
+def test_a_dry_run_says_what_it_would_do(monkeypatch, capsys, repo):
+    from conftest import copy_era
+
+    copy_era(repo, kit="1.2.0")
+    code, out, _ = run(monkeypatch, capsys, ["upgrade", "--dry-run"], cwd=repo.root)
+    assert code == 0 and "(dry run)" in out and "would delete the kit's copy" in out
+    assert (repo.guides_dir / "agents_template.md").is_file()
+
+
+def test_an_upgrade_with_nothing_to_change_says_so(monkeypatch, capsys, repo):
+    from lifecycle import guides
+
+    guides.upgrade(repo, adopt=True)
+    code, out, _ = run(monkeypatch, capsys, ["upgrade"], cwd=repo.root)
+    assert code == 0 and out.endswith("nothing to change beyond the lock\n")

@@ -1,6 +1,6 @@
 ---
 name: complete
-description: Close out a task on the maintainer's explicit go-ahead ("lgtm", "complete the task") — guides to the kit, commit, push, close the issue, board to Done at the top, delete a merged branch
+description: Close out a task on the maintainer's explicit go-ahead ("lgtm", "complete the task") — commit, push, close the issue, board to Done at the top, delete a merged branch
 argument-hint: "[issue number; empty for an untracked task]"
 ---
 
@@ -13,16 +13,15 @@ This is the *Complete* phase of AGENTS.md § Task workflow. It runs only on the 
 ## 1. Before anything lands
 
 - The gate — `gate.commands`, else AGENTS.md § Commands' lint and tests — passed in this session after the last edit; if not, run it now. A red gate stops the batch. A repository with no gate at all says so in the report.
-- `git status --short` lists only this task's files, and an upgrade's when `lifecycle upgraded` reports one, the files its upgrade steps name included. Anything else is someone's in-progress work: leave it out and name it in the report.
+- `git status --short` lists only this task's files. Anything else is someone's in-progress work: leave it out and name it in the report.
 
-## 2. Guides
+## 2. Kit issues
 
-When `lifecycle guides check` lists guides this task changed: write the push's message file in a scratch folder outside the tree and run `lifecycle guides push -F <file>`. Its first line is the line: the patch's entry in the kit's changelog, so it follows that changelog's style, one claim of at most 120 characters, no reason, no issue. Below a blank line comes the reason, the kit commit's body: the gap or failure the edit closes, which the task's plan or hand-back holds. Write both in the kit's words, as § Change a guide of the `README.md` in the guides folder (`lifecycle config` → `guides.path`) says: every repository on the kit reads the line in its session-start notes and *Upgrade* lines, so neither names the project's own issue or surface. The push refuses a line over the cap, one with a semicolon or a lone dash, a file with no line or no reason, and an issue in either in a form GitHub links; the rule is no issue at all. It replays each edit onto the kit's latest from the release its copy came from and releases them as a patch; a conflict stops the batch for the maintainer before anything lands. A pushed guide takes the released text, with any change another project made to it meanwhile, and `.lifecycle.lock` records the release: both ride the task's commit. A guide edit is never left unpushed past this step.
+A gap this task found in a kit guide was filed on the kit when it was found (`task_review.md` § Developer rules, in the kit's `method/`): the hand-back carries each as a *Taken alone* row, and the report names it. One found and not yet filed is filed now, on the repository the kit's `.claude-plugin/plugin.json` names (in the folder `lifecycle where` prints), in the kit's words. Nothing of the kit's lands from this repository.
 
 ## 3. Commit
 
-- When `lifecycle upgraded` reports an upgrade in the tree, it is the first commit: `.lifecycle.lock`, the guides and installed templates it lists, the files it ported into, and the files its `required` changes name, staged by name, as `docs(guides): upgrade to kit <release>`. It rides the task's commit instead where the task also changed one of those files or the upgrade carried the task's guide edits, and on a feature branch it rides the squash merge; the task's commit body or PR body then says so. A session that did not run the upgrade cannot tell a port from the task's own change to a file a template ports into (`lifecycle config` → `templates`): there, a changed file whose template the upgrade rewrote rides the task's commit. Guides it lists as deleted are staged with it.
-- Stage the task's files by name, the pushed guides and `.lifecycle.lock` among them when step 2 ran; never `git add -A`.
+- Stage the task's files by name; never `git add -A`.
 - One Conventional Commit (AGENTS.md § Branching and commits): the body says why, names every decision taken alone and every departure, and ends `Closes #N` on a tracked task. Write the message to a file in a scratch folder outside the tree and pass it with `-F`.
 - A failing hook is fixed at its cause and the commit made again; never `--no-verify`, never amend a pushed commit.
 
@@ -49,4 +48,4 @@ When the settings name a board, `lifecycle board <N> Done` puts the card in Done
 
 ## 8. Report
 
-One line per step with its coordinates: the kit release the guides went out in, with the line it carried and its reason quoted below that step's line, the commit, where it was pushed, the PR, the issue's state, the board column. Anything skipped says why. After a guide push, the repository's next upgrade waits until the installed kit holds the release it made.
+One line per step with its coordinates: the issues filed on the kit, the commit, where it was pushed, the PR, the issue's state, the board column. Anything skipped says why.

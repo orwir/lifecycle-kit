@@ -35,11 +35,11 @@ ALLOW = ("pre-commit run ruff-all --hook-stage pre-push --all-files",)
         "git log --format='%h {x}'",
         "git log >/dev/null 2>&1",
         "lifecycle config",
+        "lifecycle where",
+        "lifecycle version",
         "sort -r notes.txt",
         "git log --oneline --output-indicator-new=+",
         "git grep --or -e a -e b",
-        "lifecycle guides check",
-        "lifecycle upgraded --json",
     ],
 )
 def test_reads_pass(command):
@@ -51,6 +51,8 @@ def test_reads_pass(command):
     [
         ("git stash", UNKNOWN),
         ("cd /x && ls", UNKNOWN),
+        ("lifecycle upgraded", UNKNOWN),
+        ("lifecycle guides check", UNKNOWN),
         ("lifecycle upgrade", UNKNOWN),
         ("lifecycle guides push -F message.txt", UNKNOWN),
         ("git checkout -- a.py", UNKNOWN),

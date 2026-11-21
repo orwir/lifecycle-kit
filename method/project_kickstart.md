@@ -4,7 +4,7 @@ A language-agnostic, tech-agnostic recipe for standing up a new project that sta
 
 Everything here is extracted from deployed production projects, not theory. Keep one of your own as the living reference (see *Keep a living reference* at the end).
 
-Upstream of this playbook sits `idea_gauntlet.md` (copied alongside it): the gauntlet decides *whether* a project gets built, and its filled instance — the idea's folder, moved out of the ideas home: `IDEA.md` at the root, with the evidence it links in `docs/product/` and `design/` — is this playbook's input. This playbook starts once the gauntlet's answer is yes, and hands day-to-day operation to `AGENTS.md` and the issue board.
+Upstream of this playbook sits `idea_gauntlet.md` (beside it in the kit): the gauntlet decides *whether* a project gets built, and its filled instance — the idea's folder, moved out of the ideas home: `IDEA.md` at the root, with the evidence it links in `docs/product/` and `design/` — is this playbook's input. This playbook starts once the gauntlet's answer is yes, and hands day-to-day operation to `AGENTS.md` and the issue board.
 
 ---
 
@@ -164,7 +164,7 @@ git push
 
 The pre-push stage of the local hook config runs the identical lint, format-check, and test commands (with the coverage floor) that CI runs, so every push has already cleared the CI gate locally. CI itself re-runs on the push as a backstop. A push ships nothing: a release goes out only through the release workflow, dispatched on a reviewed commit (*Release process*). Broken commits on `main` are a fix-forward or `git revert` problem, not a crisis — nothing is deployed.
 
-The hook is the mechanical gate; the read is `task_review.md` (copied alongside this playbook). Before a task is handed back, the developer session hands a packet to reviewer agents with no author context — subagents it launches, or fresh sessions where the tool has none — and renders a hand-back brief for the maintainer from their return packets: plain-text packets between the agents, and the same round whether the work rides a PR or lands on `main` directly. The maintainer reads the brief and nothing else of the round, then the diff, with what a gate cannot check (scope, decisions, invariants, truth, docs) already read by reviewers the author could not steer. The same guide runs a plan round at *Clarify*, before any code: where the plan in the issue has one of the shapes that have shipped holes before, a reviewer with no author context reads it against the code, and the maintainer accepts it from a Clarify brief.
+The hook is the mechanical gate; the read is `task_review.md` (beside this playbook in the kit). Before a task is handed back, the developer session hands a packet to reviewer agents with no author context — subagents it launches, or fresh sessions where the tool has none — and renders a hand-back brief for the maintainer from their return packets: plain-text packets between the agents, and the same round whether the work rides a PR or lands on `main` directly. The maintainer reads the brief and nothing else of the round, then the diff, with what a gate cannot check (scope, decisions, invariants, truth, docs) already read by reviewers the author could not steer. The same guide runs a plan round at *Clarify*, before any code: where the plan in the issue has one of the shapes that have shipped holes before, a reviewer with no author context reads it against the code, and the maintainer accepts it from a Clarify brief.
 
 ### Feature-branch flow (escape hatch for riskier work)
 
@@ -421,12 +421,12 @@ In order:
 4. **Enforce it in the agent contract, not just the doc.** Add a rule to `AGENTS.md` that *any* UI edit conforms to the reference — reuse what ships, don't introduce a parallel variant. A doc is advisory to a model; a first-read MUST-rule holds the line. The only hard guarantee is a lint, usually over-engineering at this size.
 5. **Design every change to what a screen shows on a canvas** the assistant draws in the same session as the code (any canvas it can draw on and publish from; richest for web and desktop, thinner for TUI/CLI). The maintainer approves the drawing before code, and the build treats it as a strong draft, not a spec (reconcile invented data/backend assumptions, reuse your shipped primitives over its near-duplicates, drop embellishments).
    - A line of copy is drawn too: a look agreed in words can still look wrong, so the drawing is approved with the change's plan. A change that leaves the look alone goes straight to the code.
-   - Where the canvas keeps a file per screen, **pair them in one table** — a row per shipped screen naming its design file and the sources that decide what it draws — and hold it with a test: every screen has a row, and no two rows claim the same screen. It costs a line at screen 2, and it is what stops a change to one screen becoming a second design file for it (`docs/guides/design_workflow.md` § *Round*).
-   - **Arrange the canvas by surface from the first round** — a page per screen with its states grouped by the region they change, one for the foundations, one for the round that's open — and keep its notes to what a reader would otherwise get wrong. History stays in the canvas's versions and the tracker, so the layout never grows a row per round (`docs/guides/design_workflow.md` § *Round*).
+   - Where the canvas keeps a file per screen, **pair them in one table** — a row per shipped screen naming its design file and the sources that decide what it draws — and hold it with a test: every screen has a row, and no two rows claim the same screen. It costs a line at screen 2, and it is what stops a change to one screen becoming a second design file for it (`design_workflow.md` § *Round*).
+   - **Arrange the canvas by surface from the first round** — a page per screen with its states grouped by the region they change, one for the foundations, one for the round that's open — and keep its notes to what a reader would otherwise get wrong. History stays in the canvas's versions and the tracker, so the layout never grows a row per round (`design_workflow.md` § *Round*).
 
-The design language has a lifecycle, not just a document. Keep `docs/guides/design_workflow.md` (the *how* — found the foundation before screen 2, codify every design round back into it, evolve it on a trigger) alongside `docs/guides/design_language.md` (the *what* — the resolved tokens, components, and patterns). The same shape applies to a Textual/ratatui TUI or a Qt/Tauri desktop app.
+The design language has a lifecycle, not just a document. Keep `design_workflow.md` (the *how* — found the foundation before screen 2, codify every design round back into it, evolve it on a trigger) alongside `docs/guides/design_language.md` (the *what* — the resolved tokens, components, and patterns). The same shape applies to a Textual/ratatui TUI or a Qt/Tauri desktop app.
 
-Once shipped, the surface gets audited periodically against this foundation by three complementary passes: `docs/guides/ia_review.md` settles the structure (which screens and messages exist, what each shows, where each fact lives), `docs/guides/ux_review.md` walks the journeys for friction and bloat, and `docs/guides/design_review.md` — the runnable pass `design_workflow.md` triggers — establishes or evolves the visual system itself when the surface has outgrown the foundation set here.
+Once shipped, the surface gets audited periodically against this foundation by three complementary passes: `ia_review.md` settles the structure (which screens and messages exist, what each shows, where each fact lives), `ux_review.md` walks the journeys for friction and bloat, and `design_review.md` — the runnable pass `design_workflow.md` triggers — establishes or evolves the visual system itself when the surface has outgrown the foundation set here.
 
 ---
 
@@ -516,12 +516,12 @@ If you use AI assistants to write code (Claude Code, Codex, Cursor, Gemini CLI, 
 
 **What to leave out:** long prose, justifications, history. The rules file is an operating contract; the rationale lives in `CONTRIBUTING.md` and this playbook.
 
-**Starting point:** `agents_template.md` (copied alongside this playbook in `docs/guides/`) is a copy-and-fill skeleton with the cross-project essence of these rules pre-filled. Drop it in as your new repo's `AGENTS.md`, replace the `{{placeholders}}`, prune the project-type-specific lines, and you have a working operating contract in ten minutes.
+**Starting point:** `agents_template.md` (beside this playbook in the kit) is a copy-and-fill skeleton with the cross-project essence of these rules pre-filled. Drop it in as your new repo's `AGENTS.md`, replace the `{{placeholders}}`, prune the project-type-specific lines, and you have a working operating contract in ten minutes.
 
-**The lifecycle kit carries the mechanics.** The method these guides describe ships with its machinery as the lifecycle kit (`orwir/lifecycle-kit`): the `lifecycle` command keeps `docs/guides/` pinned to a kit release, moves board cards to the top of their column, ships a reviewed commit through the release workflow and watches the run, and says what a repository needs before its next task; the kit's skills run the review rounds, the close-out and the release for any agent that loads Agent Skills. A new project turns it on at day zero:
+**The lifecycle kit carries the mechanics.** The method these guides describe ships with its machinery as the lifecycle kit (`orwir/lifecycle-kit`): the guides are served from the installed kit, never copied; the `lifecycle` command brings a repository's templates and settings up to a new release, moves board cards to the top of their column, ships a reviewed commit through the release workflow and watches the run, and says what a repository needs before its next task; the kit's skills run the review rounds, the close-out and the release for any agent that loads Agent Skills. A new project turns it on at day zero:
 
 - `.lifecycle.toml` at the root names its integration branch, board, gate commands, release workflow and review lenses — the structured values the skills read. Everything else they need stays in `AGENTS.md`.
-- `lifecycle upgrade --adopt` copies the method into `docs/guides/` and writes `.lifecycle.lock`.
+- The kit's upgrade skill makes the first move: it compares any guide named like one of the kit's, runs `lifecycle upgrade --adopt` (which deletes those copies and writes `.lifecycle.lock`, the release and the text of each template the repository follows), ports the templates and makes every upgrade step up to the installed release.
 - The agent's adapter: for Claude Code, the kit's marketplace and plugin turned on in the committed `.claude/settings.json`, by the kit's `docs/guide.md` (*Put a repository on the kit*).
 
 ---
@@ -709,7 +709,7 @@ gh api -X PUT repos/<owner>/<repo>/branches/main/protection --input - <<'JSON'
 }
 JSON
 
-# 9. Design foundation — before screen 2, for any human-driven surface (see guides/design_workflow.md)
+# 9. Design foundation — before screen 2, for any human-driven surface (see the kit's design_workflow.md)
 #   pick the component vocabulary (record in an ADR) · set tokens once, centrally (fonts, semantic
 #   colors, spacing, radius, elevation, motion) · write docs/guides/design_language.md · add the
 #   "every UI edit conforms to the reference" rule to AGENTS.md · pair each screen with its

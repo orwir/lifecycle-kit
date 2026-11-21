@@ -108,10 +108,9 @@ ideas/
 ├── AGENTS.md        where everything is, and how to capture, kill, graduate and check
 ├── archived.md      one line per killed idea -> its folder in archive/
 ├── graduated.md     one line per graduated idea -> its repo, status and next check
-├── docs/guides/     the kit's method, shared by every idea
 ├── .lifecycle.toml  the kit's settings: integration branch `main`,
-│                    and this guide as the template AGENTS.md follows
-├── .lifecycle.lock  the kit release docs/guides/ is pinned to
+│                    and `ideas_home_template.md` as the template AGENTS.md follows
+├── .lifecycle.lock  the kit release the home last upgraded to, with its template's text
 ├── active/          every idea still in the gauntlet, parked ones included
 │   └── <idea>/
 └── archive/         killed ideas, moved here whole
@@ -120,9 +119,9 @@ ideas/
 
 Where the home's agent has a plugin system, the home turns the kit's plugin on as a
 project does (the kit's `docs/guide.md`). Its `.lifecycle.toml` names its one template under
-`[templates]`, `"idea_gauntlet.md" = "AGENTS.md"`, and none of a project's. An upgrade
-then names this guide for the port whenever it changes, and what is ported is the
-fenced template below, nothing else of the guide.
+`[templates]`, `"ideas_home_template.md" = "AGENTS.md"`, and none of a project's. The
+method itself, this guide included, is served from the installed kit, so an upgrade
+asks the home for nothing but a change to that template.
 
 - **Capture:** a new folder in `active/`, with `IDEA.md` from the template below.
 - **Park:** it stays in `active/`; its `IDEA.md` says until when.
@@ -136,78 +135,8 @@ fenced template below, nothing else of the guide.
   continue, re-scope, park, done or dead. Its `graduated.md` row records the call
   (see *The logs*).
 
-The root `AGENTS.md` carries these steps for any agent opened in an idea's folder.
-A new home starts from this one, adjusted to taste:
-
-```
-# Ideas home
-
-Every idea still being weighed lives here, run through the idea gauntlet in
-`docs/guides/idea_gauntlet.md`, and `graduated.md` follows every project that left.
-`docs/guides/` is a copy of the lifecycle kit's method. A guide changes here only
-inside the work that found it, and goes to the kit when the work is approved, by the
-steps in `docs/guides/README.md`.
-
-## Layout
-
-- `active/<idea>/`: every idea still in the gauntlet, parked ones included.
-  `IDEA.md` is its state; its evidence sits beside it.
-- `archive/<YYYY-MM-DD>-<idea>/`: killed ideas, moved here whole.
-- `archived.md`: one line per killed idea. `graduated.md`: one per graduated idea,
-  with its status and next check.
-
-## Rules
-
-- The answers in an idea's `IDEA.md`, its bar, every verdict and every check are
-  the user's: never fill them or make the call. Do the legwork on request, inside
-  that idea's folder.
-- Facts about an idea go into its own files, not agent memory: memory is usually
-  kept per repo, so here it's shared by every idea and stays behind at graduation.
-- Commit at the end of each working session and push, so every idea stays backed
-  up.
-
-## Checks
-
-At the start of a session, run `lifecycle doctor --json` (the lifecycle kit's
-command: on the agent's PATH where the kit's plugin is on, otherwise `bin/lifecycle`
-in a checkout of the kit). A finding whose fix is `upgrade`: run the kit's upgrade
-skill first, as its own commit. A `block` whose fix is `adopt` or `update-kit`: tell
-the user what it printed.
-
-Then list the `graduated.md` rows whose next check has passed. For each, show the
-bet from its project's `docs/product/vision.md` where that can be read, and its
-sessions: the days with commits in its repo since the last check and since
-graduation, for the user to correct. Then ask the user to call each one: continue,
-re-scope, park, done or dead. Write the call into the row as the guide's *The logs*
-says.
-
-## Capture
-
-Check `archived.md` first: if this idea or a close variant was killed, show the
-line; re-opening needs new facts against the logged reason. Then create
-`active/<idea>/IDEA.md` from the template in the guide, with the name, the Captured
-date and `Status: captured`. The folder takes the idea's working name.
-
-## Kill
-
-`git mv active/<idea> archive/<YYYY-MM-DD>-<idea>`, set `Status: KILLED (see
-archived.md)`, add the line to `archived.md` in the user's words, commit.
-
-## Graduate
-
-1. Create the project's repo under its real name and give it the folder with its
-   history: `git subtree split --prefix=active/<idea> -b graduate-<idea>`, then
-   `git push <new repo> graduate-<idea>:main`.
-2. Here: `git rm -r active/<idea>`, add a line to `graduated.md` with a next check
-   four weeks out, commit.
-3. In the new repo: copy the guides into `docs/guides/` (`lifecycle upgrade --adopt`)
-   and run the kickstart (gauntlet Phase 4).
-
-## Re-open
-
-Copy the archived folder back into `active/` (the archive stays as it was) and
-cite its `archived.md` line in `IDEA.md`, with the new facts.
-```
+The root `AGENTS.md` carries these steps for any agent opened in an idea's folder. A new
+home starts from `ideas_home_template.md`, beside this guide in the kit, adjusted to taste.
 
 ## Artifacts
 
@@ -390,9 +319,9 @@ learned, or KILL with reason "disproved: ____".
       breaker: "if v0.1 isn't in use after {{N}} sessions, I re-scope or kill",
       never a quiet extension.
 - [ ] Move this folder out of the ideas home into the project's own repo, under
-      its real name, with the guides copied into its docs/guides/; add its line
+      its real name, and put that repo on the kit; add its line
       to graduated.md, with a next check four weeks out.
-- [ ] [sw] Run docs/guides/project_kickstart.md (an agent can drive it), seeded
+- [ ] [sw] Run the kit's project_kickstart.md (an agent can drive it), seeded
       from the artifacts: done statement -> v0.1 milestone; IN list -> first
       issues; the stack choice (the spike's, where there was one) and the
       decisions recorded here -> first ADRs.
@@ -454,5 +383,4 @@ always a date, so every row still in play comes due.
 ## When to update this file
 
 Same rule as the rest of the set: if two ideas in a row needed the same hand-edit
-to the template, the template is wrong — fix it in the kit, through the
-copy of the project that found it.
+to the template, the template is wrong — file it as an issue on the kit.

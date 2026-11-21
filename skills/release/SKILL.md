@@ -15,7 +15,7 @@ A release runs on the integration branch, or, for a fix that cannot wait for wha
 Reversible; nothing here needs a go-ahead except a paid check.
 
 1. **The version.** Fetch the tags first (`git fetch --tags origin`): the release workflow creates them on GitHub, so a clone holds the last release's tag only after a fetch. Unless the maintainer named one, pick it from semver over the changes since the last tag (`git describe --tags --abbrev=0`): breaking → major, additive → minor, fixes only → patch. A hotfix branch takes the patch after the tag it was cut from.
-2. **Ready to ship.** On the integration branch, the milestone has no open issue. Every check the checklist puts before the bump reads clean, and the comprehensive reviews that are due (`review_machinery.md` in the guides folder) are named with the trigger that fired each.
+2. **Ready to ship.** On the integration branch, the milestone has no open issue. Every check the checklist puts before the bump reads clean, and the comprehensive reviews that are due (`review_machinery.md` in the kit's `method/`, in the folder `lifecycle where` prints) are named with the trigger that fired each.
 3. **The checklist's prepare steps:** bump the version in its one home, date the CHANGELOG section, commit those files by name, push the release branch.
 4. **A paid check** (a live eval, a paid probe) runs only on its own go-ahead: surface its price and its free twin's result, then wait.
 

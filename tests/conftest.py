@@ -20,12 +20,6 @@ for _name in _GIT_LOCAL:
     os.environ.pop(_name, None)
 
 
-@pytest.fixture(autouse=True)
-def no_network(tmp_path, monkeypatch):
-    """No test reaches the kit's real remote: a guide push clones a remote that is not there."""
-    monkeypatch.setenv("LIFECYCLE_KIT_REMOTE", str(tmp_path / "no-kit.git"))
-
-
 @pytest.fixture
 def repo(tmp_path, monkeypatch):
     """A repository on the kit with a two-file method at release 1.2.0."""
@@ -63,3 +57,18 @@ def name_templates(config, table):
     """``config``'s repository with ``[templates]`` as ``table`` (TOML lines), reloaded."""
     (config.root / ".lifecycle.toml").write_text(f"[templates]\n{table}", encoding="utf-8")
     return load(config.root)
+
+
+def copy_era(config, kit="1.1.0"):
+    """``config``'s repository as it was before 0.8.0: the method copied into its guides
+    folder, each file's digest in a lock of the old shape."""
+    import json
+
+    digests = {}
+    for name in guides.method_files():
+        path = config.guides_dir / name
+        body = (guides.METHOD / name).read_text(encoding="utf-8")
+        path.write_text(body, encoding="utf-8", newline="\n")
+        digests[name] = guides.digest(path)
+    lock = {"kit": kit, "guides": digests}
+    (config.root / guides.LOCK).write_text(json.dumps(lock), encoding="utf-8")

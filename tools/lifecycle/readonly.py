@@ -154,8 +154,7 @@ def _gh(args: list[str]) -> bool:
 
 def _reader(name: str, args: list[str]) -> bool:
     if name == "lifecycle":
-        reads = (["config"], ["doctor"], ["version"], ["where"], ["upgraded"])
-        return args[:1] in reads or args[:2] == ["guides", "check"]
+        return args[:1] in (["config"], ["doctor"], ["version"], ["where"])
     if name == "find":
         return not FIND_WRITES.intersection(args)
     if name == "sed":

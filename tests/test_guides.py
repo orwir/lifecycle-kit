@@ -1,126 +1,170 @@
+import json
+
 import pytest
-from conftest import name_templates
+from conftest import copy_era, name_templates
 from lifecycle import guides
-from lifecycle.guides import GuidesError, read_lock, upgrade
+from lifecycle.guides import LOCK, GuidesError, read_lock, upgrade
+
+PR = ".github/pull_request_template.md"
+
+
+def pr_target(repo, body):
+    path = repo.root / PR
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(body, encoding="utf-8")
+    return path
+
+
+def kit_at(monkeypatch, version):
+    monkeypatch.setattr(guides, "kit_version", lambda: version)
 
 
 def test_a_repo_with_no_record_needs_adopt(repo):
     with pytest.raises(GuidesError, match="--adopt"):
         upgrade(repo)
-
-
-def test_adopt_copies_the_method_and_pins_it(repo):
-    (repo.guides_dir / "design_language.md").write_text("own\n", encoding="utf-8")
-    changed = upgrade(repo, adopt=True)
-    assert changed == ["agents_template.md", "pr_template.md", "task_review.md"]
-    lock = read_lock(repo.root)
-    assert lock.kit == "1.2.0" and set(lock.guides) == {
-        "agents_template.md",
-        "pr_template.md",
-        "task_review.md",
-    }
-    assert (repo.guides_dir / "design_language.md").read_text(encoding="utf-8") == "own\n"
-
-
-def test_a_crlf_checkout_is_not_an_edit(repo):
-    upgrade(repo, adopt=True)
-    (repo.guides_dir / "task_review.md").write_bytes(b"# Task review\r\n")
-    assert guides.local_edits(repo, read_lock(repo.root)) == []
-
-
-def test_a_file_the_kit_dropped_leaves_the_copy(repo, monkeypatch):
-    upgrade(repo, adopt=True)
-    monkeypatch.setattr(guides, "kit_version", lambda: "1.3.0")
-    (guides.METHOD / "agents_template.md").unlink()
-    assert upgrade(repo) == ["agents_template.md"]
-    assert not (repo.guides_dir / "agents_template.md").exists()
-
-
-def test_dry_run_writes_nothing(repo):
-    assert upgrade(repo, adopt=True, dry_run=True) == [
-        "agents_template.md",
-        "pr_template.md",
-        "task_review.md",
-    ]
     assert read_lock(repo.root) is None
-    assert not (repo.guides_dir / "task_review.md").exists()
+
+
+def test_adopt_records_the_release_and_each_followed_templates_text(repo):
+    changes = upgrade(repo, adopt=True)
+    lock = read_lock(repo.root)
+    assert (lock.kit, lock.guides) == ("1.2.0", {})
+    assert lock.templates == {"agents_template.md": "# AGENTS\n", "pr_template.md": "a\nb\nc\nd\n"}
+    assert [(p.name, p.target, p.diff) for p in changes.ports] == [
+        ("agents_template.md", "AGENTS.md", ""),
+        ("pr_template.md", PR, ""),
+    ]
+    assert not any(repo.guides_dir.iterdir())
+
+
+def test_adopt_deletes_kit_named_files_and_keeps_the_repositorys_own(repo):
+    (repo.guides_dir / "task_review.md").write_text("an older copy\n", encoding="utf-8")
+    (repo.guides_dir / "design_language.md").write_text("ours\n", encoding="utf-8")
+    assert upgrade(repo, adopt=True).deleted == ["task_review.md"]
+    assert [p.name for p in repo.guides_dir.iterdir()] == ["design_language.md"]
 
 
 def test_a_gist_mirror_is_a_copy_with_no_record(repo):
     (repo.guides_dir / ".gist-revision").write_text("abc\n", encoding="utf-8")
-    with pytest.raises(GuidesError, match="no record of where its guides came from"):
+    with pytest.raises(GuidesError, match="no record of the kit release it follows"):
         upgrade(repo)
     upgrade(repo, adopt=True)
     assert read_lock(repo.root).kit == "1.2.0"
 
 
-def test_the_same_release_again_is_a_no_op(repo):
-    upgrade(repo, adopt=True)
-    (repo.guides_dir / "task_review.md").write_text("# Edited\n", encoding="utf-8")
-    assert upgrade(repo) == []
-    assert (repo.guides_dir / "task_review.md").read_text(encoding="utf-8") == "# Edited\n"
-
-
-def test_a_new_kit_file_never_overwrites_a_guide_of_the_repository(repo, monkeypatch):
-    upgrade(repo, adopt=True)
+def test_the_move_from_copies_deletes_the_kits_files_and_keeps_its_own(repo):
+    copy_era(repo)
     (repo.guides_dir / "design_language.md").write_text("ours\n", encoding="utf-8")
-    (guides.METHOD / "design_language.md").write_text("the kit's\n", encoding="utf-8")
-    monkeypatch.setattr(guides, "kit_version", lambda: "1.3.0")
-    with pytest.raises(GuidesError, match=r"design_language.md"):
+    changes = upgrade(repo)
+    assert changes.deleted == ["agents_template.md", "pr_template.md", "task_review.md"]
+    assert [p.name for p in repo.guides_dir.iterdir()] == ["design_language.md"]
+    written = json.loads((repo.root / LOCK).read_text(encoding="utf-8"))
+    assert written["kit"] == "1.2.0" and "guides" not in written
+    assert set(written["templates"]) == {"agents_template.md", "pr_template.md"}
+
+
+def test_an_edited_copy_stops_the_move_with_nothing_written(repo):
+    copy_era(repo)
+    before = (repo.root / LOCK).read_text(encoding="utf-8")
+    (repo.guides_dir / "task_review.md").write_text(
+        "an edit the kit never took\n", encoding="utf-8"
+    )
+    with pytest.raises(GuidesError, match=r"task_review\.md"):
         upgrade(repo)
-    assert (repo.guides_dir / "design_language.md").read_text(encoding="utf-8") == "ours\n"
+    assert (repo.root / LOCK).read_text(encoding="utf-8") == before
+    assert (repo.guides_dir / "agents_template.md").is_file()
+
+
+def test_a_crlf_checkout_of_a_copy_is_not_an_edit(repo):
+    copy_era(repo)
+    copy = repo.guides_dir / "pr_template.md"
+    copy.write_bytes(copy.read_bytes().replace(b"\n", b"\r\n"))
+    assert "pr_template.md" in upgrade(repo).deleted
+
+
+def test_the_move_takes_a_templates_old_text_from_the_copy(repo):
+    copy_era(repo)
+    target = pr_target(repo, "a\nb\nc\nd\n")
+    (guides.METHOD / "pr_template.md").write_text("a\nb\nc\nD\n", encoding="utf-8")
+    assert PR in upgrade(repo).installed
+    assert target.read_text(encoding="utf-8") == "a\nb\nc\nD\n"
 
 
 def test_a_template_installed_word_for_word_takes_the_new_text(repo, monkeypatch):
-    (guides.METHOD / "pr_template.md").write_text("## Summary\n", encoding="utf-8")
     upgrade(repo, adopt=True)
-    installed = repo.root / ".github" / "pull_request_template.md"
-    installed.parent.mkdir(parents=True)
-    installed.write_text("## Summary\n", encoding="utf-8")
-    (guides.METHOD / "pr_template.md").write_text(
-        "## Summary\n\n## Verification\n", encoding="utf-8"
-    )
-    monkeypatch.setattr(guides, "kit_version", lambda: "1.3.0")
-    changes = upgrade(repo)
-    assert changes.installed == [".github/pull_request_template.md"]
-    assert installed.read_text(encoding="utf-8") == "## Summary\n\n## Verification\n"
-
-
-def test_an_adapted_template_is_left_for_the_port(repo, monkeypatch):
-    (guides.METHOD / "pr_template.md").write_text("## Summary\n", encoding="utf-8")
-    upgrade(repo, adopt=True)
-    installed = repo.root / ".github" / "pull_request_template.md"
-    installed.parent.mkdir(parents=True)
-    installed.write_text("## Summary\n\nOurs.\n", encoding="utf-8")
-    (guides.METHOD / "pr_template.md").write_text(
-        "## Summary\n\n## Verification\n", encoding="utf-8"
-    )
-    monkeypatch.setattr(guides, "kit_version", lambda: "1.3.0")
-    assert upgrade(repo).installed == []
-    assert installed.read_text(encoding="utf-8") == "## Summary\n\nOurs.\n"
-
-
-def test_a_dry_run_leaves_installed_templates_alone(repo, monkeypatch):
-    upgrade(repo, adopt=True)
-    installed = repo.root / ".github" / "pull_request_template.md"
-    installed.parent.mkdir(parents=True)
-    installed.write_text("a\nb\nc\nd\n", encoding="utf-8")
+    target = pr_target(repo, "a\nb\nc\nd\n")
     (guides.METHOD / "pr_template.md").write_text("a\nb\nc\nD\n", encoding="utf-8")
-    monkeypatch.setattr(guides, "kit_version", lambda: "1.3.0")
-    assert upgrade(repo, dry_run=True).installed == [".github/pull_request_template.md"]
-    assert installed.read_text(encoding="utf-8") == "a\nb\nc\nd\n"
+    kit_at(monkeypatch, "1.3.0")
+    changes = upgrade(repo)
+    assert (changes.installed, changes.ports) == ([PR], [])
+    assert target.read_text(encoding="utf-8") == "a\nb\nc\nD\n"
+    assert read_lock(repo.root).templates["pr_template.md"] == "a\nb\nc\nD\n"
+
+
+def test_an_adapted_template_gets_its_diff_from_the_locks_old_text(repo, monkeypatch):
+    upgrade(repo, adopt=True)
+    target = pr_target(repo, "a\nb\nc\nd\nours\n")
+    (guides.METHOD / "pr_template.md").write_text("a\nb\nc\nD\n", encoding="utf-8")
+    kit_at(monkeypatch, "1.3.0")
+    (port,) = upgrade(repo).ports
+    assert (port.name, port.target) == ("pr_template.md", PR)
+    assert "-d\n" in port.diff and "+D\n" in port.diff
+    assert "(kit 1.2.0)" in port.diff and "(kit 1.3.0)" in port.diff
+    assert target.read_text(encoding="utf-8") == "a\nb\nc\nd\nours\n"
+
+
+def test_a_template_new_to_the_repository_is_read_whole(repo, monkeypatch):
+    upgrade(repo, adopt=True)
+    (guides.METHOD / "issue_template_bug.md").write_text("## Goal\n", encoding="utf-8")
+    kit_at(monkeypatch, "1.3.0")
+    (port,) = upgrade(repo).ports
+    assert (port.name, port.target, port.diff) == (
+        "issue_template_bug.md",
+        ".github/ISSUE_TEMPLATE/bug.md",
+        "",
+    )
+    assert read_lock(repo.root).templates["issue_template_bug.md"] == "## Goal\n"
+
+
+def test_a_template_the_kit_dropped_leaves_the_lock_and_its_target(repo, monkeypatch):
+    upgrade(repo, adopt=True)
+    target = pr_target(repo, "a\nb\nc\nd\n")
+    (guides.METHOD / "pr_template.md").unlink()
+    kit_at(monkeypatch, "1.3.0")
+    changes = upgrade(repo)
+    assert (changes.installed, changes.ports) == ([], [])
+    assert "pr_template.md" not in read_lock(repo.root).templates
+    assert target.read_text(encoding="utf-8") == "a\nb\nc\nd\n"
+
+
+def test_a_changed_guide_changes_nothing_in_the_repository(repo, monkeypatch):
+    upgrade(repo, adopt=True)
+    (guides.METHOD / "task_review.md").write_text("# Task review, 1.3\n", encoding="utf-8")
+    kit_at(monkeypatch, "1.3.0")
+    changes = upgrade(repo)
+    assert (changes.installed, changes.ports, changes.deleted) == ([], [], [])
+    assert not any(repo.guides_dir.iterdir())
+
+
+def test_a_dry_run_writes_nothing(repo, monkeypatch):
+    upgrade(repo, adopt=True)
+    before = (repo.root / LOCK).read_text(encoding="utf-8")
+    target = pr_target(repo, "a\nb\nc\nd\n")
+    (guides.METHOD / "pr_template.md").write_text("a\nb\nc\nD\n", encoding="utf-8")
+    kit_at(monkeypatch, "1.3.0")
+    assert upgrade(repo, dry_run=True).installed == [PR]
+    assert target.read_text(encoding="utf-8") == "a\nb\nc\nd\n"
+    assert (repo.root / LOCK).read_text(encoding="utf-8") == before
 
 
 def test_a_named_template_is_replaced_where_its_mapping_puts_it(repo, monkeypatch):
     upgrade(repo, adopt=True)
     repo = name_templates(repo, '"pr_template.md" = "docs/pr.md"\n')
     mapped = repo.root / "docs" / "pr.md"
-    unmapped = repo.root / ".github" / "pull_request_template.md"
-    for path in (mapped, unmapped):
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("a\nb\nc\nd\n", encoding="utf-8")
+    mapped.write_text("a\nb\nc\nd\n", encoding="utf-8")
+    unmapped = pr_target(repo, "a\nb\nc\nd\n")
     (guides.METHOD / "pr_template.md").write_text("a\nb\nc\nD\n", encoding="utf-8")
-    monkeypatch.setattr(guides, "kit_version", lambda: "1.3.0")
+    kit_at(monkeypatch, "1.3.0")
     assert upgrade(repo).installed == ["docs/pr.md"]
     assert mapped.read_text(encoding="utf-8") == "a\nb\nc\nD\n"
     assert unmapped.read_text(encoding="utf-8") == "a\nb\nc\nd\n"
@@ -130,7 +174,14 @@ def test_a_named_template_the_method_lacks_stops_the_upgrade(repo):
     repo = name_templates(repo, '"idea_gauntlt.md" = "AGENTS.md"\n')
     with pytest.raises(GuidesError, match=r"idea_gauntlt.md"):
         upgrade(repo, adopt=True)
-    assert read_lock(repo.root) is None and not any(repo.guides_dir.iterdir())
+    assert read_lock(repo.root) is None
+
+
+def test_an_installed_kit_older_than_the_lock_stops_the_upgrade(repo, monkeypatch):
+    upgrade(repo, adopt=True)
+    kit_at(monkeypatch, "1.1.0")
+    with pytest.raises(GuidesError, match="update the installed kit"):
+        upgrade(repo)
 
 
 def test_the_kits_own_repository_is_never_upgraded(kit_checkout):

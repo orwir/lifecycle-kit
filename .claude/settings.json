@@ -3,8 +3,7 @@
     "allow": [
       "Bash(lifecycle doctor:*)",
       "Bash(lifecycle config:*)",
-      "Bash(lifecycle guides check:*)",
-      "Bash(lifecycle upgraded:*)"
+      "Bash(lifecycle where:*)"
     ]
   },
   "extraKnownMarketplaces": {

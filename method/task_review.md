@@ -64,8 +64,6 @@ What the maintainer reads before any code, and the only thing of the plan round 
 **Plan #<N>** <title>
 <the shape | no shape> · plan round <approve | corrections | split: <what this issue keeps, what is filed> | skipped> · <n> decision(s) to answer | nothing to answer
 
-**Upgrade** <release before → after: what the kit changed; each change it required of this repository and what was done; the templates installed whole; what was ported into the repository's own files and what was left, with why> (only while the tree holds an upgrade not yet landed on the integration branch)
-
 **The plan**
 - Visible: <what a user or operator will see differently | nothing>
 - Under it: <the approach, in a sentence or two>
@@ -88,7 +86,6 @@ What the maintainer reads before any code, and the only thing of the plan round 
 **Next** <answer D1, then | > "go" | nothing to answer, no shape: going ahead.
 ```
 
-- *Upgrade*, in both briefs, is there while the tree holds a move of the repository's copy of the method to a newer release that has not landed on the integration branch (`lifecycle upgraded`). How it lands is *Complete*'s rule.
 - *Scenarios to check* holds the scenarios a reader might argue with — a failure path, a wait, a default — not all of them.
 - *Taken alone* holds the plan's choices the maintainer did not ask for and might reverse: scope added to or dropped from the ticket, a mechanism the ticket did not name, a follow-up to file.
 - About fifteen lines. Past twenty-five, the task wants a split.
@@ -129,7 +126,6 @@ Diff: git diff | git diff <integration>...HEAD | <the command or link that shows
 New files: <paths, which git diff does not show> | none
 Ticket: <the command or link that shows issue N> | untracked
 Read first: <the docs, ADR sections or guides the diff is held to, beyond the operating contract> | none
-Upgrade: <release before → after; the paths it wrote; each change the release required and where it was made; each port, with the template diff it follows (`git diff -- <guides>/<template>`)> | none
 
 Summary: <what and why, one paragraph; what was removed, or why nothing could go>
 
@@ -174,8 +170,6 @@ What the maintainer reads at the hand-back, and the only thing they read of the 
 **Hand-back #<N>** <title> | **Hand-back** untracked: <one line of intent>
 <approve | corrections | split: <what lands now, what is filed> | round skipped: untracked micro-task> · <k> round(s) · <base | base, person-facing | base, model-facing | base, person-facing, model-facing | no reviewer> · <<integration>, uncommitted on <sha> | branch <name> | PR #<M>> · gate <green | not run> · <n> decision(s) to answer | nothing to answer
 
-**Upgrade** <release before → after: what the kit changed; each change it required of this repository and what was done; the templates installed whole; what was ported into the repository's own files and what was left, with why> (only while the tree holds an upgrade not yet landed on the integration branch)
-
 **In the tree**
 - Visible: <what a user or operator sees differently | nothing>
 - Under it: <what changed beneath that>
@@ -211,6 +205,7 @@ What the maintainer reads at the hand-back, and the only thing they read of the 
 ## Developer rules
 
 - The packet is claims with coordinates. Never paste the diff or a file's contents; point at the command that shows them.
+- A gap the task finds in one of the kit's guides is filed on the kit as an issue when it is found: what the guide says, what the task met, and the gap, in the kit's words and naming no issue or surface of the repository. It is carried in *Taken alone* as a filed follow-up, named `<kit owner>/<kit repository>#M`. The guide changes by the kit's own task, never in the repository.
 - Every section is filled or says `none`. An empty *Decisions* is a claim too, and the reviewer checks it.
 - `NOT RUN` is honest: a gate that did not run in this session after the last edit runs before the packet or the brief is rendered, and what still could not run is listed with its reason.
 - Do not pre-argue findings; the reviewer has not made any.
@@ -243,7 +238,6 @@ What the maintainer reads at the hand-back, and the only thing they read of the 
   7. **Simplicity** — what could go, and does any abstraction the diff touches still earn its shape? Did the diff bolt a special case or a one-off flag onto a flow whose shape should change instead? Does a restructure delete concepts, or only move them?
 
   Then it asks the code review's *At task time* questions (`codebase_review.md`).
-- An *Upgrade* in the packet is not scope drift: its guides, lock and installed templates are the kit's release, and the base reviewer reads each port against the template diff the packet names.
 - A lens reviewer asks its lens's *At task time* questions (*Lens reviewers*), in the order each guide lists them, and none of the base reviewer's.
 - Every finding cites `path:line`, or in the plan round the plan's section, and says what breaks or which rule it breaks. A finding without evidence is a question, and goes under *For the maintainer*.
 - Name what was verified clean, so silence is never ambiguous.

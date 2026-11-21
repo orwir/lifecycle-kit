@@ -1,11 +1,11 @@
 # The lifecycle method
 
 This folder is the method of the lifecycle kit (`orwir/lifecycle-kit`): the reusable
-guides every project follows, from an idea's gauntlet to its releases and reviews. Each
-project keeps a copy in `docs/guides/`, pinned to one kit release by `.lifecycle.lock`,
-so it reads on its own. A change is made in the copy of the project that found it,
-reviewed in that project's diff, and taken into the kit at its task's *Complete*
-(*Change a guide*); the other projects take it at their next upgrade.
+guides every project follows, from an idea's gauntlet to its releases and reviews. A
+project keeps no copy: its agents read the guides from the installed kit, in `method/`
+of the folder `lifecycle where` prints, so every project reads the installed release
+from its next session. A gap a project finds in a guide is filed on the kit as an
+issue (*Change a guide*), and the kit's own task changes it.
 
 ## Files (lifecycle order)
 
@@ -17,6 +17,8 @@ reviewed in that project's diff, and taken into the kit at its task's *Complete*
   (`docs/product/`, `design/`). A graduated idea moves out into its own repo with
   its kill criteria, `IDEA.md` freezes into `docs/product/idea.md`, and the home
   checks the project on a schedule; a killed one moves to the home's `archive/`.
+- **`ideas_home_template.md`** — the ideas home's `AGENTS.md`, word for word: its
+  layout and how to capture, kill, graduate and check, for any agent opened in it.
 - **`project_kickstart.md`** — language-agnostic playbook for standing up and
   growing a project (branching, releases, CI, docs layers, tracking, the
   user-facing-surface foundation, what to grow / what to skip).
@@ -68,27 +70,27 @@ reviewed in that project's diff, and taken into the kit at its task's *Complete*
 ## Use in a project
 
 The kit's `lifecycle` command (on the agent's PATH where the kit's plugin is on,
-otherwise `bin/lifecycle` in a checkout of the kit) keeps the copy:
+otherwise `bin/lifecycle` in a checkout of the kit) keeps a repository's side of it:
 
 ```
-lifecycle upgrade --adopt   # the first time: copy the method into docs/guides/
-lifecycle upgrade           # later: move the copy to the installed kit's release
+lifecycle upgrade --adopt   # a first move, run by the upgrade skill: deletes the kit-named
+                            # files in the guides folder (--dry-run lists them), writes the
+                            # lock, names the templates to port
+lifecycle upgrade           # when the kit asks: templates and lock to the installed release
 lifecycle doctor            # what the repository needs before its next task
-lifecycle upgraded          # an upgrade in the tree the integration branch lacks
 ```
 
-`upgrade` writes `.lifecycle.lock`: the release and each copied file's digest. A
-copied guide holding an edit not yet in the kit keeps it: the upgrade replays the edit
-onto the new release from the release the copy came from, stops on a conflict, and
-the edit still goes to the kit at its task's *Complete*. It replaces each file a
-template ports into that the repository kept word for word, and names the templates
-left to port, each with its file: a project's `AGENTS.md`, `CONTRIBUTING.md` and
-`.github/` templates, unless `[templates]` in `.lifecycle.toml` names others. A
-release that needs any other change in each repository writes its steps in the kit's
-`UPGRADING.md`; `lifecycle doctor` and `lifecycle upgraded` print them, and whoever
-runs the upgrade makes each one. A repository behind the installed kit
-upgrades as a tracked task's first step, and the task's briefs say what the upgrade
-brought; it lands as its own commit ahead of the task's where it can.
+`upgrade` writes `.lifecycle.lock`: the release, and the text of each template the
+repository follows at it. A release that changes only guide wording, a skill or the
+tools asks nothing of a repository, which reads it at once. One that changes a template
+it follows, or writes a step in the kit's `UPGRADING.md`, asks for an upgrade, and
+`lifecycle doctor` says so, offline, from the lock. The upgrade replaces each file a
+template ports into that still holds the template's old text word for word, and names
+the rest to port with their diffs: a project's `AGENTS.md`, `CONTRIBUTING.md` and
+`.github/` templates, unless `[templates]` in `.lifecycle.toml` names others. Whoever
+runs it makes each step `doctor` prints. When it runs, and how, is the upgrade skill's
+(the kit's `docs/guide.md` § Staying current). A repository from before 0.8.0 still holds a copy of the method
+in `docs/guides/`; its first upgrade deletes it, keeping the repository's own guides.
 
 ## Bootstrap a new idea (agent instructions)
 
@@ -97,15 +99,15 @@ When pointed at this method and asked to bootstrap or prepare the gauntlet:
 1. Find the user's ideas home: a repo whose root `AGENTS.md` says it is one (the
    user's global agent instructions may name it). If there's none, offer to set
    one up where the user chooses, private by default, with the layout in
-   `idea_gauntlet.md` § *The ideas home*: its root `AGENTS.md` (the template
-   there), `archived.md`, `graduated.md`, `active/`, `archive/`, a `.lifecycle.toml`
+   `idea_gauntlet.md` § *The ideas home*: its root `AGENTS.md` (from
+   `ideas_home_template.md`), `archived.md`, `graduated.md`, `active/`, `archive/`, a `.lifecycle.toml`
    naming `main` as its integration branch and
-   `"idea_gauntlet.md" = "AGENTS.md"` under `[templates]`, and this method copied into
-   `docs/guides/` (*Use in a project*).
+   `"ideas_home_template.md" = "AGENTS.md"` under `[templates]`; then the upgrade
+   skill makes its first move, which writes its lock (*Use in a project*).
 2. Check `archived.md`: if this idea, or a close variant, was killed before, show
    the line — re-opening needs new facts against the logged reason.
 3. Create `active/<idea>/IDEA.md` from the fenced Template body in
-   `docs/guides/idea_gauntlet.md`; fill `{{name}}` and the Captured date, set
+   `idea_gauntlet.md`; fill `{{name}}` and the Captured date, set
    `Status: captured`.
 4. Stop there. The answers in `IDEA.md`, the bar and every verdict belong to the
    user — never fill them or call a gate. On request, do the legwork into the
@@ -120,8 +122,8 @@ set its Status, and add the line to `archived.md` in the user's words.
 
 When the user says the idea passed and asks to start the project: move the folder
 into the project's own repo (`git subtree split --prefix=active/<idea>` keeps its
-history), add a line to `graduated.md` with a next check four weeks out, copy
-the guides into the new repo, then follow `docs/guides/project_kickstart.md` seeded
+history), add a line to `graduated.md` with a next check four weeks out, put the
+new repo on the kit, then follow `project_kickstart.md` seeded
 from `IDEA.md` and its artifacts (done statement → v0.1 milestone, IN list → first
 issues, the spike's stack choice and the decisions recorded in `IDEA.md` → first
 ADRs); gauntlet Phase 4 covers the bet and the `IDEA.md` → `docs/product/idea.md`
@@ -129,40 +131,11 @@ handoff.
 
 ## Change a guide
 
-When a project finds a reusable pattern (not project-specific), it comes back to the
-kit so every project inherits it. The change starts in the copy of the project that
-found it, inside the task that found it, so it is reviewed in that project's diff with
-the rest of the task.
-
-1. **Edit the copy** inside the task. The task's hand-back names the push to the kit
-   as a step of its *Complete*; `lifecycle guides check` lists the edited guides.
-2. **Push at *Complete***, on the task's go-ahead and before its commit:
-   `lifecycle guides push -F <file>`, the file written outside the tree, as a commit
-   message is. Its first line is what changed, in the kit's words, since every project on
-   the kit reads it: the patch's entry in the kit's changelog, one claim with no reason
-   and no issue, which the push holds to the changelog's style. Below a blank line comes
-   the reason: the gap or failure the edit closes, in the kit's words too, so the kit
-   commit's body tells a later review of the guide why the clause exists without opening
-   the project. Neither names an issue in any form. The push refuses a file with no line
-   or no reason, and an issue in either in a form GitHub links: `#N`, `owner/repo#N`,
-   `GH-N` or a link. It applies the edits
-   onto the release the copy is pinned to, replays them onto the kit's latest, and
-   releases them as a patch; a conflict stops the push before anything lands, and goes
-   back to the maintainer.
-3. **Commit the pushed guides and `.lifecycle.lock` with the task.** A pushed guide
-   takes the released text, with any change another project made to it meanwhile; the
-   lock records the release that took it, and the repository's next upgrade waits until
-   the installed kit has it.
-
-Two rules keep every copy safe:
-
-- **An edit never outlives its task.** It is pushed at *Complete* or reverted; an
-  upgrade in between carries it, and never decides it.
-- **A push starts from the copy's own release**, not from whatever the kit holds now,
-  so a copy that fell behind cannot revert anyone else's change.
-
-The maintainer can also change the method in the kit itself, released by the kit's own
-rules; projects take it at their next upgrade.
+When a project finds a gap in a guide that is not specific to it, the kit takes it, so
+every project inherits the fix: the task that finds it files it on the kit as an issue,
+by `task_review.md` § Developer rules, and nothing of the guide changes in the project.
+The kit's own task changes the guide, by the kit's own rounds and release rules, and
+every project reads it from its next session.
 
 A new file here needs the same justification as a new dependency — prefer extending an
 existing guide over adding another file.

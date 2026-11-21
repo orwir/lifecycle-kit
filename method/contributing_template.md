@@ -7,7 +7,7 @@
 How to work in this repository. The compressed operating contract for AI
 assistants lives in [AGENTS.md](AGENTS.md); this file carries the mechanics and
 rationale that don't fit there. Reusable cross-project patterns live in
-[docs/guides/project_kickstart.md](docs/guides/project_kickstart.md).
+[project_kickstart.md](https://github.com/orwir/lifecycle-kit/blob/main/method/project_kickstart.md).
 
 ## Local setup
 
@@ -64,7 +64,7 @@ rationale that don't fit there. Reusable cross-project patterns live in
 ## Task review
 
 A task is read twice: its plan before any code is written, its work before it
-lands (`docs/guides/task_review.md`). At *Clarify*, where the plan in the issue
+lands ([task_review.md](https://github.com/orwir/lifecycle-kit/blob/main/method/task_review.md)). At *Clarify*, where the plan in the issue
 has a shape that has shipped holes before, the plan round has a reviewer with
 no author context read it against the code, and the maintainer accepts it from
 the Clarify brief; a plan with no such shape and nothing to answer is clear,
@@ -163,4 +163,4 @@ and an ordinary patch release.
 Every code change that makes an existing doc wrong updates that doc **in the
 same commit**. The change → required-doc mapping and the task-closing checklist
 live in [AGENTS.md](AGENTS.md); the doc-layer map lives in
-[docs/guides/project_kickstart.md](docs/guides/project_kickstart.md).
+[project_kickstart.md](https://github.com/orwir/lifecycle-kit/blob/main/method/project_kickstart.md).

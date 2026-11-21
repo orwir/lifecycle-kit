@@ -1,5 +1,6 @@
-# The kit's own settings: its tasks run the rounds every repository on the kit runs.
-# Its method/ is the canonical method, so it has no lock and never upgrades.
+# The kit's own settings: its tasks run the rounds every repository on the kit runs,
+# reading the installed kit's method/. This checkout's method/ is the canonical one,
+# so it has no lock and never upgrades.
 
 [branches]
 integration = "main"

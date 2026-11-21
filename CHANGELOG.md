@@ -4,9 +4,37 @@ What each kit release changed, newest first.
 
 Format: [Semantic Versioning](https://semver.org/)
 
-Style: one claim per entry, at most 120 characters before the `(#N)`, what a repository on the kit or its maintainer meets (a guide, a template, a skill, a `lifecycle` subcommand, a setting). A semicolon or dash welding a second claim means two entries, not a longer one. Link the issue (`(#N)`, an issue of `orwir/lifecycle-kit`) when the change has one: details live there, not here. A release groups its entries under Added / Changed / Fixed / Removed, each once, below `## [<version>] — <date>`, the day its tag was made. An entry that starts `Repositories:` names a change every repository makes beyond its guides and templates, and its steps are in [UPGRADING.md](UPGRADING.md). A guide push from a project adds its own release. `tests/test_changelog.py` holds every release to this style, and [method/project_kickstart.md § CHANGELOG style](method/project_kickstart.md) is the long form.
+Style: one claim per entry, at most 120 characters before the `(#N)`, what a repository on the kit or its maintainer meets (a guide, a template, a skill, a `lifecycle` subcommand, a setting). A semicolon or dash welding a second claim means two entries, not a longer one. Link the issue (`(#N)`, an issue of `orwir/lifecycle-kit`) when the change has one: details live there, not here. A release groups its entries under Added / Changed / Fixed / Removed, each once, below `## [<version>] — <date>`, the day its tag was made. An entry that starts `Repositories:` names a change every repository makes beyond its templates, and its steps are in [UPGRADING.md](UPGRADING.md). `tests/test_changelog.py` holds every release to this style, and [method/project_kickstart.md § CHANGELOG style](method/project_kickstart.md) is the long form.
 
 ---
+
+## [0.8.0] — 2026-11-22
+
+### Added
+- `method/ideas_home_template.md` holds the ideas home's `AGENTS.md`, word for word (#21)
+
+### Changed
+- A repository reads the guides from the installed kit and keeps no copy of them (#21)
+- `.lifecycle.lock` holds the release and the text of each template the repository follows (#21)
+- `lifecycle doctor` asks for an upgrade only for a changed template or an upgrade step, never for guide wording (#21)
+- `lifecycle upgrade` prints each template left to port with its diff and reads nothing over the network (#21)
+- The first upgrade from a copy deletes the kit's files in the guides folder and keeps the repository's own (#21)
+- An owed upgrade runs alone before a task's plan, and one due while a task is in the tree waits for it (#21)
+- The upgrade skill owns a first move: it compares the copy with the kit, then runs `lifecycle upgrade --adopt` (#21)
+- A gap a task finds in a kit guide is filed on the kit as an issue when it is found (#21)
+- The skills and the reviewer read the guides from `method/` in the folder `lifecycle where` prints (#21)
+- The templates link the kit's guides on GitHub (#21)
+- `[guides] path` is retired, read only to find a copy of the method from before 0.8.0 (#21)
+- A change to a recipe a repository instantiates ships with an upgrade step naming the file (#21)
+- Repositories: the ideas home follows `ideas_home_template.md` in place of `idea_gauntlet.md` (#21)
+- Repositories: every link to a kit guide in the guides folder opens the kit's guide on GitHub (#21)
+- Repositories: `AGENTS.md` and `CONTRIBUTING.md` say a gap in a kit guide is filed on the kit (#21)
+- Repositories: `.claude/settings.json` allows `lifecycle where` and drops the two removed commands (#21)
+
+### Removed
+- `lifecycle guides check` and `lifecycle guides push` (#21)
+- `lifecycle upgraded` (#21)
+- The *Upgrade* line in both briefs and in the hand-off packet (#21)
 
 ## [0.7.0] — 2026-11-21
 

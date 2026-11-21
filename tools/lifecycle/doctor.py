@@ -1,11 +1,10 @@
 """What a repository needs before its next task, cheap enough for every session start.
 
-A repository behind the installed kit by a minor or major release blocks a review
-round: the skills it would run were written for a newer method and contract than
-its copy describes. A patch release only changed guide wording, so it is a note.
-Each finding names its fix, and a tracked task's clarify runs the upgrade as its first
-step; an untracked task meets a minor or major one at its work round. Every check
-is offline: nothing here asks the kit's remote.
+The method is served live from the installed kit, so a release that changes only guide
+wording, a skill or the tools asks nothing of a repository. One that changes a template it
+follows, or carries an ``UPGRADING.md`` step after its release, owes an upgrade, which the
+next task runs alone before its round. Each finding names its fix. Every check is
+offline: nothing here asks the kit's remote.
 """
 
 from __future__ import annotations
@@ -16,18 +15,9 @@ from dataclasses import dataclass, field
 
 from . import KIT_ROOT, is_kit, kit_repository, kit_version
 from . import changelog as _changelog
-from . import guides as _guides
 from . import release as _release
 from .config import Config
-from .guides import (
-    LOCK,
-    Lock,
-    local_edits,
-    method_files,
-    pushed_release,
-    read_lock,
-    text,
-)
+from .guides import followed, owed_templates, read_lock
 
 BLOCK = "block"
 NOTE = "note"
@@ -50,7 +40,8 @@ class Finding:
     level: str
     message: str
     #: The remedy: UPGRADE, ADOPT or UPDATE_KIT, or None when nothing needs doing.
-    #: Whether it stops a round is ``level``'s to say, never the fix's.
+    #: Whether it stops a round is ``level``'s to say, never the fix's; the review skill
+    #: lets an UPGRADE wait while a task's edits are in the tree.
     fix: str | None = None
     details: tuple[str, ...] = field(default_factory=tuple)
 
@@ -88,7 +79,7 @@ def changes_since(pinned: str, installed: str) -> list[str]:
 
 def steps_since(pinned: str, installed: str) -> list[str]:
     """``UPGRADING.md``'s steps for the releases after ``pinned`` up to ``installed``: what
-    each asks of every repository beyond its guides and templates, oldest release first,
+    each asks of every repository beyond its templates, oldest release first,
     the order they are made in. Each opens ``Upgrade <release>:``, since a step can speak
     of its release and a first move runs several releases' steps together."""
     return [
@@ -112,34 +103,8 @@ def _shown(changes: list[str], required: list[str]) -> tuple[str, ...]:
     return (*required, *changes[:room], *more)
 
 
-def _behind(lock: Lock, installed: str, pushed_pending: str | None) -> Finding:
-    pinned, current = _release(lock.kit), _release(installed)
-    changes = _shown(changes_since(lock.kit, installed), steps_since(lock.kit, installed))
-    minor = pinned[:2] < current[:2]
-    if pushed_pending:
-        return Finding(
-            BLOCK if minor else NOTE,
-            f"this repository is on kit {lock.kit}, and its guide edits went out in kit "
-            f"{pushed_pending}, newer than the installed {installed}: update the kit "
-            f"({UPDATE_COMMAND}), then upgrade",
-            UPDATE_KIT,
-            changes,
-        )
-    if minor:
-        message = (
-            f"this repository is on kit {lock.kit} and the installed kit is {installed}: "
-            f"the next task upgrades first, by {UPGRADE_SKILL}, before any review round"
-        )
-    else:
-        message = (
-            f"kit {installed} changed guides this repository's {lock.kit} lacks: the next "
-            f"task upgrades first, by {UPGRADE_SKILL}"
-        )
-    return Finding(BLOCK if minor else NOTE, message, UPGRADE, changes)
-
-
 def _kit(config: Config, installed: str) -> list[Finding]:
-    """The kit's own repository pins no copy of the method, so it needs no lock. Its rounds
+    """The kit's own repository is the method's home, so it needs no lock. Its rounds
     run on the installed plugin, though: older than the release on the integration branch,
     they run skills that release replaced. The release is read at the flow's base, so a
     task's own bump in the tree is not mistaken for it."""
@@ -170,47 +135,38 @@ def check(config: Config, installed: str | None = None) -> list[Finding]:
         return [
             Finding(
                 BLOCK,
-                "not on the kit yet: see `lifecycle upgrade --help`",
+                f"not on the kit yet: {UPGRADE_SKILL} moves it on, by `lifecycle upgrade --adopt`",
                 ADOPT,
                 _required(installed),
             )
         ]
-
-    findings = []
-    current = _release(installed)
-    pushed = pushed_release(lock)
-    pushed_pending = pushed if pushed and _release(pushed) > current else None
-    if _release(lock.kit) < current:
-        findings.append(_behind(lock, installed, pushed_pending))
-    elif _release(lock.kit) > current:
-        findings.append(
+    if _release(lock.kit) > _release(installed):
+        return [
             Finding(
                 BLOCK,
                 f"this repository is on kit {lock.kit} but the installed kit is {installed}: "
                 f"update the kit ({UPDATE_COMMAND})",
                 UPDATE_KIT,
             )
+        ]
+    behind = _release(lock.kit) < _release(installed)
+    steps = steps_since(lock.kit, installed) if behind else []
+    targets = followed(config)
+    templates = [f"template {name} -> {targets[name]}" for name in owed_templates(config, lock)]
+    if not (lock.guides or steps or templates):
+        return []
+    changes = changes_since(lock.kit, installed) if behind else []
+    if lock.guides:
+        message = (
+            f"this repository still holds a copy of the method in {config.guides}: the next "
+            f"task runs {UPGRADE_SKILL} alone first, which deletes the copy"
         )
-    elif pushed_pending:
-        findings.append(
-            Finding(
-                NOTE,
-                f"this repository's guide edits went out in kit {pushed_pending}; the installed "
-                f"kit is {installed}: the next upgrade waits until the kit is updated "
-                f"({UPDATE_COMMAND})",
-                UPDATE_KIT,
-            )
+    else:
+        message = (
+            f"kit {installed} asks this repository, on {lock.kit}, for an upgrade: the next "
+            f"task runs {UPGRADE_SKILL} alone first"
         )
-    edits = local_edits(config, lock)
-    if edits:
-        findings.append(
-            Finding(
-                NOTE,
-                "guide edits not yet in the kit: " + ", ".join(edits) + " (they go to the kit "
-                "at their task's Complete)",
-            )
-        )
-    return findings
+    return [Finding(BLOCK, message, UPGRADE, _shown(changes, [*steps, *templates]))]
 
 
 def _git(config: Config, *args: str) -> str | None:
@@ -240,48 +196,3 @@ def flow_base(config: Config) -> str:
 def _at(config: Config, base: str, rel: str) -> str | None:
     shown = _git(config, "show", f"{base}:{rel}")
     return shown.replace("\r\n", "\n") if shown is not None else None
-
-
-def upgraded(config: Config, base: str | None = None) -> dict | None:
-    """The upgrade the tree holds that has not landed: against ``base``, the flow's by default.
-
-    A task that spans sessions finds its upgrade here: the release move, what the kit
-    changed in between, the guides it rewrote or deleted and the templates it installed
-    whole. Guides the task itself edited stay out: they are its own work, not kit text.
-    """
-    base = base or flow_base(config)
-    lock = read_lock(config.root)
-    landed = _at(config, base, LOCK)
-    before = json.loads(landed) if landed else None
-    if lock is None or (before and before.get("kit") == lock.kit):
-        return None
-    own = set(local_edits(config, lock))
-    rewritten = [
-        name
-        for name in method_files()
-        if name not in own
-        and (config.guides_dir / name).is_file()
-        and _at(config, base, f"{config.guides}/{name}") != text(config.guides_dir / name)
-    ]
-    deleted = sorted(set(before.get("guides", {})) - set(lock.guides)) if before else []
-    installed = [
-        target
-        for name, target in config.templates.items()
-        if (config.root / target).is_file()
-        and (_guides.METHOD / name).is_file()
-        and text(config.root / target) == text(_guides.METHOD / name)
-        and _at(config, base, target) != text(config.root / target)
-    ]
-    previous = before.get("kit") if before else None
-    changes = changes_since(previous, lock.kit) if previous else []
-    # A first move has no release to measure from: every step the kit has asked for applies.
-    owed = steps_since(previous or "0.0.0", lock.kit)
-    return {
-        "from": previous,
-        "to": lock.kit,
-        "changes": changes,
-        "required": owed,
-        "guides": rewritten,
-        "deleted": deleted,
-        "installed": installed,
-    }

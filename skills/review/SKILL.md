@@ -9,10 +9,10 @@ Task: $ARGUMENTS — an issue number, a PR number, or empty for a task with no i
 ## 0. Before anything
 
 - `lifecycle` is the kit's command: on PATH where the kit's Claude plugin is on, otherwise `bin/lifecycle` in a checkout of the kit.
-- `lifecycle doctor --json`. A `block` whose fix is `upgrade` (the kit moved past a minor release since this task's clarify, or an untracked task meets one): run the upgrade skill first. A `block` whose fix is `adopt` or `update-kit`, or any failure of the command: stop and tell the maintainer what it printed. A `note` waits for a tracked task's clarify or the upgrade skill run alone.
-- `lifecycle config` prints the repository's settings. Below, `<guides>` is its `guides.path`, and the lenses are `review.lenses`.
+- `lifecycle doctor --json`. A finding whose fix is `upgrade` waits: the task's edits are in the tree, and the round needs nothing a port brings, since the method is served from the installed kit. The session start carries it to the next task, where the upgrade skill runs alone. A `block` whose fix is `adopt` or `update-kit`, or any failure of the command: stop and tell the maintainer what it printed.
+- `lifecycle config` prints the repository's settings, and the lenses are its `review.lenses`. Below, `<method>` is the `method/` folder in the folder `lifecycle where` prints: the kit's guides, served from the installed kit.
 - **The gate** is `gate.commands`, in order; where the settings name none, the commands AGENTS.md § Commands gives for lint and tests; with neither, the gate is `not run`, and the brief says so.
-- Read `<guides>/task_review.md`: the packet shapes, the brief and the developer rules are there. This round reads the tree against the plan accepted at *Clarify* (the clarify skill). Read `AGENTS.md` § Task workflow too: a repository may add a step before the hand-back (a design close, a sync check), and you do it where it says.
+- Read `<method>/task_review.md`: the packet shapes, the brief and the developer rules are there. This round reads the tree against the plan accepted at *Clarify* (the clarify skill). Read `AGENTS.md` § Task workflow too: a repository may add a step before the hand-back (a design close, a sync check), and you do it where it says.
 
 You are the developer and you run the whole round here. The maintainer reads only the brief at the end, so print nothing else but the one line in step 2.
 
@@ -31,11 +31,10 @@ You are the developer and you run the whole round here. The maintainer reads onl
    - the run must load the code under test from the worktree, not from this tree: check where it imported from. A run that collected no tests proves nothing;
    - `git worktree remove --force <worktree>`.
 4. **Read first.** The docs, ADR sections or guides the diff is held to beyond AGENTS.md, or `none`.
-   - **Upgrade.** `lifecycle upgraded`: when the tree holds one, the packet's *Upgrade* line names the release move, the paths it wrote, each change the release required and where it was made, and each port with its template's diff command. Those paths get no *Reconciliation* line.
 5. **The gate.** If the gate did not run in this session after the last edit, run it now. Report the numbers; anything that still could not run goes under `NOT RUN` with its reason.
-6. **Decisions taken alone.** Every option picked without the maintainer, every hypothesis left untested and where it is marked, every spend. `none` is a claim the reviewer checks.
+6. **Decisions taken alone.** Every option picked without the maintainer, every hypothesis left untested and where it is marked, every spend, and every issue filed on the kit for a gap in a kit guide, as `<kit owner>/<kit repository>#M`. `none` is a claim the reviewer checks.
 7. **Where to look.** The two or three hunks you are least sure of, the invariant each relies on, and the test that enforces it — or `stated only`.
-8. **Docs.** The files touched per AGENTS.md's change → doc mapping, and the CHANGELOG line quoted, or why there is none. Then what AGENTS.md's added steps produced (a design page closed, a sync check's reading), or `none`. A guide in `<guides>` this task changed is named here: `lifecycle guides check` lists them, and they go to the kit at *Complete*.
+8. **Docs.** The files touched per AGENTS.md's change → doc mapping, and the CHANGELOG line quoted, or why there is none. Then what AGENTS.md's added steps produced (a design page closed, a sync check's reading), or `none`.
 
 Claims with coordinates, never the diff or file contents; self-contained, with no reference to this conversation; no pre-arguing of findings.
 

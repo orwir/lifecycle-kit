@@ -10,9 +10,9 @@ Task: $ARGUMENTS — the issue number given with the invocation (where nothing s
 
 - `lifecycle` is the kit's command: on PATH where the kit's Claude plugin is on, otherwise `bin/lifecycle` in a checkout of the kit.
 - When the settings name a board (`lifecycle config`), `lifecycle board <N> "In Progress"` first.
-- `lifecycle doctor --json`. A finding whose fix is `upgrade`: run the upgrade skill now, before the ticket; the Clarify brief carries its *Upgrade* line. A `block` whose fix is `adopt` or `update-kit`, or any failure of the command: stop and tell the maintainer what it printed. Anything else: carry on.
-- `lifecycle config` prints the repository's settings. Below, `<guides>` is its `guides.path`.
-- Read `<guides>/task_review.md`: the plan packet, the plan return, the Clarify brief and the developer rules are there, and the plan's sections are the repository's issue templates (`.github/ISSUE_TEMPLATE/`). Read `AGENTS.md` § Task workflow too: a repository may add steps to this round (a drawing, an evidence source), and you do them where it says.
+- `lifecycle doctor --json`. A finding whose fix is `upgrade`, with no task's edits in the tree: run the upgrade skill now, alone, before the ticket. It ends in its own hand-back and lands by its own *Complete*; this round starts once it has landed. With an accepted plan and its edits in the tree, the upgrade waits until the task lands, as the upgrade skill's opening says. A `block` whose fix is `adopt` or `update-kit`, or any failure of the command: stop and tell the maintainer what it printed. Anything else: carry on.
+- `lifecycle config` prints the repository's settings. Below, `<method>` is the `method/` folder in the folder `lifecycle where` prints: the kit's guides, served from the installed kit.
+- Read `<method>/task_review.md`: the plan packet, the plan return, the Clarify brief and the developer rules are there, and the plan's sections are the repository's issue templates (`.github/ISSUE_TEMPLATE/`). Read `AGENTS.md` § Task workflow too: a repository may add steps to this round (a drawing, an evidence source), and you do them where it says.
 
 You are the developer and you run the whole round here, before any code. The maintainer reads only the brief at the end, so print nothing else but the one line in step 3.
 
