@@ -8,6 +8,12 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## [0.9.0] — 2026-11-22
+
+### Changed
+- `project_kickstart.md`'s release recipe runs its refusals with `shell: bash` on a Windows runner (#24)
+- Repositories: each release job refuses a moved head and a tagged version before it ships, as 0.4.2's recipe does (#24)
+
 ## [0.8.0] — 2026-11-22
 
 ### Added
