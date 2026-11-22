@@ -229,7 +229,7 @@ Each row gets a verdict, mapped to a label (`review_machinery.md` § Severity vo
 
 ## At task time
 
-What a task's work round asks of one diff for this review (`task_review.md` § Lens reviewers): the classes of finding this review keeps meeting that a reader can see in the change that introduces them. The person-facing reviewer asks them, against the IA section of the intent doc and the vocabulary its close-out wrote back. A class two reviews of this kind in a row meet with no question here gets one (`review_machinery.md` § Close-out).
+What a task's work round asks of one diff for this review (`task_review.md` § Lens reviewers): the classes of finding this review keeps meeting that a reader can see in the change that introduces them. The person-facing reviewer asks them, against the IA section of the intent doc and the vocabulary its close-out wrote back.
 
 - **One home.** Does the diff render in full a fact whose home is elsewhere, or show one fact twice on a page, instead of a reference to its home (Phases 2 and 4)?
 - **One name.** Does every reader-facing word the diff adds match the controlled vocabulary in every locale, with no new synonym and no word used for two things (Phase 6, *Labels*)?

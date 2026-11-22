@@ -596,7 +596,7 @@ Explain the deltas — coverage drops on real new code at <100% are expected and
 
 ## At task time
 
-What a task's work round asks of one diff for this review (`task_review.md` § Lens reviewers): the classes of finding this review keeps meeting that a reader can see in the change that introduces them. The base reviewer asks them of every diff, after the work-round questions, which already cover siblings, failure paths, removals and growth. A class two reviews of this kind in a row meet with no question here gets one (`review_machinery.md` § Close-out).
+What a task's work round asks of one diff for this review (`task_review.md` § Lens reviewers): the classes of finding this review keeps meeting that a reader can see in the change that introduces them. The base reviewer asks them of every diff, after the work-round questions, which already cover siblings, failure paths, removals and growth.
 
 - **Trust boundary.** Where does input the diff newly accepts — text, a header, a provider's error, a model's output — reach a prompt, storage, a log, a page or a query, and is it escaped, bound, signed and authorized for every actor there (5.3–5.5, 5.7)?
 - **Bounds.** What bounds each input, collection, loop and in-memory map the diff adds, and what happens at zero, at the cap and past it (5.5; *Starter sub-checks*, runtime hygiene)?

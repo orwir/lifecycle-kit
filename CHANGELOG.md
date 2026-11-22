@@ -8,6 +8,25 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## [0.12.1] — 2026-11-22
+
+### Changed
+- `task_review.md` defines its terms once, at its top (#28)
+- `task_review.md` gives a task's action for each of the seven severities in one table (#28)
+- A reviewer's second read in the work round is a second pass: only the plan and work rounds are rounds (#28)
+- A D-row left open at "go" or "lgtm" takes its recommended option (#28)
+- A task defers a `Drift-prone` finding to a filed issue, with its trigger and plan (#28)
+- An exploitable finding is fixed in the task or reported privately, never filed as an issue (#28)
+- A work-round `split` becomes a D-row (#28)
+- A disputed finding goes to the brief, never to a third pass (#28)
+- The hand-back brief counts passes and the findings reported privately (#28)
+
+### Fixed
+- The hand-off packet's diff shows uncommitted edits, in a form the reviewer's guard runs (#28)
+- The briefs' templates hold the `(no guard)` and `(pasted)` marks and an option's size unit (#28)
+- The Clarify brief's D-row names the part of the system it touches (#28)
+- Each review guide's § At task time holds only the questions a task asks (#28)
+
 ## [0.12.0] — 2026-11-22
 
 ### Changed

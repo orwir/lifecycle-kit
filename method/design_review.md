@@ -239,7 +239,7 @@ breached.
 
 ## At task time
 
-What a task's work round asks of one diff for this review (`task_review.md` § Lens reviewers): the classes of finding this review keeps meeting that a reader can see in the change that introduces them. The person-facing reviewer asks them, against the design-language reference. A class two reviews of this kind in a row meet with no question here gets one (`review_machinery.md` § Close-out).
+What a task's work round asks of one diff for this review (`task_review.md` § Lens reviewers): the classes of finding this review keeps meeting that a reader can see in the change that introduces them. The person-facing reviewer asks them, against the design-language reference.
 
 - **Conformance.** Does every component, data rendering and pattern the diff touches — lines it only moved included — match the design-language reference, with no raw value off its token scale (Phases 0 and 5)?
 - **State contract.** Does a new or changed component cover every state the shared contract defines: hover, focus, active, disabled, selected, loading, empty and error (Phase 4)?

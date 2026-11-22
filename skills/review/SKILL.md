@@ -50,10 +50,10 @@ Print one line: the reviewers launched for the task, by lens, and that the brief
 
 ## 3. Act on the returns
 
-- Fix every `Real bug` and `Drift`; `Cleanup` and `Minor` only inside the diff; `Acceptable` is recorded. One defect two returns report is one finding. Every `Decision pending`, every *For the maintainer* question you cannot settle, and every finding you dispute go to the brief.
+- Fix every `Real bug` and `Drift`; `Cleanup` and `Minor` only inside the diff; `Acceptable` is recorded. One defect two returns report is one finding. Every `Decision pending`, every *For the maintainer* question you cannot settle, every finding you dispute and a `split` go to the brief.
 - A fix that leaves the accepted plan is a departure: write it into the issue's *Departures* when you make it. One that is user-visible, hard to undo or changes scope stops for the maintainer first.
-- Before a finding is deferred, file it, labelled as the repository's `AGENTS.md` says, and, when the settings name a board, `lifecycle board <new> Backlog` — the brief's row carries the number and title.
-- A `Real bug` in a return buys that reviewer one second round: after the fixes, send the same reviewer the reply per finding id — `fixed <how>` / `disputed <why>` / `deferred #N` — wait for its second return, and act on it the same way. The same reviewer keeps its context: in Claude Code, `SendMessage` to the subagent; for a pasted session, a second file the maintainer pastes into the same session. No third round: what is still disputed is a D-row.
+- An exploitable finding, whatever its label, is fixed here or goes by the private route (`task_review.md` § Return packet) — where the repository names no private channel, to the brief as a D-row — never into an issue. Before any other finding is deferred, file it, labelled as the repository's `AGENTS.md` says, and, when the settings name a board, `lifecycle board <new> Backlog` — the brief's row carries the number and title.
+- A `Real bug` in a return buys that reviewer a second pass: after the fixes, send the same reviewer the reply per finding id — `fixed <how>` / `disputed <why>` / `deferred #N` / `reported privately` — wait for its second return, and act on it the same way. The same reviewer keeps its context: in Claude Code, `SendMessage` to the subagent; for a pasted session, a second file the maintainer pastes into the same session. No third pass: what is still disputed is a D-row.
 - Re-run the gate after the last edit.
 
 ## 4. Hand back

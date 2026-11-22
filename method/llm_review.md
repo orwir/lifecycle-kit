@@ -155,7 +155,7 @@ Before anything is cut or rewritten:
 
 ## At task time
 
-What a task's work round asks of one diff for this review (`task_review.md` § Lens reviewers): the classes of finding this review keeps meeting that a reader can see in the change that introduces them. The model-facing reviewer asks them, against the product's prompt documentation and its eval cases. A class two reviews of this kind in a row meet with no question here gets one (`review_machinery.md` § Close-out).
+What a task's work round asks of one diff for this review (`task_review.md` § Lens reviewers): the classes of finding this review keeps meeting that a reader can see in the change that introduces them. The model-facing reviewer asks them, against the product's prompt documentation and its eval cases.
 
 - **One rule, one home.** Is a rule the diff writes already stated in, or contradicted by, the instructions, a tool description, a schema field or a sibling return (Phase 1)?
 - **Rent.** Is the new text sent on every request, and if it serves a rare case, why is it not on the tool, return or conditional block that case reaches (Stance 2; Phase 2, *move*)?

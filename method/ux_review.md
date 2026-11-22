@@ -172,7 +172,7 @@ The subtraction phase. Evidence first: the usage data from Phase 0's instrumenta
 
 ## At task time
 
-What a task's work round asks of one diff for this review (`task_review.md` § Lens reviewers): the classes of finding this review keeps meeting that a reader can see in the change that introduces them. The person-facing reviewer asks them. A class two reviews of this kind in a row meet with no question here gets one (`review_machinery.md` § Close-out).
+What a task's work round asks of one diff for this review (`task_review.md` § Lens reviewers): the classes of finding this review keeps meeting that a reader can see in the change that introduces them. The person-facing reviewer asks them.
 
 - **Readers.** Which readers, roles, tiers and configurations reach the change, and what does each see — a control shown to someone who cannot use it included (Phases 1 and 2)?
 - **Failed, empty, boundary.** What does each region or reply the diff touches show when its read fails, finds nothing, or sits on a boundary — zero, one, the cap, an exact page — and does it name the next step (Phases 2 and 3)?

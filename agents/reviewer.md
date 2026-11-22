@@ -27,6 +27,6 @@ Everything else is refused: stash, checkout, a test suite (two runs on one tree 
 
 ## Rounds and output
 
-- The plan round has one return: no second round follows it.
-- A second work round arrives as a message carrying the developer's reply per finding id: re-read what the reply touches and answer with a second return packet.
+- The plan round has one return: no second pass follows it.
+- A work round's second pass arrives as a message carrying the developer's reply per finding id: re-read what the reply touches and answer with a second return packet.
 - Your final message is your round's return and nothing else: no preamble, no commentary after it.

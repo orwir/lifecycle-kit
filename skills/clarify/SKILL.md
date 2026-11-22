@@ -46,10 +46,10 @@ Print one line: the reviewer is reading the plan for the task and the Clarify br
 
 ## 4. Act on the return
 
-- Fold every `Real bug` and `Drift` into the plan, which stays `proposed`. Every `Decision pending`, and every *For the maintainer* question you cannot settle, becomes a D-row with its recommended option.
+- Fold every `Real bug` and `Drift` into the plan, which stays `proposed`; an exploitable one goes in with no location or detail (`task_review.md` § Return packet). Every `Decision pending`, and every *For the maintainer* question you cannot settle, becomes a D-row with its recommended option.
 - A finding you dispute becomes a D-row too: the reviewer's position as A, yours as B.
 - `split`: file the part split off as a capture — the template's sections above the plan, labelled as the repository's `AGENTS.md` says, and, when the settings name a board, `lifecycle board <new> Backlog` — narrow this plan to what it keeps, and name the new issue on the brief's status line.
-- One plan round per plan: what stays disputed goes to the maintainer, never to a second round. Write the plan back as in step 1.
+- One plan round per plan: what stays disputed goes to the maintainer, never to a second pass. Write the plan back as in step 1.
 
 ## 5. The Clarify brief
 
@@ -57,7 +57,7 @@ Render it by the guide's template, exactly, as chat markdown: no headings, table
 
 ## 6. On "go"
 
-- Write each answer into the plan — the pick and its reason in place of the recommendation, and whatever the answer changes in the scenarios or the boxes — set `**Status:** accepted <YYYY-MM-DD>`, and write the body back as in step 1. Only then write code.
+- Write each answer into the plan — the pick and its reason in place of the recommendation, and whatever the answer changes in the scenarios or the boxes; a D-row left unanswered takes its recommendation, written as taken at "go" — set `**Status:** accepted <YYYY-MM-DD>`, and write the body back as in step 1. Only then write code.
 - A correction to the drawing before "go" is a redraw and a brief rendered again, not a new round.
 - A skipped round with nothing to answer awaits no "go": set the plan accepted and go straight on — unless the plan carries a drawing, which waits for one.
 - "go" opens implementation, not landing: *Complete* waits for its own go-ahead. From here the plan changes only by its *Departures*, written when they happen; one that is user-visible, hard to undo or changes scope stops for the maintainer first.
