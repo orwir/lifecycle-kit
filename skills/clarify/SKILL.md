@@ -50,9 +50,10 @@ Launch one reviewer with the plan packet as its whole task, by the review skill'
 
 By § The plan round, step 4:
 
-- fold every `Real bug` and `Drift` into the plan, which stays `proposed`; an exploitable one goes in with no location or detail;
+- first check each finding's evidence, by § Developer rules: one whose locations do not show what its evidence says they show, or an `inferred` or unmarked one you cannot prove, is disputed on evidence;
+- fold every `Real bug` and `Drift` that holds into the plan, which stays `proposed`; an exploitable one goes in with no location or detail;
 - every `Decision pending`, and every *For the maintainer* question you cannot settle, goes by its door (§ Terms): a one-way one becomes a D-row with its recommended option; a two-way one is taken, at the reviewer's recommendation or at your own pick with the reviewer's option named, and written as a `Taken:` line (§ Developer rules); a question with no option goes the same way, your answer as its recommendation;
-- a finding you dispute becomes a D-row: the reviewer's position as A, yours as B;
+- a finding you dispute becomes a D-row naming its kind (§ Brief rules): the reviewer's position as A, yours as B;
 - a `split`: file the part split off as a capture, the template's sections above the plan, labelled as the repository's `AGENTS.md` says, and, where the settings name a board, `lifecycle board <new> Backlog`; narrow this plan to what it keeps, and name `<new>` on the brief's *Reviewed* line;
 - write the plan back as in § 1 step 4, with the round's mark in the same write;
 - one plan round per plan: what stays disputed goes to the maintainer, never to a second pass.

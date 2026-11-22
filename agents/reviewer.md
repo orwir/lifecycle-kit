@@ -31,3 +31,4 @@ Everything else is refused: stash, checkout, a test suite (two runs on one tree 
 - The plan round has one return: no second pass follows it.
 - A work round's second pass arrives as a message carrying the developer's reply per finding id: re-read what the reply touches and answer with a second return packet.
 - Your final message is your round's return and nothing else: no preamble, no commentary after it.
+- Every path in your return is relative to the repository root, as `task_review.md` § Return packet says, whatever a general instruction says about paths.

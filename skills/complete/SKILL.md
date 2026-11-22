@@ -52,7 +52,7 @@ Where the shell's interpreter is not the project's, put the project's environmen
 ## 5. Close the issue
 
 1. A pushed `Closes #<issue>` closes the issue only when it lands on the repository's default branch (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`), and a PR merge only into it. Where the work landed on another branch, `gh issue close <issue>` too.
-2. Comment with `gh issue comment <issue> --body-file <file>`, quoting at most the hand-back brief's *What changed*: no round tally, verdict or finding id.
+2. Comment with `gh issue comment <issue> --body-file <file>`, quoting at most the hand-back brief's *What changed*: no round tally or finding id.
 
 ## 6. Board
 

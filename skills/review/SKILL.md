@@ -69,12 +69,13 @@ Print one line: the reviewers launched, by lens, and that the brief follows; for
 
 By § The work round, step 3, and § Return packet's table:
 
-- fix every required finding, and every `Cleanup` and `Minor` inside the diff; one defect two returns report is one finding;
-- every `Decision pending` and every *For the maintainer* question you cannot settle goes by its door (§ Terms): a two-way one is made in the tree, at the reviewer's recommendation or at your own pick with the reviewer's option named, and written as a `Taken:` line (§ Developer rules); a one-way one, every finding you dispute and a `split` go to the brief as D-rows;
+- first check each finding's evidence, by § Developer rules: one whose locations do not show what its evidence says they show, or an `inferred` or unmarked one you cannot prove, is disputed on evidence;
+- fix every finding that holds: each required one, and each `Cleanup` and `Minor` inside the diff; one defect two returns report is one finding;
+- every `Decision pending` and every *For the maintainer* question you cannot settle goes by its door (§ Terms): a two-way one is made in the tree, at the reviewer's recommendation or at your own pick with the reviewer's option named, and written as a `Taken:` line (§ Developer rules); a one-way one, every finding you dispute, on evidence or on scope (§ Terms), and a `split` go to the brief as D-rows;
 - a fix that leaves the accepted plan is a departure, by § Developer rules;
 - an exploitable finding is fixed here or goes by the private route (§ Return packet) — where the repository names no private channel, to the brief as a D-row — never into an issue;
 - any other deferred finding is filed first, labelled as the repository's `AGENTS.md` says, and, where the settings name a board, `lifecycle board <new> Backlog`; the brief's row carries `<new>`'s number, title and link;
-- a `Real bug` buys its reviewer a second pass: after the fixes, send the same reviewer the reply per finding id — `fixed <how>` / `disputed <why>` / `deferred #<new>` / `reported privately` — and act on its second return the same way, never buying a third (§ Terms, *Pass*); in Claude Code, `SendMessage` to the subagent; for a pasted session, a second file the maintainer pastes into the same session;
+- a `Real bug` buys its reviewer a second pass: after the fixes, send the same reviewer the reply per finding id — `fixed <how>` / `disputed: the evidence does not hold — <what the locations show>` / `disputed: <why it is not yours to act on>` / `deferred #<new>` / `reported privately` — and act on its second return the same way, never buying a third (§ Terms, *Pass*); in Claude Code, `SendMessage` to the subagent; for a pasted session, a second file the maintainer pastes into the same session;
 - re-run the gate after the last edit; a red gate is fixed before the hand-back.
 
 ## 4. Hand back

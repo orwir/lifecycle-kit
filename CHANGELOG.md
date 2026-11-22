@@ -8,6 +8,20 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## [0.14.1] — 2026-11-22
+
+### Changed
+- A reviewer's return opens with the count of its required findings and their ids, in place of the verdict (#33)
+- A finding in a return is a short block: id, severity and location, then a line each for claim, evidence and action (#33)
+- A finding marks its evidence `seen` or `inferred` (#33)
+- A return's paths are relative to the repository root (#33)
+- The developer reads every location a finding cites before acting on it, and disputes one that does not hold (#33)
+- An `inferred` finding is proven before its fix: by a search, a failing test, or the run or read that shows it (#33)
+- A dispute is on evidence or on scope, and the plan round's mark and both briefs' *Reviewed* name its kind (#33)
+
+### Removed
+- The reviewer's verdict and the findings table (#33)
+
 ## [0.14.0] — 2026-11-22
 
 ### Changed
