@@ -8,6 +8,14 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## [0.14.3] — 2026-11-22
+
+### Changed
+- The kit's repository is public, under the MIT license (#14)
+
+### Removed
+- Putting a repository on the kit no longer sets up git's credential helper (#14)
+
 ## [0.14.2] — 2026-11-22
 
 ### Fixed

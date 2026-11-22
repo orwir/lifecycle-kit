@@ -1,6 +1,6 @@
 {
   "name": "lifecycle-kit",
-  "description": "The maintainer's project lifecycle kit for Claude Code.",
+  "description": "orwir's project lifecycle kit for Claude Code.",
   "owner": { "name": "orwir" },
   "plugins": [
     {

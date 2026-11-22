@@ -1,11 +1,11 @@
 {
   "name": "lifecycle",
-  "version": "0.14.2",
+  "version": "0.14.3",
   "description": "The lifecycle method's review rounds, close-out and release as skills, a read-only reviewer, and the checks every project on the kit shares.",
   "author": {
     "name": "orwir"
   },
   "repository": "https://github.com/orwir/lifecycle-kit",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "defaultEnabled": false
 }

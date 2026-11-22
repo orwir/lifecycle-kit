@@ -8,7 +8,7 @@ Agent instructions. Commit nothing: the maintainer reads the diff and gives the 
 
 1. **An empty repository** is a new project: stop and tell the maintainer, before anything is installed. A new project starts from its idea, in the ideas home, which runs the method's `project_kickstart.md` in a run of its own; its day zero comes back to the steps below.
 2. **The kit on this machine.**
-   - Claude Code: when `claude plugin list` has no `lifecycle@lifecycle-kit`, make sure git can read the private repository (`gh auth setup-git`, or Git Credential Manager), then:
+   - Claude Code: when `claude plugin list` has no `lifecycle@lifecycle-kit`:
 
      ```
      claude plugin marketplace add orwir/lifecycle-kit
