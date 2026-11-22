@@ -8,6 +8,20 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## [0.10.0] — 2026-11-22
+
+### Changed
+- The CONTRIBUTING template holds local setup, the release checklist and hotfixes only (#22)
+- The AGENTS template keeps the gates and the rules applied on every change, and points at the rest (#22)
+- The AGENTS template holds the repository's labels and changelog cap as placeholders (#22)
+- `project_kickstart.md` keeps why for releases, branching and commits, and points at the templates (#22)
+- `method/README.md` is the method's index alone (#22)
+- `idea_gauntlet.md` § The ideas home says how an agent sets a home up (#22)
+- `docs/guide.md` names the `lifecycle` commands a repository runs (#22)
+- The clarify and review skills label an issue as the repository's `AGENTS.md` says (#22)
+- The kit's model-facing reviewer reads `method/`, `UPGRADING.md` and `CHANGELOG.md` too (#22)
+- Repositories: a pointer at a removed section of the method's README points at that section's new home (#22)
+
 ## [0.9.0] — 2026-11-22
 
 ### Changed

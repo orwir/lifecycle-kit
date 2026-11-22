@@ -18,6 +18,7 @@ You are working in `orwir/lifecycle-kit`: the maintainer's project lifecycle —
 - **Mechanics live in the tools, words in the skills.** A step a skill would have an agent re-derive each time — a board move, a version check, a guard — is a `lifecycle` subcommand with a test, and the skill calls it.
 - **Skills keep to the portable Agent Skills subset**: `name`, `description`, and the body. A Claude-only field is harmless where others ignore it (`argument-hint`, `disable-model-invocation`), but no step may depend on one.
 - **The adapter stays thin.** `.claude-plugin/`, `hooks/` and `bin/` wire the tools into Claude Code and hold no logic of their own.
+- **A new file in `method/` needs the justification of a new dependency.** Extend an existing guide first.
 - **Repository specifics never enter the kit.** A skill reads them from the repository: structured values from `.lifecycle.toml`, everything else from its `AGENTS.md`.
 - Every new behaviour gets a test in `tests/` that fails without it.
 

@@ -6,6 +6,10 @@ prints the steps a repository owes, oldest release first, and the upgrade skill 
 them. The release's `Repositories:` entries in [CHANGELOG.md](CHANGELOG.md)
 say in one claim each what its steps do.
 
+## [0.10.0] — 2026-11-22
+
+- in every tracked file, `AGENTS.md` and `CONTRIBUTING.md` among them, a pointer at the lifecycle kit's `method/README.md` takes the section's new home, in the form the file already links the kit: § Use in a project becomes `docs/guide.md`, § Bootstrap a new idea becomes `idea_gauntlet.md` § The ideas home, and § Change a guide becomes `task_review.md` § Developer rules (`git grep -n -e "Use in a project" -e "Bootstrap a new idea" -e "Change a guide"` lists them).
+
 ## [0.9.0] — 2026-11-22
 
 - in the workflow `[release] workflow` names in `.lifecycle.toml` (`.github/workflows/release.yml` by the recipe), every job that deploys, publishes or tags carries the two refusals of the recipe's `ship` job in `project_kickstart.md` § CI/CD recipe, copied from there word for word: right after the job's checkout and before anything it builds or ships, with the version from `refuse` in `VERSION`, and under the recipe's names, which `lifecycle release` reads. `Refuse a head the review did not read` reads the branch's live head with `git ls-remote`, not `$GITHUB_SHA`, against the reviewed commit, and `Refuse a version released already` reads the version's tag. Both run in bash, with `shell: bash` where the job runs on a Windows runner, since in pwsh they fail on every run and read as a moved branch. Every such job carries them, the build alone not being enough: re-running only the failed jobs keeps the first dispatch's head and skips `refuse` and every job that passed. Where every such job holds both already, nothing changes; a repository with no `[release]` has no step to make.

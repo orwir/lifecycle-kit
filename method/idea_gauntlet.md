@@ -11,8 +11,8 @@ small v0.1 in use settle the rest.
 
 Companion to `project_kickstart.md`: the gauntlet ends exactly where the kickstart
 begins. Every idea lives in your ideas home (see *The ideas home*), one folder per
-idea, versioned and backed up from its first line; the method's README carries the
-agent bootstrap for setting the home up and capturing an idea into it. Each phase
+idea, versioned and backed up from its first line; *The ideas home* says how an agent
+sets one up, and its `AGENTS.md` how to capture an idea into it. Each phase
 leaves its evidence where the kickstart will read it (see *Artifacts*), so
 graduation moves the folder out into its own repo as it is: `IDEA.md` freezes as
 the origins artifact and the rest become the project's first docs. A killed idea
@@ -138,6 +138,12 @@ asks the home for nothing but a change to that template.
 The root `AGENTS.md` carries these steps for any agent opened in an idea's folder. A new
 home starts from `ideas_home_template.md`, beside this guide in the kit, adjusted to taste.
 
+**Setting a home up** (agent instructions). Asked to capture an idea or run the gauntlet
+with no home in reach, find it first: a repo whose root `AGENTS.md` says it is one (the
+user's global agent instructions may name it). Where there is none, offer to set one
+up where the user chooses, private by default, with the layout and settings above,
+then run the kit's upgrade skill for its first move, which writes its lock.
+
 ## Artifacts
 
 What each phase leaves behind, inside the idea's folder. Every file sits where the
@@ -175,7 +181,7 @@ to know how stale.
 ## Template
 
 Copy everything below into `active/<idea>/IDEA.md` in your ideas home and fill as
-you go (the agent bootstrap in the method's README does this step for you).
+you go (the ideas home's `AGENTS.md` has an agent do this step for you).
 
 ```
 # Idea: {{name}}

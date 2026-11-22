@@ -48,7 +48,7 @@ Print one line: the reviewer is reading the plan for the task and the Clarify br
 
 - Fold every `Real bug` and `Drift` into the plan, which stays `proposed`. Every `Decision pending`, and every *For the maintainer* question you cannot settle, becomes a D-row with its recommended option.
 - A finding you dispute becomes a D-row too: the reviewer's position as A, yours as B.
-- `split`: file the part split off as a capture — the template's sections above the plan, labelled as the repository's contributing guide says, and, when the settings name a board, `lifecycle board <new> Backlog` — narrow this plan to what it keeps, and name the new issue on the brief's status line.
+- `split`: file the part split off as a capture — the template's sections above the plan, labelled as the repository's `AGENTS.md` says, and, when the settings name a board, `lifecycle board <new> Backlog` — narrow this plan to what it keeps, and name the new issue on the brief's status line.
 - One plan round per plan: what stays disputed goes to the maintainer, never to a second round. Write the plan back as in step 1.
 
 ## 5. The Clarify brief

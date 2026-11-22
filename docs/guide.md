@@ -45,7 +45,9 @@ The guides are not copied in: every agent reads them from the installed kit, in 
 
 `lifecycle doctor` runs at every session start through the plugin, and before a task by the repository's `AGENTS.md` where no plugin runs it. A release that changes only guide wording, a skill or the tools asks nothing of a repository: it reads the release at once. One that changes a template the repository follows, or writes a step in the kit's `UPGRADING.md`, asks for an upgrade, and `doctor` names its fix with the steps, the templates and what the kit changed. The upgrade runs alone, with its own round and commit, before a task's plan or an untracked task's first edit; one that comes due while a task's edits are in the tree waits until that task lands. It replaces each file a template ports into that the repository kept word for word (usually the issue and PR templates), and the agent ports the rest and makes each step, oldest release first. This machine's kit takes a new release on its own route from step 1: the plugin by the marketplace's `autoUpdate` that step 3 turns on, and a clone by a pull (`git -C <clone> pull`) that the agent's instructions run before a task. Nothing checks the kit's remote for you, so a clone that is never pulled stays on its release.
 
-A gap a task finds in one of the kit's guides is filed on the kit as an issue when it is found, and the kit's own task changes the guide (`method/README.md` § Change a guide).
+The command behind it: `lifecycle doctor` says what a repository needs before its next task; `lifecycle upgrade` brings its templates and lock to the installed release when the kit asks; `lifecycle upgrade --adopt` is a first move, which the upgrade skill runs.
+
+A gap a task finds in one of the kit's guides is filed on the kit as an issue when it is found, and the kit's own task changes the guide (`method/task_review.md` § Developer rules).
 
 ## Settings
 

@@ -10,9 +10,6 @@ commands = [".githooks/pre-push"]
 # {root} is a worktree of the base, {tests} the new tests as pytest node ids under it.
 targeted = "python -m pytest -q -p no:cacheprovider --rootdir {root} {tests}"
 
-[guides]
-path = "method"
-
 [review]
 allow = [
   "ruff check tools tests",
@@ -25,8 +22,9 @@ paths = ["README.md", "docs/"]
 read = ["method/project_kickstart.md, principle 3 and its README.md row — documentation is layered by audience; the README is a front page: what, install, where to find more"]
 
 [review.lenses.model-facing]
-paths = ["skills/", "agents/", "docs/guide.md"]
+paths = ["skills/", "agents/", "docs/guide.md", "method/", "UPGRADING.md", "CHANGELOG.md"]
 read = [
+  "AGENTS.md § Releases — an UPGRADING.md step is one line, worded so a repository's agent can make it, and names the file it changes",
   "AGENTS.md § Rules — skills keep to the portable Agent Skills subset; mechanics live in the tools, words in the skills",
   "method/task_review.md — a rule a skill restates keeps its one home in the guide",
 ]

@@ -58,7 +58,7 @@ A review document from before this machinery has no parent issue: its open `[ ]`
 
 A fix the maintainer authorizes during a review is that review's work and runs the project's task workflow (`task_review.md`): each phase's authorized fixes land as one hand-back, with its own work round and go-ahead, under the parent issue.
 
-An item with one of the plan round's four shapes is not fixed inside the review; it becomes a child issue and gets its own plan round. The shapes: a rule that must hold at more than one entry point; persisted, billed, auth or safety state; a wait, retry or failure the user sees; a decision that wants an ADR.
+An item with one of the plan round's four shapes (`task_review.md` § When it runs) is not fixed inside the review; it becomes a child issue and gets its own plan round.
 
 ## Working document
 

@@ -47,7 +47,7 @@ def kit_checkout(tmp_path):
         '{"name": "lifecycle", "version": "9.9.9"}\n', encoding="utf-8"
     )
     (root / ".lifecycle.toml").write_text(
-        '[branches]\nintegration = "main"\n\n[guides]\npath = "method"\n',
+        '[branches]\nintegration = "main"\n',
         encoding="utf-8",
     )
     return load(root)

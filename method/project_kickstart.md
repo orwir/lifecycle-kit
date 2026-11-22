@@ -50,7 +50,7 @@ project/
 ├── docker-compose.yml
 ├── README.md                   # front page — what, install, links on
 ├── CHANGELOG.md                # release history
-├── CONTRIBUTING.md             # how to work in this repo
+├── CONTRIBUTING.md             # setting up, releasing, hotfixing
 ├── LICENSE                     # or a proprietary notice
 └── <pkg manifest>              # pyproject.toml, package.json, go.mod, Cargo.toml, …
 ```
@@ -91,7 +91,7 @@ Every new project should have these on day zero. Each one has a single job; resi
 | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
 | `README.md`                                                      | Front page for anyone landing on the repo: what the project is, how to install it, where to find more; how to use it, until that outgrows a minute's read. | Project identity            |
 | `CHANGELOG.md`                                                   | What changed between releases, grouped Added/Changed/Fixed/Removed.                                                                                  | Release history             |
-| `CONTRIBUTING.md`                                                | How to work in this repo: branching, local setup, release process, commit conventions.                                                               | Development workflow        |
+| `CONTRIBUTING.md`                                                | Setting the repository up, the release checklist and hotfixes; branching and commits are `AGENTS.md`'s.                                              | Setup and releasing         |
 | `LICENSE`                                                        | Legal terms of use. MIT/Apache-2.0/BSD for OSS, or an "All rights reserved" notice for closed-source.                                                | Legal                       |
 | `.env.example`                                                   | Every environment variable the app reads, grouped Required/Optional, with inline comments on where to obtain each value. Never commit a real `.env`. | Runtime configuration shape |
 | `.gitignore`                                                     | What never enters git: secrets, build artifacts, venvs, caches, IDE config.                                                                          | Repo hygiene                |
@@ -141,9 +141,9 @@ For non-service projects, the equivalent is a `--version` flag (CLI), an About d
 One long-lived branch, `main`, and two events kept apart: a task **lands** on `main`, and nothing deploys; a **release** is a version-bump commit on `main`, reviewed, then shipped by the release workflow, which creates the tag `v<version>`. Short-lived branches come off `main` and go back into it.
 
 - **`main`** — the default branch on GitHub, where every task lands, and the record of every release: its tags are what shipped, and after `git fetch --tags` (the release workflow makes the tags on GitHub), `git log $(git describe --tags --abbrev=0)..main` is what has not. **The pre-push hook runs the same lint + test gate as CI before any push lands**, so it is safe to commit directly here; CI re-runs on every push to `main` and on PRs as a backstop.
-- **feature branches** — optional, branched from `main`, named `feat/…`, `fix/…`, `chore/…`, `docs/…`, `refactor/…`. Used only when the change warrants them (see below).
-- **hotfix branches** — `hotfix/<name>`, cut from the last release's tag when a production fix cannot wait for what `main` holds (*Hotfix variant*).
-- **Commit messages** — [Conventional Commits](https://www.conventionalcommits.org/) (`feat` / `fix` / `chore` / `docs` / `refactor` / `test` / `perf`), imperative subject under 72 characters, body for the *why* when it isn't obvious. Squash-merge titles inherit their quality from these.
+- **feature branches** — optional, branched from `main`, named by the AGENTS template's prefixes. Used only when the change warrants them (see below).
+- **hotfix branches** — `hotfix/<name>`, cut from the last release's tag when a production fix cannot wait for what `main` holds (*Release process*).
+- **Commit messages** — [Conventional Commits](https://www.conventionalcommits.org/), whose conventions the AGENTS template states: squash-merge titles inherit their quality from them.
 
 ### Pick the flow that matches the situation
 
@@ -164,7 +164,7 @@ git push
 
 The pre-push stage of the local hook config runs the identical lint, format-check, and test commands (with the coverage floor) that CI runs, so every push has already cleared the CI gate locally. CI itself re-runs on the push as a backstop. A push ships nothing: a release goes out only through the release workflow, dispatched on a reviewed commit (*Release process*). Broken commits on `main` are a fix-forward or `git revert` problem, not a crisis — nothing is deployed.
 
-The hook is the mechanical gate; the read is `task_review.md` (beside this playbook in the kit). Before a task is handed back, the developer session hands a packet to reviewer agents with no author context — subagents it launches, or fresh sessions where the tool has none — and renders a hand-back brief for the maintainer from their return packets: plain-text packets between the agents, and the same round whether the work rides a PR or lands on `main` directly. The maintainer reads the brief and nothing else of the round, then the diff, with what a gate cannot check (scope, decisions, invariants, truth, docs) already read by reviewers the author could not steer. The same guide runs a plan round at *Clarify*, before any code: where the plan in the issue has one of the shapes that have shipped holes before, a reviewer with no author context reads it against the code, and the maintainer accepts it from a Clarify brief.
+The hook is the mechanical gate; the read is the two review rounds of `task_review.md` (beside this playbook in the kit), by reviewers with no author context, so what a gate cannot check is read before the maintainer reads anything.
 
 ### Feature-branch flow (escape hatch for riskier work)
 
@@ -176,27 +176,7 @@ Use a branch when the change is:
 - Something you want to **review as a diff** before merging
 - Something that benefits from a **PR description as a mini-changelog**
 
-When those apply, automate the flow end-to-end. The overhead is ~30 seconds per feature and AI assistants can drive all four commands:
-
-```
-git checkout -b feat/my-thing
-# ... work, commit ...
-git push -u origin feat/my-thing
-gh pr create --base main --title "<subject>" --body-file <pr.md outside the tree>
-gh pr merge --squash --auto --delete-branch
-```
-
-- The PR body is `.github/pull_request_template.md`, filled for a reader who never saw the review rounds (`task_review.md`). `--fill` would send the commit messages instead.
-- `gh pr merge --squash --auto --delete-branch` waits for CI to pass, squashes the branch into one commit on `main`, and deletes the remote branch. You can close the terminal; the merge completes in the background.
-- `--delete-branch` removes only the **remote** copy. Once the merge lands, finish the job locally — stale merged branches are how `git branch` output turns into noise:
-
-  ```
-  git checkout main && git pull
-  git branch -d feat/my-thing
-  git fetch --prune
-  ```
-
-  A branch listed by `git branch` is either active work or it shouldn't exist.
+When those apply, automate the flow end to end: AI assistants can drive it whole, in about thirty seconds per feature. The commands, and the deletion of a merged branch on both ends, are the AGENTS template's § Branching and commits: a branch listed by `git branch` is either active work or it shouldn't exist.
 
 **One-time setup:** enable auto-merge in the repo at `Settings → General → Pull Requests → Allow auto-merge`. `gh pr merge --auto` fails without it.
 
@@ -222,28 +202,13 @@ Codify release as a numbered checklist in `CONTRIBUTING.md`. Not "the maintainer
 
 Use [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`. Each `MAJOR.MINOR` maps to a milestone; patch releases reuse the same milestone.
 
-### Planning
+The checklist itself, the hotfix variant included, is the CONTRIBUTING template's § Releasing and § Hotfixes, which a repository fills in for its own build and deploy. Why it runs that way:
 
-1. **Pick the milestone.** Open `v<MAJOR.MINOR>` if it doesn't exist. Don't pre-create a dozen — create them as you commit to scope.
-2. **Triage.** Move issues from `Backlog` to `Ready` and assign them to the milestone. Reshuffling between milestones is free until release work starts.
-3. **Work the issues.** Land each on `main`, directly or by a PR that references it (`Closes #N`); delete a merged branch — remote and local.
-4. **Confirm the milestone is ready.** All issues closed or moved out. `gh issue list --milestone v1.2 --state open` should be empty.
-
-### Cutting the release
-
-5. **Bump the version** in the single source of truth file.
-6. **Update `CHANGELOG.md`** with the new version and date, grouped Added / Changed / Fixed / Removed, referencing issue numbers.
-7. **Commit and push** the release commit to `main`. The push gate and CI run on it like on any other commit.
-8. **Review the release** on the compare link from the last tag (`git fetch --tags` first) to that commit (`https://github.com/<owner>/<repo>/compare/v<last>...<sha>`), with the readings of every check the checklist runs before shipping. A correction lands on `main` and the review reads the new head.
-9. **Dispatch the release workflow** on the reviewed commit: `lifecycle release <sha>`, or `gh workflow run release.yml --ref main -f commit=<sha>` and a watch of the run. It refuses when `main` moved since the review or the version is tagged already; otherwise it runs CI, builds, deploys, smoke-checks, and creates the tag and the GitHub Release last.
-10. **Close the milestone.**
-11. **Verify deployment** — curl `/health` and confirm it reports the new version.
-
-**AI assistant checkpoint.** Step 9 is irreversible and deploys to production. If an AI agent is executing this release, it should draft the CHANGELOG, push the release commit, surface the compare link, and then **stop and require explicit user approval** before the dispatch. A prior "do the release" does not extend to it. Codify this rule in your agent-instructions file (see the *AI agent instructions* section below) so assistants apply it consistently.
-
-### Hotfix variant
-
-For an urgent fix while `main` holds unreleased work: cut `hotfix/<name>` from the last release's tag (`git fetch --tags` first), fix with a test, bump the patch, update the CHANGELOG, push the branch, review it, and dispatch the release workflow on it. Once it shipped, merge the branch into `main` with a merge commit — never squashed, so the tag stays in `main`'s history and the next release's compare starts after it — and delete it, remote and local. A dispatch runs the workflow file of the ref it names, so a hotfix cut from a tag older than the release workflow brings that file over from `main` first. With nothing unreleased on `main`, a fix is an ordinary task and an ordinary patch release.
+- **Plan by milestone.** Open `v<MAJOR.MINOR>` when you commit to scope, not weeks ahead; triage moves an issue from `Backlog` to `Ready` and into it, and the release waits for its last open issue.
+- **The release is a reviewed commit.** The version bump and the dated CHANGELOG land on `main` like any other commit, and the review reads the compare link from the last tag to that commit. A correction lands on `main`, and the review reads the new head.
+- **A dispatch ships, and only the reviewed commit,** so nothing ships that the review did not read, and a failed release leaves no tag (*CI/CD recipe*, `release.yml`).
+- **An assistant stops before the dispatch.** It is irreversible and deploys to production, so an AI agent drafts, pushes the release commit, surfaces the compare link, and waits for explicit approval; a prior "do the release" does not reach it. The AGENTS template states it as a gate.
+- **A hotfix ships from its own branch.** Cut from the last release's tag while `main` holds unreleased work, it is released from the branch, then merged into `main` with a merge commit, never squashed, so the tag stays in `main`'s history and the next release's compare starts after it. With nothing unreleased on `main`, a fix is an ordinary task and an ordinary patch release.
 
 ---
 
@@ -438,7 +403,7 @@ Each document answers a different question. If two docs are answering the same q
 | ---------------- | ------------------------ | --------------------------------------------------------------------------------------- |
 | **Entry**        | `README.md`              | "What is this? How do I install it?" — and "How do I use it?" until the user guide splits off |
 | **User guide**   | `docs/guide.md`          | "How do I use it?" — every task, setting and error path, in the order of the user journeys |
-| **Contribution** | `CONTRIBUTING.md`        | "How do I work in this repo?" — branching, setup, release, commit style                 |
+| **Contribution** | `CONTRIBUTING.md`        | "How do I set it up and release it?" — setup, the release checklist, hotfixes          |
 | **History**      | `CHANGELOG.md`           | "What changed between versions?"                                                        |
 | **Vision**       | `docs/product/vision.md` | "What problem does this solve? Who is it for? What does success look like?" — owns the CUJ inventory |
 | **Research**     | `docs/product/competitors.md`, `docs/product/feasibility.md` | "What exists already, and how do we compare?" · "What did we learn about building it?" — started in the gauntlet; the comparison stays living, the feasibility record feeds ADRs and architecture |
@@ -488,9 +453,9 @@ When users read more than one language, translate the user-facing layers, the fr
 
 Documentation drift is the single most common way a well-organized project turns into an unreadable one. The cure is a rule, not discipline: **every code change that makes an existing doc wrong updates that doc in the same commit.** Deferred doc updates rot; a doc that lies is worse than a doc that's missing.
 
-Write the mapping down where it's read on every change: `AGENTS.md`. The template (`agents_template.md`) ships the standard **change → required doc** table pre-filled — that copy is the operative one; extend it there, not here. The shape, compressed: new env var → `.env.example` + the user doc (the README, or the guide once split, with its twins); new component or changed data flow → `docs/architecture/architecture.md`; non-obvious decision → new ADR; any user-visible change → `CHANGELOG.md`; reusable process change → `CONTRIBUTING.md` and this playbook.
+Write the mapping down where it's read on every change: `AGENTS.md`. The template (`agents_template.md`) ships the standard **change → required doc** table pre-filled — that copy is the operative one; extend it there, not here. The shape, compressed: new env var → `.env.example` + the user doc (the README, or the guide once split, with its twins); new component or changed data flow → `docs/architecture/architecture.md`; non-obvious decision → new ADR; any user-visible change → `CHANGELOG.md`; a process change → `AGENTS.md`, or `CONTRIBUTING.md` for setup and releasing, and a pattern reusable across projects is filed on the lifecycle kit.
 
-Before merging a PR or closing an issue, verify: relevant docs updated, CHANGELOG entry exists, new env vars / commands / config options are documented, non-obvious decisions have an ADR. If the task introduced a reusable *pattern* rather than local code, that pattern belongs in `project_kickstart.md` so future projects inherit it.
+What to verify before a task is called done is the AGENTS template's Definition of Done, item 5; a reusable *pattern* goes to the kit by `task_review.md` § Developer rules, so future projects inherit it.
 
 ### AI agent instructions
 
@@ -509,12 +474,12 @@ If you use AI assistants to write code (Claude Code, Codex, Cursor, Gemini CLI, 
 - Code layout rule (transport vs logic split; what can import what)
 - Testing expectation (coverage floor, test location mirroring, no-mock-DB rules)
 - Versioning rule (where the version string lives; don't duplicate)
-- Documentation sync rule (change → required doc mapping; task-closing checklist)
+- Documentation sync rule (change → required doc mapping; the Definition of Done)
 - Security rules (secrets, non-root containers, least-privilege workflows)
 - A "What NOT to do" section for the most common violations
 - Pointers to `CONTRIBUTING.md` and this playbook for detail
 
-**What to leave out:** long prose, justifications, history. The rules file is an operating contract; the rationale lives in `CONTRIBUTING.md` and this playbook.
+**What to leave out:** long prose, justifications, history. The rules file is an operating contract; the rationale lives in this playbook and the ADRs.
 
 **Starting point:** `agents_template.md` (beside this playbook in the kit) is a copy-and-fill skeleton with the cross-project essence of these rules pre-filled. Drop it in as your new repo's `AGENTS.md`, replace the `{{placeholders}}`, prune the project-type-specific lines, and you have a working operating contract in ten minutes.
 
@@ -754,4 +719,4 @@ Things that look like best practice but are overkill for small/solo projects. If
 
 ## Keep a living reference
 
-A playbook stays honest only while it points at something running. Keep at least one deployed project that implements this playbook end-to-end, and when kickstarting a new repo, crib from it directly: `CONTRIBUTING.md` for the branching and release text, `.github/workflows/` for CI and deploy, `.pre-commit-config.yaml` for the local gate, the issue and PR templates, and `docs/` for the layering. When a newer project improves on the reference, it becomes the new reference — and the improvement gets folded back into this playbook so every future project inherits it.
+A playbook stays honest only while it points at something running. Keep at least one deployed project that implements this playbook end-to-end, and when kickstarting a new repo, crib from it directly: `AGENTS.md` for the branching and commit rules, `CONTRIBUTING.md` for the release text, `.github/workflows/` for CI and deploy, `.pre-commit-config.yaml` for the local gate, the issue and PR templates, and `docs/` for the layering. When a newer project improves on the reference, it becomes the new reference — and the improvement gets folded back into this playbook so every future project inherits it.
