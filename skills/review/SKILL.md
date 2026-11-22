@@ -47,7 +47,7 @@ You are the developer and you run the whole round here. The maintainer reads onl
    4. `git worktree remove --force <worktree>`.
 7. **Read first:** the docs, ADR sections or guides the diff is held to beyond AGENTS.md, or `none`.
 8. **The gate.** If it did not run in this session after the last edit, run it now; a red gate is fixed before the packet, since the round runs on a green one (§ When it runs). Report the numbers; what still could not run goes under `NOT RUN`, with its reason.
-9. **Decisions taken alone:** the plan's `Taken:` lines and every option picked without the maintainer since, every hypothesis left untested and where it is marked, every spend and where it was asked, and every issue filed on the kit for a gap in a kit guide, as `<kit owner>/<kit repository>#M`. `none` is a claim the reviewer checks.
+9. **Decisions taken alone:** the plan's `Taken:` lines and every option picked without the maintainer since, every hypothesis left untested and where it is marked, every spend and where it was asked, every gap in a kit guide filed by `lifecycle gap`, as it named it, and every `Not filed:` entry in the plan. `none` is a claim the reviewer checks.
 10. **Where to look:** the two or three hunks you are least sure of, the invariant each relies on and the test that enforces it, or `stated only`.
 11. **Docs:** the files touched per AGENTS.md's change → doc mapping and the CHANGELOG line quoted, or why there is none; then what AGENTS.md's added steps produced, or `none`.
 

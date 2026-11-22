@@ -8,8 +8,9 @@ import os
 import subprocess
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 
-from . import KIT_ROOT, METHOD, board, doctor, guides, hook, kit_version, ship
+from . import KIT_ROOT, METHOD, board, doctor, gap, guides, hook, kit_repository, kit_version, ship
 from .config import Config, ConfigError, load
 
 
@@ -94,6 +95,17 @@ def _release(args: argparse.Namespace) -> int:
     return code
 
 
+def _gap(args: argparse.Namespace) -> int:
+    filed = gap.file(_config(), args.title, Path(args.body_file).resolve())
+    line = f"filed {filed.reference} {filed.url}"
+    if filed.label:
+        line += (
+            f", labelled {filed.label}: the signed-in gh account cannot push to {kit_repository()}"
+        )
+    print(line)
+    return 0
+
+
 def _hook(args: argparse.Namespace) -> int:
     raw = sys.stdin.buffer.read()
     if args.event == "pre-bash":
@@ -140,6 +152,17 @@ def parser() -> argparse.ArgumentParser:
     p = sub.add_parser("release", help="ship a reviewed commit by the release workflow, watched")
     p.add_argument("commit", help="the head the release review read")
     p.add_argument("--ref", help="the branch to dispatch on (default: the integration branch)")
+    p = sub.add_parser(
+        "gap",
+        help="file a gap in a kit guide: on the kit where you can push to it, otherwise here, "
+        f"labelled {gap.LABEL}",
+    )
+    p.add_argument("--title", required=True)
+    p.add_argument(
+        "--body-file",
+        required=True,
+        help="the gap in the kit's words: what the guide says, what the task met, the gap",
+    )
     p = sub.add_parser("hook", help="an agent hook: the event as JSON on stdin")
     p.add_argument("event", choices=("pre-bash", "session-start"))
     return root
@@ -172,9 +195,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             "upgrade": _upgrade,
             "board": _board,
             "release": _release,
+            "gap": _gap,
             "hook": _hook,
         }[args.command]
         return handler(args)
-    except (ConfigError, guides.GuidesError, board.BoardError, ship.ReleaseError) as error:
+    except (
+        ConfigError,
+        guides.GuidesError,
+        board.BoardError,
+        ship.ReleaseError,
+        gap.GapError,
+    ) as error:
         print(f"lifecycle: {error}", file=sys.stderr)
         return 1

@@ -8,6 +8,17 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## [0.15.0] — 2026-11-22
+
+### Added
+- `lifecycle gap` files a gap in a kit guide on the kit, or here labelled `kit-gap` where you cannot push to the kit (#35)
+
+### Changed
+- Every guide, skill and template files a gap in a kit guide, or a reusable pattern, with `lifecycle gap` (#35)
+- A gap no issue could be filed for waits in the task's plan as a `Not filed:` entry until a later filing (#35)
+- A `kit-gap` issue in a repository takes none of its own issue rules: no template, no label from its list, no card (#35)
+- Repositories: a sentence that files a kit-guide gap on the kit files it with `lifecycle gap` instead (#35)
+
 ## [0.14.4] — 2026-11-22
 
 ### Changed

@@ -3,7 +3,7 @@
 Every idea still being weighed lives here, run through the lifecycle kit's idea
 gauntlet, `idea_gauntlet.md` in the kit's `method/` (in the folder `lifecycle where`
 prints), and `graduated.md` follows every project that left. The kit's guides are not
-copied here: a gap found in one is filed as an issue on the kit.
+copied here: a gap found in one is filed with `lifecycle gap`.
 
 ## Layout
 

@@ -435,9 +435,9 @@ never passed on fewer, or on my own play.
       from the artifacts: done statement -> v0.1 milestone; IN list -> first
       issues; the stack choice (the spike's, where there was one) and the
       decisions recorded here -> first ADRs.
-      [game] It has no game variant yet: take what fits, and file on the kit
-      what the project had to work out for itself (the engine's setup, large
-      assets, store builds).
+      [game] It has no game variant yet: take what fits, and file with
+      `lifecycle gap` what the project had to work out for itself (the
+      engine's setup, large assets, store builds).
 - [ ] [hw] A repo anyway (firmware, code, docs), plus docs/hardware/: BOM with
       sources and prices, wiring diagram or labeled photo, build log,
       calibration notes.
@@ -496,4 +496,4 @@ always a date, so every row still in play comes due.
 ## When to update this file
 
 Same rule as the rest of the set: if two ideas in a row needed the same hand-edit
-to the template, the template is wrong — file it as an issue on the kit.
+to the template, the template is wrong — file it with `lifecycle gap`.

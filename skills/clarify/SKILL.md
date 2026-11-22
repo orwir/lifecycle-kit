@@ -63,7 +63,7 @@ By § The plan round, step 4:
 Render it by § Clarify brief's template and § Brief rules:
 
 1. The first line links the issue, from `gh issue view <N> --json url -q .url`, and names the task in a few plain words; the goal is the issue's *Goal* in one plain sentence.
-2. *Taken alone*, by § Brief rules: the plan's `Taken:` lines that might draw the maintainer's attention, and every follow-up filed, its title and link by `gh issue view <M> --json title,url`.
+2. *Taken alone*, by § Brief rules: the plan's `Taken:` lines that might draw the maintainer's attention, and every follow-up filed, its title and link by `gh issue view <M> --json title,url`. A gap in a kit guide is named as `lifecycle gap` printed it, its title and link read with `--repo` on the repository it landed in, and each `Not filed:` entry in the plan is carried with its title and why (§ Developer rules).
 3. *Reviewed* is read off the round's mark.
 
 ## 6. On "go"

@@ -20,8 +20,9 @@ def kit_at(monkeypatch, version):
 
 
 def test_a_repo_with_no_record_needs_adopt(repo):
-    with pytest.raises(GuidesError, match="--adopt"):
+    with pytest.raises(GuidesError, match="--adopt") as refused:
         upgrade(repo)
+    assert "as a kit gap (`lifecycle gap`)" in str(refused.value)
     assert read_lock(repo.root) is None
 
 
@@ -88,8 +89,9 @@ def test_an_edited_copy_stops_the_move_with_nothing_written(repo):
     (repo.guides_dir / "task_review.md").write_text(
         "an edit the kit never took\n", encoding="utf-8"
     )
-    with pytest.raises(GuidesError, match=r"task_review\.md"):
+    with pytest.raises(GuidesError, match=r"task_review\.md") as refused:
         upgrade(repo)
+    assert "File it as a kit gap (`lifecycle gap`)" in str(refused.value)
     assert (repo.root / LOCK).read_text(encoding="utf-8") == before
     assert (repo.guides_dir / "agents_template.md").is_file()
 

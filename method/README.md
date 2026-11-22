@@ -5,7 +5,7 @@ guides every project follows, from an idea's gauntlet to its releases and review
 project keeps no copy: its agents read the guides from the installed kit, in `method/`
 of the folder `lifecycle where` prints, so every project reads the installed release
 from its next session. How a repository uses the kit is the kit's `docs/guide.md`; a
-gap a project finds in a guide is filed on the kit as an issue, by `task_review.md`
+gap a project finds in a guide is filed with `lifecycle gap`, by `task_review.md`
 § Developer rules, and the kit's own task changes the guide.
 
 ## Files (lifecycle order)

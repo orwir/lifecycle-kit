@@ -34,7 +34,7 @@ In Claude Code the skills are `/lifecycle:<name>`; with another agent, ask for t
 2. **Clarify** (`/lifecycle:clarify <N>`). The agent writes the plan into the issue, runs the plan round, and hands you the Clarify brief. Answer what it asks and say "go": a question you leave unanswered takes its recommended option.
 3. **The work.** The agent builds it and runs the gate.
 4. **Review** (`/lifecycle:review <N>`). The work round, ending in the hand-back brief.
-5. **Answer what it asks, and say "lgtm".** A question you leave unanswered takes its recommended option. The agent makes your answers, then lands it: the commit, the push, the issue closed, and any gap it found in a guide already filed on the kit. A veto, or an answer bigger than the brief said, comes back as a new brief that waits for your "lgtm" again.
+5. **Answer what it asks, and say "lgtm".** A question you leave unanswered takes its recommended option. The agent makes your answers, then lands it: the commit, the push, the issue closed, and any gap it found in a guide already filed by `lifecycle gap`. A veto, or an answer bigger than the brief said, comes back as a new brief that waits for your "lgtm" again.
 
 A change with no issue skips step 2 and runs step 4 with no number; one obvious change with nothing to decide skips both rounds, and its brief says so. Releases run by the release skill (`/lifecycle:release`), which stops for your "proceed" before it ships. When a new release asks something of a repository, the session start says so and the upgrade runs alone before the next task; ask the agent to upgrade any time with the upgrade skill.
 

@@ -12,11 +12,11 @@ description: Bring a repository up to what the installed lifecycle kit asks of i
    - A step that changes `.lifecycle.toml` comes next, since the upgrade reads those settings: `[templates]` decides which templates the repository follows.
 2. **A first move** has no `.lifecycle.lock`. `lifecycle upgrade --adopt --dry-run` names each file in the guides folder named like one in the kit's `method/` (in the folder `lifecycle where` prints): it would delete each whose text is the kit's, and keep the rest.
    - Compare each kept one with the kit's, and show the maintainer every difference.
-   - An older copy of the kit's goes after step 3 and before step 5, by `git rm`, once what only it holds is in an issue on the kit or a guide of the repository's own, as the maintainer says: 0.8.0's link step counts it among the kit's files.
+   - An older copy of the kit's goes after step 3 and before step 5, by `git rm`, once what only it holds is filed with `lifecycle gap` or in a guide of the repository's own, as the maintainer says: 0.8.0's link step counts it among the kit's files.
    - A guide of the repository's own, such as its own `README.md` index, stays.
 3. **`lifecycle upgrade`**, with `--adopt` on a first move, runs once; what it prints is saved beside step 1's output, since a second run finds nothing to change.
    - It deletes a copy of the method from before 0.8.0, or, on a first move, each file the dry run named to delete.
-   - A copied file holding an edit the kit never took stops it with nothing written: the edit goes to an issue on the kit or into a guide of the repository's own, as the maintainer says; the kit's text goes back into the copy, or the copy is deleted; then it runs again.
+   - A copied file holding an edit the kit never took stops it with nothing written: the edit is filed with `lifecycle gap` or goes into a guide of the repository's own, as the maintainer says; the kit's text goes back into the copy, or the copy is deleted; then it runs again.
    - It replaces each file a template ports into that still holds the template's old text word for word, and names each other changed template with its diff, or read whole for a template new to the repository.
    - It writes `.lifecycle.lock`: the release, and each followed template's text at it.
    - A session that picks up an upgrade cut off after this step finds the old templates in the `templates` of `git show HEAD:.lifecycle.lock`, or, for a lock from before 0.8.0, in the copies under HEAD's guides folder (`git show HEAD:docs/guides/<template>`); a first move reads every template whole. The steps are in the kit's `UPGRADING.md`, for the releases after the old lock's.

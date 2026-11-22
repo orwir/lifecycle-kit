@@ -47,7 +47,7 @@ The guides are not copied in: every agent reads them from the installed kit, in 
 
 The command behind it: `lifecycle doctor` says what a repository needs before its next task; `lifecycle upgrade` brings its templates and lock to the installed release when the kit asks; `lifecycle upgrade --adopt` is a first move, which the upgrade skill runs.
 
-A gap a task finds in one of the kit's guides is filed on the kit as an issue when it is found, and the kit's own task changes the guide (`method/task_review.md` § Developer rules).
+A gap a task finds in one of the kit's guides, or a pattern reusable across projects, is filed as soon as the task finds it, and `lifecycle gap` files it: on the kit where the signed-in `gh` user can push to it, otherwise in the repository itself, labelled `kit-gap`. It is in the kit's words either way, so the kit's maintainer lifts it onto the kit from any repository they can read; where no issue can be filed, it waits in the task's plan until one can. The kit's own task changes the guide (`method/task_review.md` § Developer rules).
 
 ## Settings
 
@@ -89,7 +89,7 @@ Without `[templates]`, a repository follows a project's templates: `agents_templ
 | Layer | Holds | Run by |
 |---|---|---|
 | `method/` | the guides: kickstart, task review, the review kinds, the templates | anyone who reads |
-| `tools/lifecycle/` | the `lifecycle` command: settings, doctor, upgrade, board, release, hooks | any agent, a git hook, CI, a person |
+| `tools/lifecycle/` | the `lifecycle` command: settings, doctor, upgrade, board, release, gap, hooks | any agent, a git hook, CI, a person |
 | `skills/`, `agents/` | clarify, review, handback, complete, release, upgrade; the read-only reviewer | any agent that loads Agent Skills |
 | `.claude-plugin/`, `hooks/`, `bin/` | the Claude Code adapter: marketplace, plugin manifest, hook wiring, the command on PATH | Claude Code |
 

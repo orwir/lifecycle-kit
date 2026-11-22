@@ -6,6 +6,10 @@ prints the steps a repository owes, oldest release first, and the upgrade skill 
 them. The release's `Repositories:` entries in [CHANGELOG.md](CHANGELOG.md)
 say in one claim each what its steps do.
 
+## [0.15.0] — 2026-11-22
+
+- in `AGENTS.md`, `CONTRIBUTING.md` and any other doc that says it (such as `docs/README.md`), beyond what the AGENTS template's port changes, a sentence that sends a gap found in one of the lifecycle kit's guides, or a pattern reusable across projects, to the kit ("filed on the kit as an issue", "filed on the lifecycle kit") says instead that it is filed with `lifecycle gap`: on the kit for one who can push to it, otherwise in this repository, labelled `kit-gap` (`git grep -n -i -e "on the kit" -e "on the lifecycle kit"` lists the candidates); accepted ADRs and released CHANGELOG sections stay as written.
+
 ## [0.10.0] — 2026-11-22
 
 - in every tracked file, `AGENTS.md` and `CONTRIBUTING.md` among them, a pointer at the lifecycle kit's `method/README.md` takes the section's new home, in the form the file already links the kit: § Use in a project becomes the kit's own `docs/guide.md` (`https://github.com/orwir/lifecycle-kit/blob/main/docs/guide.md`), § Bootstrap a new idea becomes `idea_gauntlet.md` § The ideas home, and § Change a guide becomes `task_review.md` § Developer rules (`git grep -n -i -e "use in a project" -e use-in-a-project -e "bootstrap a new idea" -e bootstrap-a-new-idea -e "change a guide" -e change-a-guide` lists them, by heading or slug); accepted ADRs and released CHANGELOG sections stay as written.

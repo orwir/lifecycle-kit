@@ -153,9 +153,9 @@ def _copies(config: Config, lock: Lock | None, adopt: bool) -> tuple[list[str], 
     edited = sorted(name for name, d in present.items() if digest(config.guides_dir / name) != d)
     if edited:
         raise GuidesError(
-            f"{', '.join(edited)} in {config.guides}: an edit the kit never took. File it as an "
-            "issue on the kit or move it into a guide of the repository's own, put the kit's text "
-            "back in the copy (or delete it), then upgrade again."
+            f"{', '.join(edited)} in {config.guides}: an edit the kit never took. File it as a "
+            "kit gap (`lifecycle gap`) or move it into a guide of the repository's own, put the "
+            "kit's text back in the copy (or delete it), then upgrade again."
         )
     return sorted(present), []
 
@@ -186,8 +186,8 @@ def upgrade(config: Config, adopt: bool = False, dry_run: bool = False) -> Chang
         raise GuidesError(
             "this repository has no record of the kit release it follows. Compare each file in "
             f"{config.guides} named like one in the kit's method/ with the kit, file anything "
-            "only this copy has as an issue on the kit or move it into a guide of the repository's "
-            "own, then run `lifecycle upgrade --adopt`, as the upgrade skill does."
+            "only this copy has as a kit gap (`lifecycle gap`) or move it into a guide of the "
+            "repository's own, then run `lifecycle upgrade --adopt`, as the upgrade skill does."
         )
     if lock is not None and release(installed) < release(lock.kit):
         raise GuidesError(

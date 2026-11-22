@@ -21,9 +21,9 @@ This is the *Complete* phase of AGENTS.md § Task workflow. It runs only on the 
 2. **The gate** — `gate.commands`, else AGENTS.md § Commands' lint and tests — passed in this session after the last edit; if not, run it now. A red gate stops the batch. A repository with no gate says so in the report.
 3. `git status --short` lists only this task's files. Anything else is someone's in-progress work: leave it out and name it in the report.
 
-## 2. Kit issues
+## 2. Kit gaps
 
-A gap this task found in a kit guide was filed on the kit when it was found (`task_review.md` § Developer rules), and the hand-back's *Taken alone* names it. One found and not yet filed is filed now, on the repository the kit's `.claude-plugin/plugin.json` names (in the folder `lifecycle where` prints), in the kit's words. Nothing of the kit's lands from this repository.
+A gap this task found in a kit guide was filed by `lifecycle gap` when it was found (`task_review.md` § Developer rules), and the hand-back's *Taken alone* names it. Each gap not filed — a `Not filed:` entry in the plan, or in an untracked task's hand-back — is filed now, by `lifecycle gap --title <its title> --body-file <its body>`, the body in a file outside the tree (`task_review.md` § Developer rules), and its reference replaces the plan's entry; one `lifecycle gap` still cannot file stays where it is, and the report gives its title and why. Nothing of the kit's lands from this repository.
 
 ## 3. Commit
 
@@ -65,4 +65,4 @@ Where the settings name a board, `lifecycle board <issue> Done` puts the card in
 
 ## 8. Report
 
-One line per step with its coordinates: the issues filed on the kit, the commit, where it was pushed, the PR, the issue's state, the board column. Anything skipped says why.
+One line per step with its coordinates: the kit gaps filed, each where it landed, and any left unfiled with why, the commit, where it was pushed, the PR, the issue's state, the board column. Anything skipped says why.
