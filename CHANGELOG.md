@@ -8,6 +8,26 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## [0.12.2] — 2026-11-22
+
+### Changed
+- Each skill's steps hold one rule per line, each with what to do when it fails (#25)
+- The skills cite `task_review.md` for the packet, brief, drawing and departures rules (#25)
+- The review skill holds the three ways to launch a reviewer, and the clarify skill points at it (#25)
+- A plan whose round ran is marked `proposed, plan round <date>: …`, so a cold session renders its brief (#25)
+- "ship it" is a go-ahead for neither the complete nor the release skill, which each ask (#25)
+- The upgrade skill accounts for every step and template doctor listed before its hand-back (#25)
+
+### Fixed
+- The review and handback skills tell a PR number from an issue's and find the issue a PR closes (#25)
+- The complete skill opens a PR only where no open one exists (#25)
+- The complete skill's wait on a PR's checks has an else for each outcome (#25)
+- A refused push fetches before it rebases (#25)
+- The release skill counts only dispatched runs to tell a workflow's first release (#25)
+- A hotfix merge that conflicts only in `CHANGELOG.md` keeps both sections (#25)
+- The reviewer definition sends only a lens reviewer to `review.lenses` (#25)
+- The reviewer definition allows a formatter in check mode that `review.allow` lists (#25)
+
 ## [0.12.1] — 2026-11-22
 
 ### Changed

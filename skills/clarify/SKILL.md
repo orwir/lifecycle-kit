@@ -4,60 +4,67 @@ description: Run the plan round at Clarify for an issue (the method's task_revie
 argument-hint: "<issue number>"
 ---
 
-Task: $ARGUMENTS — the issue number given with the invocation (where nothing substitutes `$ARGUMENTS`, the number the maintainer named). A task with no issue has no plan and skips this round; the review skill runs its work round with an `untracked:` packet.
+Task: $ARGUMENTS — the issue number given with the invocation (where nothing substitutes `$ARGUMENTS`, the number the maintainer named). A task with no issue has no plan and skips this round; the review skill runs its work round untracked.
+
+You are the developer and you run the whole round here, before any code. The maintainer reads only the brief at the end, so print nothing but the one line in § 3.
 
 ## 0. Before anything
 
-- `lifecycle` is the kit's command: on PATH where the kit's Claude plugin is on, otherwise `bin/lifecycle` in a checkout of the kit.
-- When the settings name a board (`lifecycle config`), `lifecycle board <N> "In Progress"` first.
-- `lifecycle doctor --json`. A finding whose fix is `upgrade`, with no task's edits in the tree: run the upgrade skill now, alone, before the ticket. It ends in its own hand-back and lands by its own *Complete*; this round starts once it has landed. With an accepted plan and its edits in the tree, the upgrade waits until the task lands, as the upgrade skill's opening says. A `block` whose fix is `adopt` or `update-kit`, or any failure of the command: stop and tell the maintainer what it printed. Anything else: carry on.
-- `lifecycle config` prints the repository's settings. Below, `<method>` is the `method/` folder in the folder `lifecycle where` prints: the kit's guides, served from the installed kit.
-- Read `<method>/task_review.md`: the plan packet, the plan return, the Clarify brief and the developer rules are there, and the plan's sections are the repository's issue templates (`.github/ISSUE_TEMPLATE/`). Read `AGENTS.md` § Task workflow too: a repository may add steps to this round (a drawing, an evidence source), and you do them where it says.
-
-You are the developer and you run the whole round here, before any code. The maintainer reads only the brief at the end, so print nothing else but the one line in step 3.
+1. `lifecycle` is the kit's command: on PATH where the kit's Claude plugin is on, otherwise `bin/lifecycle` in a checkout of the kit.
+2. Where the settings name a board (`lifecycle config`), `lifecycle board <N> "In Progress"`.
+3. `lifecycle doctor --json`:
+   - a finding whose fix is `upgrade`, with no task's edits in the tree: run the upgrade skill now, alone; it lands by its own *Complete*, and this round starts after it;
+   - the same, with an accepted plan's edits in the tree: the upgrade waits until this task lands;
+   - a `block` whose fix is `adopt` or `update-kit`, or a failure of the command: stop and tell the maintainer what it printed;
+   - anything else: carry on.
+4. `lifecycle config` prints the settings. Below, `<method>` is `method/` in the folder `lifecycle where` prints, and *§* a section of `<method>/task_review.md`.
+5. Read `<method>/task_review.md`: the plan round, the plan packet, the plan return, the Clarify brief, the brief rules and the developer rules are there; the plan's sections are the repository's issue templates (`.github/ISSUE_TEMPLATE/`). Read `AGENTS.md` § Task workflow too, and do any step it adds to this round (a drawing, an evidence source) where it says.
 
 ## 1. Write the plan into the issue — gather, don't recall
 
-1. **The ticket.** `gh issue view <N>` and the code the change touches: every path, caller and entry point it meets. A *Plan* already in the issue is where this session continues: `proposed` is checked against the code and goes on to its round; `accepted` means *Clarify* is over, and the work continues from its ticked boxes and the tree.
-2. **The root cause.** A bug's root cause is a hypothesis until real data confirms it — the evidence sources AGENTS.md names (logs, the database, a live probe). Before the plan is written, the issue's *Root cause* says what holds, with the evidence as coordinates.
-3. **The plan.** The template's `## Plan` with `**Status:** proposed`, as the body's last section, where the template puts it. A WHEN … THEN line per scenario, failure paths included; *Seams*; a box per path; the D-rows; *Verification*; *Departures* `none`. An issue in an older shape gets its plan now: its top-level technical details, options and verification move into it, re-checked against the code.
-   - Every D-row names the part it touches — one AGENTS.md § Task workflow names, such as the runtime, a prompt or an eval — or none, for a docs or process choice.
-   - *Verification* names a test per WHEN line. A scenario a test cannot score names how it is scored, or says `not covered: <why>`. That each test fails without the change is proven at the work round, on a worktree of the base; it is not claimed here.
-   - Coordinates, never payload: an attack is described by its shape and where the evidence sits, never quoted. No live person is named: invent a name of the same shape, or give a count.
-4. **Write it.** Fetch the body fresh with `gh issue view <N> --json body -q .body`; write the whole new body to a file in a scratch folder outside the tree, everything outside the plan as it stands; then `gh issue edit <N> --body-file <file>`. Every later change to the plan goes in the same way.
-5. **The drawing.** When AGENTS.md puts the change under a design workflow (what a person sees on a surface), draw it now, as part of the plan, by that workflow. Each open decision is a D-row; the brief's *Visible* links the drawing. The reviewer cannot see it, so the packet states the drawing's region and decisions in words.
-6. **The shape.** Which of the guide's four shapes the plan has, and where it meets it — or none. No shape skips the round: go straight to the Clarify brief (§ 5), the round marked skipped. A drawn plan always ends at the brief, since its "go" accepts the drawing.
+1. **The ticket.** `gh issue view <N>` and the code the change touches: every path, caller and entry point it meets. A *Plan* already in the issue is where this session continues:
+   - `proposed`, unmarked: check it against the code, then run its round;
+   - `proposed, plan round …` (§ The plan round, step 4): the round ran; render the Clarify brief (§ 5) from the mark and the plan;
+   - `accepted`: *Clarify* is over, and the work continues from its ticked boxes and the tree.
+2. **The root cause.** A bug's root cause is a hypothesis until real data confirms it, from the evidence sources AGENTS.md § Task workflow names (logs, the database, a live probe). The issue's *Root cause* says what holds, with the evidence as coordinates. Where the data does not confirm it, *Root cause* says so, and the plan's first box takes the next evidence, or a D-row asks how.
+3. **The plan.** The template's `## Plan`, with `**Status:** proposed`, as the body's last section. An issue in an older shape gets its plan now: its technical details, options and verification move in, checked against the code.
+   - A WHEN … THEN line per scenario, failure paths included; *Seams*; a box per path; the D-rows; *Verification*; *Departures* `none`.
+   - Every D-row names the part it touches, one AGENTS.md § Task workflow names, or none for a docs or process choice.
+   - *Verification* names a test per WHEN line; a scenario no test can score names how it is scored, or says `not covered: <why>`. That each test fails without the change is the work round's to prove.
+   - Coordinates, never payload: an attack is described by its shape and where the evidence sits. No live person is named: invent a name of the same shape, or give a count.
+4. **Write it.** `gh issue view <N> --json body -q .body`, fresh; the whole new body, everything outside the plan as it stands, to a file in a scratch folder outside the tree; then `gh issue edit <N> --body-file <file>`. Every later change to the plan is written the same way.
+5. **The drawing.** Where AGENTS.md § Task workflow names drawn surfaces and the change touches one, draw it now, as part of the plan, by `design_workflow.md`. Each open decision is a D-row, and the brief's *Visible* links the drawing. The reviewer cannot see it, so the packet states its region and decisions in words.
+6. **The shape:** which of § When it runs' four shapes the plan has, and where it meets it.
+   - One or more: the round runs (§ 2).
+   - None: the round is skipped; go to the Clarify brief (§ 5), the round marked skipped.
 
 ## 2. Render the plan packet
 
-The guide's shape, line for line. *Read first*: the docs, ADR sections or guides the plan is held to, or `none`. *Rests on*: each fact about the code the plan assumes, with its `path:line`. *Taken alone*: the plan's choices the maintainer has not made. *Open*: what you could not settle.
-
-Claims with coordinates, never the plan pasted: the reviewer reads it in the issue. Self-contained, with no reference to this conversation; no pre-arguing.
+By § Plan packet's shape and rules, line for line.
 
 ## 3. Launch the reviewer
 
-Launch it in the background with the plan packet as its whole task. The reviewer definition carries both rounds' rules, so add nothing to the packet. The first of these the agent can do:
-
-1. **The kit's reviewer agent** — in Claude Code, `Agent` with `subagent_type: "lifecycle:reviewer"` and `run_in_background: true`. The kit's hook holds it to commands that read.
-2. **A general-purpose subagent** whose task is the definition — `agents/reviewer.md` in the folder `lifecycle where` prints, without its front matter — above the packet. Use it where the first is not listed (a plugin installed in this session is not always picked up at once). No guard fires for it: the brief's status line marks that lens `(no guard)`.
-3. **A fresh session the maintainer opens**: write the definition and the packet to one file in a scratch folder outside the tree, ask the maintainer to paste it into a new session and paste the return back. The brief's status line marks that lens `(pasted)`.
-
-Print one line: the reviewer is reading the plan for the task and the Clarify brief follows — or, for a pasted session, the request to paste the file, with its path. Do not print the packet. Edit nothing until the return arrives; the reviewer is reading the plan in the issue.
+Launch one reviewer with the plan packet as its whole task, by the review skill's § 2 (`skills/review/SKILL.md` in the folder `lifecycle where` prints), and print its one line. Edit nothing until the return arrives (§ Terms, *Launch*).
 
 ## 4. Act on the return
 
-- Fold every `Real bug` and `Drift` into the plan, which stays `proposed`; an exploitable one goes in with no location or detail (`task_review.md` § Return packet). Every `Decision pending`, and every *For the maintainer* question you cannot settle, becomes a D-row with its recommended option.
-- A finding you dispute becomes a D-row too: the reviewer's position as A, yours as B.
-- `split`: file the part split off as a capture — the template's sections above the plan, labelled as the repository's `AGENTS.md` says, and, when the settings name a board, `lifecycle board <new> Backlog` — narrow this plan to what it keeps, and name the new issue on the brief's status line.
-- One plan round per plan: what stays disputed goes to the maintainer, never to a second pass. Write the plan back as in step 1.
+By § The plan round, step 4:
+
+- fold every `Real bug` and `Drift` into the plan, which stays `proposed`; an exploitable one goes in with no location or detail;
+- every `Decision pending`, and every *For the maintainer* question you cannot settle, becomes a D-row with its recommended option;
+- a finding you dispute becomes a D-row: the reviewer's position as A, yours as B;
+- a `split`: file the part split off as a capture, the template's sections above the plan, labelled as the repository's `AGENTS.md` says, and, where the settings name a board, `lifecycle board <new> Backlog`; narrow this plan to what it keeps, and name `<new>` on the brief's status line;
+- write the plan back as in § 1 step 4, with the round's mark in the same write;
+- one plan round per plan: what stays disputed goes to the maintainer, never to a second pass.
 
 ## 5. The Clarify brief
 
-Render it by the guide's template, exactly, as chat markdown: no headings, tables or fenced block, nothing before the first line and nothing after *Next*. It points at the plan instead of repeating it. No finding ids — a row says in words what it rests on; "I" is the developer, "you" the maintainer; each D-row's question names its part. About fifteen lines; past twenty-five, the task wants a split.
+Render it by § Clarify brief's template and § Brief rules.
 
 ## 6. On "go"
 
-- Write each answer into the plan — the pick and its reason in place of the recommendation, and whatever the answer changes in the scenarios or the boxes; a D-row left unanswered takes its recommendation, written as taken at "go" — set `**Status:** accepted <YYYY-MM-DD>`, and write the body back as in step 1. Only then write code.
-- A correction to the drawing before "go" is a redraw and a brief rendered again, not a new round.
-- A skipped round with nothing to answer awaits no "go": set the plan accepted and go straight on — unless the plan carries a drawing, which waits for one.
-- "go" opens implementation, not landing: *Complete* waits for its own go-ahead. From here the plan changes only by its *Departures*, written when they happen; one that is user-visible, hard to undo or changes scope stops for the maintainer first.
+1. Write each answer into the plan: the pick and its reason in place of the recommendation, and whatever it changes in the scenarios or the boxes. A D-row left unanswered takes its recommendation, written as taken at "go".
+2. Set `**Status:** accepted <YYYY-MM-DD>`, write the body back as in § 1 step 4, and only then write code.
+3. A correction to the drawing before "go" is a redraw and a brief rendered again, not a new round.
+4. A skipped round with nothing to answer awaits no "go" (§ The plan round): set the plan accepted and go on, unless it carries a drawing.
+5. "go" opens implementation, never landing: *Complete* waits for its own go-ahead. From here the plan changes only by its *Departures* (§ Developer rules).

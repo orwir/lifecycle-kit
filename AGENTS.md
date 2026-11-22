@@ -28,7 +28,7 @@ A kit issue runs the two review rounds every repository on the kit runs (`method
 
 - **The plan** takes the shape of `method/issue_template_task.md`'s *Plan*: the kit keeps no `.github/` copy of it.
 - **Labels:** an issue split off or deferred takes `enhancement`, `bug` or `documentation`. There is no board.
-- **The release** rides the task's diff: the version in `.claude-plugin/plugin.json` and its CHANGELOG section (§ Releases). At *Complete* it replaces the plain push to `main`: rebase onto `origin/main`, date the release's heading with the day it is tagged, in `CHANGELOG.md` and, where the release has steps, in `UPGRADING.md`, amended into the task's commit, tag `HEAD` `v<version>`, then `git push --atomic origin HEAD:main v<version>`, so `main` never holds a commit no release's tag carries. A push refused because `main` moved: `git tag -d v<version>`, rebase, date and tag again, push again.
+- **The release** rides the task's diff: the version in `.claude-plugin/plugin.json` and its CHANGELOG section (§ Releases). At *Complete* it replaces the plain push to `main`: `git fetch origin`, rebase onto `origin/main`, date the release's heading with the day it is tagged, in `CHANGELOG.md` and, where the release has steps, in `UPGRADING.md`, amended into the task's commit, tag `HEAD` `v<version>`, then `git push --atomic origin HEAD:main v<version>`, so `main` never holds a commit no release's tag carries. A push refused because `main` moved: `git tag -d v<version>`, `git fetch origin`, rebase, date and tag again, push again.
 - **The installed plugin runs the rounds**, not this checkout: `lifecycle doctor` notes when it is older than the release on `main`, and how to update it.
 
 ## Branching and commits
