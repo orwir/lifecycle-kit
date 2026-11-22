@@ -59,6 +59,9 @@ class Changes:
     installed: list[str] = field(default_factory=list)
     ports: list[Port] = field(default_factory=list)
     deleted: list[str] = field(default_factory=list)
+    #: On a first move, the files named like the kit's whose text is not the installed kit's:
+    #: a guide of the repository's own, or an older copy, which the upgrade skill compares.
+    kept: list[str] = field(default_factory=list)
 
 
 def text(path: Path) -> str:
@@ -128,15 +131,24 @@ def _check_templates(config: Config) -> None:
         )
 
 
-def _copies(config: Config, lock: Lock | None, adopt: bool) -> list[str]:
-    """The kit's files in the guides folder that the upgrade deletes. Raises, before anything
-    is written, on a copied file that holds an edit the kit never took."""
+def _same(path: Path, kit: Path) -> bool:
+    """A file holds the kit's text, line endings aside. Compared as bytes, so a repository's
+    own guide in another encoding is simply not the kit's text."""
+    return path.read_bytes().replace(b"\r\n", b"\n") == kit.read_bytes().replace(b"\r\n", b"\n")
+
+
+def _copies(config: Config, lock: Lock | None, adopt: bool) -> tuple[list[str], list[str]]:
+    """The kit's files in the guides folder that the upgrade deletes, and, on a first move,
+    those it keeps. A first move deletes only a file whose text is the installed kit's: any
+    other is a guide of the repository's own or an older copy, which no tool can tell apart.
+    Raises, before anything is written, on a copied file that holds an edit the kit never
+    took."""
     if lock is None:
-        return (
-            [name for name in method_files() if (config.guides_dir / name).is_file()]
-            if adopt
-            else []
-        )
+        if not adopt:
+            return [], []
+        named = [name for name in method_files() if (config.guides_dir / name).is_file()]
+        same = [name for name in named if _same(config.guides_dir / name, METHOD / name)]
+        return same, [name for name in named if name not in same]
     present = {name: d for name, d in lock.guides.items() if (config.guides_dir / name).is_file()}
     edited = sorted(name for name, d in present.items() if digest(config.guides_dir / name) != d)
     if edited:
@@ -145,7 +157,7 @@ def _copies(config: Config, lock: Lock | None, adopt: bool) -> list[str]:
             "issue on the kit or move it into a guide of the repository's own, put the kit's text "
             "back in the copy (or delete it), then upgrade again."
         )
-    return sorted(present)
+    return sorted(present), []
 
 
 def _diff(name: str, old: str, new: str, before: str, after: str) -> str:
@@ -162,7 +174,8 @@ def _diff(name: str, old: str, new: str, before: str, after: str) -> str:
 def upgrade(config: Config, adopt: bool = False, dry_run: bool = False) -> Changes:
     """Bring the repository to the installed kit: replace each followed template's target
     that holds the old text word for word, name the rest to port with their diffs, delete a
-    copy of the method from before 0.8.0, and write the lock. Reads nothing over the network.
+    copy of the method from before 0.8.0 (on a first move, only a file that is the kit's
+    text), and write the lock. Reads nothing over the network.
     """
     if is_kit(config.root):
         raise GuidesError(CANONICAL + ": nothing upgrades it")
@@ -181,9 +194,9 @@ def upgrade(config: Config, adopt: bool = False, dry_run: bool = False) -> Chang
             f"this repository is on kit {lock.kit} and the installed kit is {installed}: "
             "update the installed kit first (`lifecycle doctor` names how)"
         )
-    copies = _copies(config, lock, adopt)
+    copies, kept = _copies(config, lock, adopt)
     before = lock.kit if lock else "none"
-    changes = Changes(before=before, after=installed, deleted=copies)
+    changes = Changes(before=before, after=installed, deleted=copies, kept=kept)
     for name, target in followed(config).items():
         old, new, path = old_text(config, lock, name), text(METHOD / name), config.root / target
         if old == new:

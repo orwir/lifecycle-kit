@@ -40,6 +40,12 @@ def _upgrade(args: argparse.Namespace) -> int:
     if changes.deleted:
         verb = "would delete" if args.dry_run else "deleted"
         print(f"{verb} the kit's copy in {config.guides}: " + ", ".join(changes.deleted))
+    if changes.kept:
+        verb = "would keep" if args.dry_run else "kept"
+        print(
+            f"{verb}, named like the kit's but not its text, to compare with the kit's: "
+            + ", ".join(f"{config.guides}/{name}" for name in changes.kept)
+        )
     if changes.installed:
         verb = "would replace" if args.dry_run else "replaced"
         print(
@@ -54,7 +60,7 @@ def _upgrade(args: argparse.Namespace) -> int:
             print(
                 f"port {port.name} -> {port.target}, read whole: {(METHOD / port.name).as_posix()}"
             )
-    if not (changes.deleted or changes.installed or changes.ports):
+    if not (changes.deleted or changes.kept or changes.installed or changes.ports):
         print("nothing to change beyond the lock")
     return 0
 
@@ -124,7 +130,8 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--adopt",
         action="store_true",
-        help="a first move: deletes the guides named like the kit's (--dry-run lists them)",
+        help="a first move: deletes each guide that is the kit's text, keeps the rest named "
+        "like the kit's (--dry-run lists both)",
     )
     p.add_argument("--dry-run", action="store_true")
     p = sub.add_parser("board", help="put an issue's card in a board column, at the top")

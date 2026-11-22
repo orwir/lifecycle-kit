@@ -61,6 +61,12 @@ def test_session_start_lists_what_an_owed_upgrade_brings(repo, monkeypatch, tmp_
     monkeypatch.setattr(hook.doctor, "kit_version", lambda: "1.3.0")
     text = hook.session_start({"cwd": str(repo.root)})
     assert "runs the upgrade skill" in text and "\n  - a change" in text
+    assert "a task whose edits are in the tree lands before the upgrade" in text
+
+
+def test_session_start_leaves_when_to_each_finding(repo):
+    lead, finding = hook.session_start({"cwd": str(repo.root)}).splitlines()[:2]
+    assert lead == "lifecycle kit:" and "before the next task" in finding
 
 
 def test_session_start_is_quiet_in_the_kits_own_repository(kit_checkout):

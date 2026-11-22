@@ -67,11 +67,13 @@ def test_a_copy_from_before_the_move_owes_an_upgrade(repo, monkeypatch, tmp_path
     (finding,) = doctor.check(repo, installed="1.2.0")
     assert (finding.level, finding.fix) == (doctor.BLOCK, doctor.UPGRADE)
     assert "still holds a copy of the method in docs/guides" in finding.message
+    assert finding.message.endswith("a task whose edits are in the tree lands before the upgrade")
 
 
 def test_an_installed_kit_older_than_the_repo_blocks(repo):
     upgrade(repo, adopt=True)
-    assert "update the kit" in doctor.check(repo, installed="1.1.9")[0].message
+    message = doctor.check(repo, installed="1.1.9")[0].message
+    assert "update the kit before the next task" in message
 
 
 def test_a_repo_not_on_the_kit_blocks(repo):
@@ -83,6 +85,10 @@ def test_a_first_move_is_sent_to_the_upgrade_skill(repo):
     assert finding.fix == doctor.ADOPT
     assert (
         doctor.UPGRADE_SKILL in finding.message and "`lifecycle upgrade --adopt`" in finding.message
+    )
+    assert finding.message.startswith("not on the kit yet: before the next task, ")
+    assert "compares each guide named like one of the kit's with the kit's, then runs" in (
+        finding.message
     )
 
 
@@ -243,6 +249,8 @@ def test_the_kit_notes_an_installed_kit_older_than_its_release(kit_checkout, mon
     (finding,) = doctor.check(kit_checkout, installed="9.9.8")
     assert (finding.level, finding.fix) == (doctor.NOTE, doctor.UPDATE_KIT)
     assert "main is at 9.9.9" in finding.message and "9.9.8" in finding.message
+    assert "the rounds run on 9.9.8's skills until it is updated" in finding.message
+    assert "before the next round" not in finding.message
     assert doctor.check(kit_checkout, installed="9.9.9") == []
     manifest = kit_checkout.root / ".claude-plugin" / "plugin.json"
     manifest.write_text('{"name": "lifecycle", "version": "10.0.0"}\n', encoding="utf-8")

@@ -8,6 +8,23 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## [0.11.0] — 2026-11-22
+
+### Changed
+- `lifecycle upgrade --adopt` deletes only a guide that is the kit's text, and prints the rest it keeps (#27)
+- The AGENTS template's feature-branch flow waits for checks and merges, as the complete skill does (#27)
+- The AGENTS template reads every link to the kit from the folder `lifecycle where` prints (#27)
+- The maintainer's answers to a hand-back are made before *Complete* lands anything (#27)
+- A release refused as moved checks its version, milestone and changelog again before review (#27)
+- The session start's findings each say when their fix runs, under a lead that names no time (#27)
+
+### Fixed
+- The complete skill's close-out no longer fails on the branch `gh pr merge --delete-branch` deleted (#27)
+- The upgrade skill keeps a first move's `--adopt` output for its round (#27)
+- A hotfix release by the CONTRIBUTING template pushes to its own branch and leaves the milestone (#27)
+- The release skill closes the milestone only on the integration branch (#27)
+- The 0.4.0, 0.8.0 and 0.10.0 upgrade steps say where each applies and where a link goes (#27)
+
 ## [0.10.0] — 2026-11-22
 
 ### Changed

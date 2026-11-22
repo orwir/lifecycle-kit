@@ -49,4 +49,4 @@ def session_start(event: dict) -> str:
     for finding in findings:
         lines.append(f"- {finding.message}")
         lines.extend(f"  - {detail}" for detail in finding.details)
-    return "lifecycle kit, before the next task:\n" + "\n".join(lines)
+    return "lifecycle kit:\n" + "\n".join(lines)

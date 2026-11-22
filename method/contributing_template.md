@@ -42,7 +42,8 @@ reuse it. The checklist is literal — execute it in order, no shortcuts:
 7. **Dispatch the release workflow** (`{{RELEASE_WORKFLOW}}`, named under
    `[release]` in `.lifecycle.toml`) on the reviewed commit, and watch the run
    to its end: `lifecycle release <sha>`. It refuses when
-   `{{INTEGRATION_BRANCH}}` moved since the review (review the new head, then
+   `{{INTEGRATION_BRANCH}}` moved since the review (check the version, the
+   changelog and step 1's milestone against the new head, review it, then
    dispatch that) or when the version is tagged already; otherwise it builds,
    ships, and creates the tag and the GitHub Release last.
 8. **Close the milestone.**
@@ -61,8 +62,11 @@ work:
    workflow file of the branch it names.
 2. Fix, with a test that fails before and passes after, and push the branch.
    Nothing merges it yet.
-3. Release from the branch: the Releasing steps with the patch version, the
-   dispatch on the branch (`lifecycle release <sha> --ref hotfix/<name>`).
+3. Release from the branch by the Releasing steps, with `hotfix/<name>`
+   wherever they name `{{INTEGRATION_BRANCH}}`: the patch version, the release
+   commit pushed to the branch, corrections landed on it, and the dispatch
+   `lifecycle release <sha> --ref hotfix/<name>`. Skip steps 1 and 8: the
+   milestone holds the unreleased work.
 4. Merge the branch into `{{INTEGRATION_BRANCH}}` with a merge commit (`git
    merge --no-ff`), never squashed, so the tag stays in its history, and push.
 5. Delete the hotfix branch — remote and local.

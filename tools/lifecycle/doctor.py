@@ -26,6 +26,7 @@ ADOPT = "adopt"
 UPDATE_KIT = "update-kit"
 CHANGES_SHOWN = 8
 UPGRADE_SKILL = "the upgrade skill (Claude: `/lifecycle:upgrade`)"
+IN_THE_TREE = "a task whose edits are in the tree lands before the upgrade"
 UPDATE_COMMAND = (
     "Claude: `claude plugin marketplace update lifecycle-kit` and "
     "`claude plugin update lifecycle@lifecycle-kit`, then `/reload-plugins` in a running session"
@@ -120,7 +121,8 @@ def _kit(config: Config, installed: str) -> list[Finding]:
         Finding(
             NOTE,
             f"the kit's {config.integration} is at {version} and the installed kit is "
-            f"{installed}: update it before the next round ({UPDATE_COMMAND})",
+            f"{installed}: the rounds run on {installed}'s skills until it is updated "
+            f"({UPDATE_COMMAND})",
             UPDATE_KIT,
         )
     ]
@@ -135,7 +137,9 @@ def check(config: Config, installed: str | None = None) -> list[Finding]:
         return [
             Finding(
                 BLOCK,
-                f"not on the kit yet: {UPGRADE_SKILL} moves it on, by `lifecycle upgrade --adopt`",
+                f"not on the kit yet: before the next task, {UPGRADE_SKILL} moves it on. It "
+                "compares each guide "
+                "named like one of the kit's with the kit's, then runs `lifecycle upgrade --adopt`",
                 ADOPT,
                 _required(installed),
             )
@@ -145,7 +149,7 @@ def check(config: Config, installed: str | None = None) -> list[Finding]:
             Finding(
                 BLOCK,
                 f"this repository is on kit {lock.kit} but the installed kit is {installed}: "
-                f"update the kit ({UPDATE_COMMAND})",
+                f"update the kit before the next task ({UPDATE_COMMAND})",
                 UPDATE_KIT,
             )
         ]
@@ -159,12 +163,12 @@ def check(config: Config, installed: str | None = None) -> list[Finding]:
     if lock.guides:
         message = (
             f"this repository still holds a copy of the method in {config.guides}: the next "
-            f"task runs {UPGRADE_SKILL} alone first, which deletes the copy"
+            f"task runs {UPGRADE_SKILL} alone first, which deletes the copy; {IN_THE_TREE}"
         )
     else:
         message = (
             f"kit {installed} asks this repository, on {lock.kit}, for an upgrade: the next "
-            f"task runs {UPGRADE_SKILL} alone first"
+            f"task runs {UPGRADE_SKILL} alone first; {IN_THE_TREE}"
         )
     return [Finding(BLOCK, message, UPGRADE, _shown(changes, [*steps, *templates]))]
 

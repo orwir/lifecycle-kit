@@ -37,11 +37,30 @@ def test_adopt_records_the_release_and_each_followed_templates_text(repo):
     assert not any(repo.guides_dir.iterdir())
 
 
-def test_adopt_deletes_kit_named_files_and_keeps_the_repositorys_own(repo):
+def test_adopt_deletes_only_the_kits_text_and_keeps_the_rest_named_like_it(repo):
+    (guides.METHOD / "README.md").write_text("# The method\n", encoding="utf-8")
+    (repo.guides_dir / "README.md").write_text("Our own guides\n", encoding="utf-8")
     (repo.guides_dir / "task_review.md").write_text("an older copy\n", encoding="utf-8")
+    (repo.guides_dir / "agents_template.md").write_bytes(b"# AGENTS\r\n")
     (repo.guides_dir / "design_language.md").write_text("ours\n", encoding="utf-8")
-    assert upgrade(repo, adopt=True).deleted == ["task_review.md"]
-    assert [p.name for p in repo.guides_dir.iterdir()] == ["design_language.md"]
+    planned = upgrade(repo, adopt=True, dry_run=True)
+    assert planned.deleted == ["agents_template.md"]
+    assert planned.kept == ["README.md", "task_review.md"]
+    assert len(list(repo.guides_dir.iterdir())) == 4
+    changes = upgrade(repo, adopt=True)
+    assert (changes.deleted, changes.kept) == (planned.deleted, planned.kept)
+    assert sorted(p.name for p in repo.guides_dir.iterdir()) == [
+        "README.md",
+        "design_language.md",
+        "task_review.md",
+    ]
+
+
+def test_adopt_keeps_a_kit_named_guide_in_another_encoding(repo):
+    (repo.guides_dir / "task_review.md").write_text("Наши гайды\n", encoding="utf-16")
+    changes = upgrade(repo, adopt=True)
+    assert (changes.deleted, changes.kept) == ([], ["task_review.md"])
+    assert (repo.guides_dir / "task_review.md").is_file()
 
 
 def test_a_gist_mirror_is_a_copy_with_no_record(repo):

@@ -126,7 +126,8 @@ def outcome(run: dict, ref: str, commit: str) -> tuple[int, str]:
         if step == MOVED:
             return MOVED_SINCE_REVIEW, (
                 f"refused: {ref} moved since the review, so its head is not {commit[:8]}. "
-                f"Review the new head, then ship that: {url}"
+                "Check the release's version and changelog against the new head, and its "
+                f"milestone where the checklist does, review it, then ship that: {url}"
             )
         if step == TAGGED:
             return (

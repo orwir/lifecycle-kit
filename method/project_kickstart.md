@@ -178,8 +178,6 @@ Use a branch when the change is:
 
 When those apply, automate the flow end to end: AI assistants can drive it whole, in about thirty seconds per feature. The commands, and the deletion of a merged branch on both ends, are the AGENTS template's § Branching and commits: a branch listed by `git branch` is either active work or it shouldn't exist.
 
-**One-time setup:** enable auto-merge in the repo at `Settings → General → Pull Requests → Allow auto-merge`. `gh pr merge --auto` fails without it.
-
 ### Team / open-source flow
 
 Once you have more than one contributor, invert the defaults: **feature branches become the default** and direct commits to `main` stop. The PR is the review surface; you don't want two people stomping on each other in a shared branch. Route all normal work through branches so the PR-triggered CI run is the single gate of record; contributors who can't be trusted to keep pre-push hooks installed should not be direct-committing to `main` anyway.
@@ -486,7 +484,7 @@ If you use AI assistants to write code (Claude Code, Codex, Cursor, Gemini CLI, 
 **The lifecycle kit carries the mechanics.** The method these guides describe ships with its machinery as the lifecycle kit (`orwir/lifecycle-kit`): the guides are served from the installed kit, never copied; the `lifecycle` command brings a repository's templates and settings up to a new release, moves board cards to the top of their column, ships a reviewed commit through the release workflow and watches the run, and says what a repository needs before its next task; the kit's skills run the review rounds, the close-out and the release for any agent that loads Agent Skills. A new project turns it on at day zero:
 
 - `.lifecycle.toml` at the root names its integration branch, board, gate commands, release workflow and review lenses — the structured values the skills read. Everything else they need stays in `AGENTS.md`.
-- The kit's upgrade skill makes the first move: it compares any guide named like one of the kit's, runs `lifecycle upgrade --adopt` (which deletes those copies and writes `.lifecycle.lock`, the release and the text of each template the repository follows), ports the templates and makes every upgrade step up to the installed release.
+- The kit's upgrade skill makes the first move: it compares any guide named like one of the kit's, runs `lifecycle upgrade --adopt` (which deletes each copy that is the kit's text, keeps the rest for the comparison, and writes `.lifecycle.lock`, the release and the text of each template the repository follows), ports the templates and makes every upgrade step up to the installed release.
 - The agent's adapter: for Claude Code, the kit's marketplace and plugin turned on in the committed `.claude/settings.json`, by the kit's `docs/guide.md` (*Put a repository on the kit*).
 
 ---

@@ -89,9 +89,10 @@ def test_a_successful_run_shipped():
     assert ship.outcome(run(), "main", "abc12345ff")[0] == ship.SHIPPED
 
 
-def test_a_moved_branch_sends_the_release_back_to_review():
+def test_a_moved_branch_sends_the_release_back_to_its_checks_then_review():
     code, line = ship.outcome(run("failure", ship.MOVED), "main", "abc12345ff")
     assert code == ship.MOVED_SINCE_REVIEW and "main moved since the review" in line
+    assert "version and changelog against the new head, and its milestone where" in line
 
 
 def test_no_outcome_takes_the_code_argparse_exits_with_on_a_usage_error():

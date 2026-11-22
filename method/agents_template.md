@@ -37,7 +37,7 @@ Everything inside the fenced block below is the template body. Copy it as-is, th
 
 You are working in the `{{OWNER}}/{{REPO}}` repository: a {{LANGUAGE}} {{PROJECT_TYPE}} ({{ONE_LINE_DESCRIPTION}}). Follow every rule below on every code change. When a rule conflicts with a direct user instruction in the current session, ask the user to clarify before proceeding.
 
-These rules are the compressed operating contract. Why each exists is the lifecycle kit's [project_kickstart.md](https://github.com/orwir/lifecycle-kit/blob/main/method/project_kickstart.md); setting up and releasing is [CONTRIBUTING.md](CONTRIBUTING.md).
+These rules are the compressed operating contract. Why each exists is the lifecycle kit's [project_kickstart.md](https://github.com/orwir/lifecycle-kit/blob/main/method/project_kickstart.md); setting up and releasing is [CONTRIBUTING.md](CONTRIBUTING.md). Every link to the lifecycle kit, here or in any other file, opens its `main` on GitHub: read the file at the same path in the folder `lifecycle where` prints instead (`method/…`, `docs/guide.md`), the release this machine runs.
 
 **Hard gates, before anything else:** never start a release workflow without the release's own "proceed"; never commit, push, merge, or close work without explicit approval (see *Task workflow*); never bypass hooks with `--no-verify`; never commit or print secrets. Everything below is detail around these four.
 
@@ -64,10 +64,10 @@ These are the canonical invocations — the same ones the hooks and CI run. Don'
   # ... work, commit, push ...
   git push -u origin feat/my-thing
   gh pr create --base {{INTEGRATION_BRANCH}} --title "<subject>" --body-file <pr.md outside the tree>
-  gh pr merge --squash --auto --delete-branch
+  gh pr checks feat/my-thing --watch && gh pr merge feat/my-thing --squash --delete-branch
+  git fetch --prune
   ```
-  The PR body is `.github/pull_request_template.md`, filled for a reader who never saw the review rounds ([task_review.md](https://github.com/orwir/lifecycle-kit/blob/main/method/task_review.md)); `--fill` would send the commit messages instead. Auto-merge must be enabled once in the repo's Settings → General → Pull Requests.
-  `--delete-branch` removes only the **remote** copy — once the merge lands, delete the local branch too: `git checkout {{INTEGRATION_BRANCH}} && git pull && git branch -d feat/my-thing && git fetch --prune`. A branch listed by `git branch` is either active work or it shouldn't exist.
+  The PR body is `.github/pull_request_template.md`, filled for a reader who never saw the review rounds ([task_review.md](https://github.com/orwir/lifecycle-kit/blob/main/method/task_review.md)); `--fill` would send the commit messages instead. The merge runs only once `--watch` exits 0, every check passed (before the first check registers it reports none and fails: run it again); `--delete-branch` then deletes the branch on GitHub and here, after switching to `{{INTEGRATION_BRANCH}}` and pulling it, and `git fetch --prune` drops its remote-tracking ref. A branch listed by `git branch` is either active work or it shouldn't exist.
 - Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/):
   * Allowed prefixes: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `perf`.
   * Optional scope in parentheses: `fix(parser): …`, `chore(deps): …`, `chore(ci): …`.
@@ -80,9 +80,9 @@ These are the canonical invocations — the same ones the hooks and CI run. Don'
 Every tracked task moves through three explicit phases. **Do not collapse them** — each gate is the user's, not yours to assume. The issue carries the task between sessions: a session that picks it up cold continues from the issue body, its ticked boxes and the tree, so nothing a later session needs may live only in the conversation.
 
 1. **Clarify.** Read the ticket and the code it touches, ask for any missing detail, and surface scope or constraint conflicts *before* writing code. Move the board item to `In Progress` when you pick it up (an untracked task has no board item; the approval gates still apply). Write the issue's *Plan* and run the plan round where it applies. Implementation begins only once the plan is accepted: by the maintainer's "go", or, when the round was skipped and nothing is left to answer, by you. Accepting a plan opens implementation and nothing more.
-2. **Implement & stop.** Do the work in full to the *Definition of Done* below, ticking each Technical-details box as its path lands and recording a departure under the plan's *Departures* when you make it. Run the local gate in this session, and say what could not run. Run the work round, then **stop and hand back** with the hand-back brief: on `{{INTEGRATION_BRANCH}}` the changes stay **uncommitted**; on a feature branch WIP commits are fine. Corrections are worked here, then you stop again. Do **not** push, merge, or close anything in this phase.
+2. **Implement & stop.** Do the work in full to the *Definition of Done* below, ticking each Technical-details box as its path lands and recording a departure under the plan's *Departures* when you make it. Run the local gate in this session, and say what could not run. Run the work round, then **stop and hand back** with the hand-back brief: on `{{INTEGRATION_BRANCH}}` the changes stay **uncommitted**; on a feature branch WIP commits are fine. Corrections, and answers to the brief given without the go-ahead, are worked here, then you stop again. Do **not** push, merge, or close anything in this phase.
    - The rounds, their packets and the briefs are the lifecycle kit's [task_review.md](https://github.com/orwir/lifecycle-kit/blob/main/method/task_review.md); its `clarify`, `review` and `handback` skills run them, and its `complete` skill the close-out.
-3. **Complete — on explicit approval only.** An explicit go-ahead ("complete the task", "lgtm", or equivalent) is the *only* trigger to commit the task work, push, close the ticket, move the board item to `Done`, and delete a merged feature branch, remote and local. No approval → no commit, no push, no close. A gap found in one of the kit's guides is filed on the kit ([task_review.md](https://github.com/orwir/lifecycle-kit/blob/main/method/task_review.md) § Developer rules). The same gate applies to `git push`, `gh pr create` and `gh pr merge`: auto mode is permission to write code without re-asking, not permission to land it.
+3. **Complete — on explicit approval only.** An explicit go-ahead ("complete the task", "lgtm", or equivalent) is the *only* trigger to commit the task work, push, close the ticket, move the board item to `Done`, and delete a merged feature branch, remote and local. No approval → no commit, no push, no close. Answers to the brief given with the go-ahead are made first, within the size the brief stated; a veto, or a bigger change, renders the brief again and waits for a new go-ahead. A gap found in one of the kit's guides is filed on the kit ([task_review.md](https://github.com/orwir/lifecycle-kit/blob/main/method/task_review.md) § Developer rules). The same gate applies to `git push`, `gh pr create` and `gh pr merge`: auto mode is permission to write code without re-asking, not permission to land it.
 
 ### Definition of Done
 
@@ -128,7 +128,7 @@ The bar is the maintainer's. A shortfall in 1 or 2 found after landing is unfini
   * `CHANGELOG.md` — release history
   * `docs/product/` — vision incl. CUJs, the "what" and "why"; competitors and feasibility, the research behind them; `idea.md` is the frozen origins record — never edit it
   * `docs/architecture/` — the "how": components, data flow, config reference
-  * `docs/guides/` — the project's own task-oriented howtos (deploy / publish / package, extend). The lifecycle kit's guides (kickstart, task review, the comprehensive reviews) are not copied here: the links below open them on GitHub, and on this machine they sit in `method/` in the folder `lifecycle where` prints
+  * `docs/guides/` — the project's own task-oriented howtos (deploy / publish / package, extend). The lifecycle kit's guides (kickstart, task review, the comprehensive reviews) are not copied here
   * `docs/adr/` — architecture decision records, one per significant choice
 - **Do not create new documentation files unprompted.** Work from conversation context; if you need to capture a decision, suggest an ADR and wait for approval.
 - **Do not recreate `roadmap.md`** or any equivalent tracking file. Tracked work lives on GitHub: issues, milestones, the project board.
@@ -178,7 +178,7 @@ If a row points at a doc the project doesn't have yet (extension guide, design r
 - **The board:** every write is `lifecycle board <N> <column>`, which puts the card at the top of its column: **Backlog** when you file an issue; the other moves are *Task workflow*'s, and `Backlog → Ready` is the maintainer's triage. What each column means, milestones, why an issue is filed in two stages, and the label taxonomy behind the labels above: [project_kickstart.md § GitHub tracking setup](https://github.com/orwir/lifecycle-kit/blob/main/method/project_kickstart.md).
 - PRs use `.github/pull_request_template.md`. Every PR has a Summary, a linked issue (`Closes #N`), and a concrete Verification section.
 - Reference issues in commit bodies and PR descriptions. Do not invent issue numbers — confirm they exist with `gh issue view <N>` first.
-- **Dependabot PRs:** treat as normal PRs — read the bump's changelog/release notes before merging. Patch/minor bumps may use the auto-merge flow once CI is green; major bumps always get a manual review.
+- **Dependabot PRs:** treat as normal PRs — read the bump's changelog/release notes before merging. Patch/minor bumps may merge once CI is green; major bumps always get a manual review.
 
 ## Secrets and security
 

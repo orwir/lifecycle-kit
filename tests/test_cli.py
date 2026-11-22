@@ -52,6 +52,19 @@ def test_a_first_upgrade_names_each_template_to_port_and_where_to_read_it(
     assert "port agents_template.md -> AGENTS.md, read whole: " in out
 
 
+def test_a_first_move_names_what_it_keeps_to_compare(monkeypatch, capsys, repo):
+    (repo.guides_dir / "task_review.md").write_text("our own\n", encoding="utf-8")
+    code, out, _ = run(monkeypatch, capsys, ["upgrade", "--adopt", "--dry-run"], cwd=repo.root)
+    keeps = (
+        "named like the kit's but not its text, to compare with the kit's: "
+        "docs/guides/task_review.md"
+    )
+    assert code == 0 and f"would keep, {keeps}\n" in out and "delete" not in out
+    code, out, _ = run(monkeypatch, capsys, ["upgrade", "--adopt"], cwd=repo.root)
+    assert code == 0 and f"kept, {keeps}\n" in out
+    assert (repo.guides_dir / "task_review.md").is_file()
+
+
 def test_the_pre_bash_hook_blocks_with_exit_2(monkeypatch, capsys, repo):
     event = {"tool_input": {"command": "git stash"}, "agent_type": hook.REVIEWER}
     event["cwd"] = str(repo.root)

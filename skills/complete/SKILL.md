@@ -12,6 +12,7 @@ This is the *Complete* phase of AGENTS.md § Task workflow. It runs only on the 
 
 ## 1. Before anything lands
 
+- **The hand-back's answers.** Each answer the maintainer gave to the hand-back's D-rows, with this go-ahead or before it, and each *Taken alone* row they vetoed, is made first, by `task_review.md` § The work round, step 5, and the gate run again. A pick bigger than the size the brief stated, or any veto, stops the batch: render the brief again by the handback skill and wait for a new go-ahead.
 - The gate — `gate.commands`, else AGENTS.md § Commands' lint and tests — passed in this session after the last edit; if not, run it now. A red gate stops the batch. A repository with no gate at all says so in the report.
 - `git status --short` lists only this task's files. Anything else is someone's in-progress work: leave it out and name it in the report.
 
@@ -22,7 +23,7 @@ A gap this task found in a kit guide was filed on the kit when it was found (`ta
 ## 3. Commit
 
 - Stage the task's files by name; never `git add -A`.
-- One Conventional Commit (AGENTS.md § Branching and commits): the body says why, names every decision taken alone and every departure, and ends `Closes #N` on a tracked task. Write the message to a file in a scratch folder outside the tree and pass it with `-F`.
+- One Conventional Commit (AGENTS.md § Branching and commits): the body says why, names every decision taken alone, every departure and each answer to the hand-back, and ends `Closes #N` on a tracked task. Write the message to a file in a scratch folder outside the tree and pass it with `-F`.
 - A failing hook is fixed at its cause and the commit made again; never `--no-verify`, never amend a pushed commit.
 
 ## 4. Land
@@ -43,8 +44,8 @@ When the settings name a board, `lifecycle board <N> Done` puts the card in Done
 
 ## 7. Branches
 
-- A merged feature branch: `git checkout <integration> && git pull && git branch -d <branch> && git fetch --prune`. `--delete-branch` removed only the remote copy.
-- A worktree's own branch stays while its worktree exists, and goes with it.
+- A merged feature branch: `--delete-branch` deleted it on GitHub and here, after switching to the integration branch and pulling it. `git fetch --prune` drops its remote-tracking ref. Where gh warned that it could not fast-forward, the integration branch has diverged from its remote: stop, and report `git status -sb`.
+- A worktree's own branch stays while its worktree exists, and goes with it: in a linked worktree, gh leaves the local branch.
 
 ## 8. Report
 

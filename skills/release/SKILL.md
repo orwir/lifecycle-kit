@@ -40,13 +40,13 @@ The "proceed" authorizes the whole phase as one batch, with no prompt between st
    Any other outcome stops the phase: report it.
 2. **Ship.** Where `release.workflow` is null, the repository ships by the checklist's own ship steps: run those. Otherwise `lifecycle release <head> --ref <release branch>`, with the head the last stop showed. It dispatches the release workflow and watches the run to its end, which takes as long as the build and the deploy: run it where a long command may run, in the background where you can. Its last line says how it ended, and its exit code matches:
    - 0, `shipped`: shipped and tagged.
-   - 3, `refused: <branch> moved since the review`: go back to Phase 2 on the new head.
+   - 3, `refused: <branch> moved since the review`: `git pull`, then check Phase 1's version, milestone and changelog against the new head again, and fix any by one more commit on top, the version included where the new commits change it, never a second release commit; then Phase 2 on the new head.
    - 1: refused or failed at the step the line names, or nothing was dispatched (a line starting `lifecycle:`, GitHub's refusal among them). Report it with the run's link; a run that failed after its deploy started may have shipped in part, and the rollback is the maintainer's call.
    - 4, `in flight`, or no last line at all (the shell cut the command off): the run may still ship and tag. Report the run, and dispatch nothing again until it has ended.
    - 2 is a usage error from the command line, not a release outcome: fix the command.
 
    Anything but `shipped` ends the phase here: steps 3 and 4 run only after it.
 3. **A hotfix branch lands.** Once it shipped, merge it into the integration branch with a merge commit (`git merge --no-ff`), never squashed, so the tag stays in the integration branch's history. Push it, then delete the hotfix branch, remote and local. A conflict stops for the maintainer. The merge carries the fix's `Closes #N` to the default branch; when the settings name a board, `lifecycle board <N> Done`.
-4. **The checklist's other ship steps:** close the milestone, verify the deploy, and whatever else it lists.
+4. **The checklist's other ship steps:** close the milestone, on the integration branch only (on a hotfix branch it holds the integration branch's unreleased work), verify the deploy, and whatever else it lists.
 
 The dispatch is irreversible: the workflow ships as soon as its checks pass. Report each step with its coordinates, and anything left to the maintainer.
