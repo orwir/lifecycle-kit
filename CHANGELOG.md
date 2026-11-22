@@ -8,6 +8,12 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## [0.14.4] — 2026-11-22
+
+### Changed
+- The idea gauntlet fits a game: a `[game]` line under an item asks what a game is judged on (#17)
+- The gauntlet's Phase 0 asks for an idea's type with its appetite, before its other questions (#17)
+
 ## [0.14.3] — 2026-11-22
 
 ### Changed

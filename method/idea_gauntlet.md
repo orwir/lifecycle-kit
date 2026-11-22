@@ -22,6 +22,14 @@ Works for software, hardware, and mixed builds — a bot, a smart-home sensor, a
 automatic plant waterer, a pinball machine. Items tagged `[sw]` / `[hw]` apply only
 to that kind; untagged items always apply. Mixed projects take both.
 
+A game, from a single-screen arcade game to a story-rich adventure, is built from
+one of those kinds and takes its items, and its `[game]` lines too. An idea is a
+game when what it offers is play, not a fix to a problem: a pinball machine is a
+game, a habit tracker with points is software. A game sells an experience, so a
+`[game]` line adds what a game is judged on to the item above it; one that says
+*instead* replaces that item's untagged and `[sw]` words, or only those it names,
+and leaves its `[hw]` words to a game built of hardware.
+
 ## The rules
 
 1. **One folder per idea, in your ideas home; `IDEA.md` is the state.** The `Status`
@@ -46,6 +54,16 @@ to that kind; untagged items always apply. Mixed projects take both.
      still unclear after two evenings is one.
 
    A spike adds a fifth: **disproved:** the riskiest assumption failed.
+
+   [game] For a game, a crowded genre is a market, not a kill. **Solved by X** is a
+   near-twin: a comparable game that already gives the same fantasy and hook, at
+   or under the price; kill, or go back to Phase 0 for a hook the twin lacks.
+   **Adapt X:** a mod, a level in an existing game's editor, or a paper or jam
+   version scratches the itch. **Blocked by Y:** the rights to someone else's
+   world, or no way to be paid where you live. **Not worth it:** the content
+   inventory outgrows the appetite, or, for a game sold, comparable games'
+   estimated sales don't cover the spend. **Disproved:** it isn't fun, or its
+   story doesn't hold a player.
 4. **Size the bet at capture, in sessions.** The appetite is the effort you're
    willing to spend on v0.1, counted in sessions: one sitting of focused work,
    about an evening. Free time comes in bursts, so budgets count sessions, never
@@ -60,12 +78,21 @@ to that kind; untagged items always apply. Mixed projects take both.
    | Project  | Up to 15 sessions to v0.1                           | Every phase                                                         |
    | Product  | A project's, plus upkeep a month; others rely on it | Every phase, plus a real user's reaction before the verdict         |
 
+   [game] A game's v0.1 is a playable vertical slice: one level, run or chapter at
+   the quality of the finished game, far short of a release. A toy game is
+   jam-sized. A game released to strangers, sold or free, is a product whatever
+   its size: players expect patches, and a store page and its marketing cost a
+   small game what they cost a big one. Its appetite line says whether it is sold.
+
 5. **Set the bar before shaping, then structure before surface.** Before anything is
    shaped, write the bar in two halves: the value the shape must show against the
    best existing option, and the cost ceiling it must stay under. Then shape from
    the journeys Phase 1 wrote: the IA first, and a picture only where a walk of the
    journeys through the IA can't settle the bar. The verdict judges the result
-   against the bar, not the feeling, and waits at least one night.
+   against the bar, not the feeling, and waits at least one night. [game] Only
+   play settles fun: a game's value half is a playtest result, judged at the
+   spike, and Phase 2's verdict judges the cost half and the hook. A toy game runs
+   no spike: its play is judged by its v0.1, played by people other than you.
 6. **A killed idea gets a log line, not a funeral.** Its folder moves to `archive/`,
    whole, with one line in `archived.md`. Re-opening requires new facts that beat
    the logged reason — renewed enthusiasm doesn't count.
@@ -178,6 +205,11 @@ to know how stale.
 
 [hw] `docs/hardware/` joins at Phase 4.
 
+[game] A game's evidence goes in the same files: `competitors.md` holds the
+comparable games and, for a game sold, their estimated sales, `vision.md` the
+fantasy, the players and the player journeys, `feasibility.md` the content
+inventory.
+
 ## Template
 
 Copy everything below into `active/<idea>/IDEA.md` in your ideas home and fill as
@@ -187,17 +219,24 @@ you go (the ideas home's `AGENTS.md` has an agent do this step for you).
 # Idea: {{name}}
 
 - Status: captured | phase 1 | phase 2 | phase 3 | PARKED until {{trigger}} | KILLED (see archived.md) | GRADUATED -> {{repo}}
-- Type: software | hardware | mixed
+- Type: software | hardware | mixed[, game]
 - Appetite: toy | project | product — {{the sessions v0.1 may take}}
 - Captured: {{YYYY-MM-DD}}
 
 ## Phase 0 — Capture (5 minutes)
 
+- [ ] Type and appetite, in the header. The type: what it's built from, and
+      whether it's a game (the guide's intro). The appetite: toy, project or
+      product; it sets how deep the gauntlet goes (the guide's rule 4).
+      [game] A game released to strangers is a product: say whether it's sold.
 - [ ] Problem — what hurts, concretely:
+      [game] instead: the fantasy and the hook — what the player does and feels,
+      and the one thing no comparable game has:
 - [ ] Who has it, and how often ("just me" is a valid answer):
+      [game] instead: who plays it, not who it's about — the players of 2–3
+      named comparable games, on what, and for how long a sitting:
 - [ ] Solution shape, one sentence:
-- [ ] Appetite, in the header: toy, project or product. It sets how deep the
-      gauntlet goes (the guide's rule 4).
+      [game] instead: the pitch, "X meets Y, but Z":
 
 No gate: the idea waits, captured, for a free evening — the wait is the cooldown.
 Re-read it when you pick it up. No longer care? Leave it, or kill it.
@@ -210,23 +249,44 @@ first.
 
 - [ ] Existing options checked — OSS, paid products, [hw] off-the-shelf devices
       and kits. Best 2–3 candidates and the *specific* reason each doesn't fit:
+      [game] instead: 5–10 comparable games, searched by theme and fantasy as
+      well as by genre, small free ones included, each with its price and its
+      hook; for a game sold, its review count as estimated sales where it shows
+      one (reviews × about 30, range 20–55: Video Game Insights on 2021
+      releases), and with no count, say so. A game far past the appetite, named
+      for the feeling it gives, is a reference, not a comparable. The closest by
+      fantasy and hook, and what mine adds:
       1.
       2.
 - [ ] CUJs: the 2–4 journeys that matter, each with a success criterion and a
       frequency, in vision.md after the problem and who has it (format:
       ux_review.md § CUJs).
+      [game] The four player journeys: the first minutes, the core loop, one
+      session (a run, a level, a chapter), the whole arc. Success is what a
+      watcher sees ("starts a second run unasked"); the frequency, how long and
+      how often a sitting.
 - [ ] The baseline walk: use the best option yourself through each CUJ — steps,
       decisions, time (method: ux_review.md § Phase 1). Then its adapt price:
       what it would take to make it do the job — learning it, configuring it, a
       small script on top:
+      [game] instead of using the best option: play the top 2–3 comparable
+      games, an hour each — the core loop, the first ten minutes, the moment I'd
+      quit. The adapt price: a mod, a level in its editor, a paper or jam version.
 - [ ] Feasibility: what research can settle — data and API access, platform
       limits, licences; [hw] parts availability, power, tolerances. What it can't
       settle goes to feasibility.md as open questions.
+      [game] Engine and platform fit, a performance target, and the skills the
+      content needs (art, audio, music, writing), each gap with an answer: a
+      style that hides it, free-licensed assets, or a paid commission.
 - [ ] Cost: does a useful v0.1 fit the appetite's sessions? Upkeep per month, in
       sessions and money — updates, data, support, hosting, paid APIs; [hw]
       power, consumables, the space it takes. Up front — [hw] rough BOM + tools
       I'd have to buy + parts lead time. Hardware iterations cost real money and
       shipping weeks: budget 2–3x the first guess.
+      [game] A content inventory, counted — levels, characters, sprites, tracks,
+      words — where most of a game's cost goes. A product adds the store's fixed
+      overhead, whatever the game's size: its fee, the store page, capsule art, a
+      trailer.
 - [ ] Portfolio: the running projects (graduated.md), and which one loses these
       sessions. "They can co-exist" is not an answer.
 - [ ] Motivation: do I want the *result* or the *process*? Both are valid — but a
@@ -245,13 +305,21 @@ first.
       model limit is in play
       [hw] usually sensor accuracy, power budget, waterproofing, mechanical
       tolerances, or a skill I don't have yet
+      [game] usually value: that it's fun, which only play settles (Phase 3).
+      For a game sold, viability: comparable games' estimated sales against the
+      store's base rates (e.g. Steam games released January–October 2025:
+      median revenue about $249, 66% under $1,000; Gamalytic, via 80.lv, 2025);
+      with no review count among them, on the base rates and the hook
 
 EARLY EXIT (rule 3): solved by X, adapt X, blocked by Y, or not worth it -> KILL,
 with the numbers. Otherwise:
+[game] A near-twin may go back to Phase 0 for a hook it lacks instead (rule 3).
 
 - [ ] The question Phase 2's shaping must answer that could still flip the
       verdict. None, or a toy -> Phase 2 writes the bar's cost half and the
       definitions, skips the IA, the walk and the picture, and goes to the GATE:
+      [game] A toy judges its hook by the pitch, and its play by its v0.1; any
+      other game still draws the picture's capsule, which its hook is judged by.
 
 ## Phase 2 — Shape it (an evening, no product code)
 
@@ -263,8 +331,13 @@ competitors.md.
       fewer steps than X on CUJ-1 and CUJ-2, and worse on none"):
       cost: the ceiling it must stay under (v0.1 within the appetite's sessions;
       upkeep under N sessions and M money a month):
+      [game] instead of the value half: what a playtest must show, a result a
+      watcher sees ("three of five start a second run unasked"), judged at the
+      spike. Here the hook stands in for it: the capsule holds up beside
+      comparable games' capsules.
 - [ ] Done statement: "v0.1 is done when ____" — one sentence, observable.
 - [ ] IN — the MVP, max 7 bullets; OUT — explicitly not in v0.1 (be generous).
+      [game] With the content counted: levels, endings, characters.
 - [ ] Constraints: money cap; deadline (only if real); [hw] where it physically
       lives and who else has to tolerate it — the household veto is real.
 - [ ] [hw] Safety check: mains voltage, water near electronics, lithium cells,
@@ -276,17 +349,30 @@ competitors.md.
       attributes, actions, relationships and one home (§ Phase 2); the map of
       screens, commands and messages, [hw] controls, displays and alerts
       (§ Phase 5); the vocabulary (§ Phase 6).
+      [game] instead: the entities and systems with their states (the objects),
+      the menus, HUD and world map (the map), and the vocabulary; a story game
+      adds its outline and a branch map.
 - [ ] The IA walk: each CUJ through the IA, in text, with its steps and decisions
       counted. Then re-check the cost half: the objects, their states and the map
       are the honest size of v0.1.
+      [game] instead of the walk in text: a paper prototype (cards, dice, a
+      spreadsheet) for a systems game, a playable text draft for a story one,
+      played through each journey.
 - [ ] The picture, in design/, only for what the walk can't settle — often an
       interaction that is itself the edge: [sw] low-fidelity flows, or a CLI or
       bot transcript; [hw] a sketch or a cardboard mock-up, photographed.
+      [game] instead, for every game but a toy: a target screenshot and a mock
+      store capsule, the art direction set beside comparable games' look, so
+      the hook shows at a glance.
 - [ ] Side by side: the IA walk against the baseline walk, per CUJ, in
       competitors.md.
+      [game] The paper prototype against the baseline play, per journey, and the
+      capsule beside comparable games'.
 - [ ] Product appetite only: a real user's reaction to the IA walk, or without
       one to the CUJs and the done statement — what they do today, and what they
       would stop doing.
+      [game] instead: strangers who play comparable games see the pitch and the
+      capsule beside those games' and say which they would try.
 
 No user-facing surface -> no IA, no walk and no picture. Without an IA walk, for
 whatever reason, judge the value half on the CUJs and the done statement.
@@ -294,6 +380,9 @@ whatever reason, judge the value half on the CUJs and the done statement.
 GATE (the verdict, after at least one night's sleep): does it clear both halves of
 the bar? Would I use it instead of the best option, adapted? Can I state the done
 statement and the riskiest assumption from memory?
+[game] Here the bar is its cost half and the hook: the value half is the spike's
+gate, or a toy's v0.1's. Instead of using it: would players pick it over the
+closest comparable game?
 - Make -> Phase 3; a toy goes to Phase 4. Over the WIP limit -> name the project
   it parks:
 - Park -> Status: PARKED until {{a date or an event}}. No trigger means it's a kill.
@@ -310,12 +399,21 @@ Budget: {{1–3}} sessions. [hw] Parts spend cap: {{amount}}.
       [hw] dev board + breadboard, cardboard, hand-operated before automated;
       simulate first where possible (Wokwi, Falstad); order the minimal parts,
       never the full BOM
+      [game] the main gate: the riskiest part of the experience made playable —
+      usually the core loop as a greybox (placeholder shapes), for a story game
+      a playable slice of the story — played by 3–5 people other than me while I
+      watch, not ask
 - [ ] Stack / platform picked while spiking, reasons noted in feasibility.md —
       these become the project's first ADRs.
 - [ ] Result, one line (the numbers and surprises go to feasibility.md):
+      [game] how many played, and what they did unasked.
 
 GATE: the assumption survived? Yes -> Phase 4. No -> back to Phase 1 with what was
 learned, or KILL with reason "disproved: ____".
+[game] Survived: the playtest met the bar's value half, or with none written,
+they played on, or read on, unasked. Disproved: not fun, or the story doesn't
+hold them. Fewer than three played -> PARKED until three players are lined up:
+never passed on fewer, or on my own play.
 
 ## Phase 4 — Commit (handoff)
 
@@ -324,6 +422,12 @@ learned, or KILL with reason "disproved: ____".
       date only where the world sets one). The first is v0.1's, the circuit
       breaker: "if v0.1 isn't in use after {{N}} sessions, I re-scope or kill",
       never a quiet extension.
+      [game] In use: played by people other than me. A product adds a second
+      budget, sessions to launch, and kill criteria the world measures: "if a
+      level costs over N sessions once the slice measures it, I cut levels";
+      "under W wishlists on the store page after N production sessions, I ship
+      smaller or elsewhere". The store's lead times (its review, a coming-soon
+      period, festival dates) are dates the world sets.
 - [ ] Move this folder out of the ideas home into the project's own repo, under
       its real name, and put that repo on the kit; add its line
       to graduated.md, with a next check four weeks out.
@@ -331,6 +435,9 @@ learned, or KILL with reason "disproved: ____".
       from the artifacts: done statement -> v0.1 milestone; IN list -> first
       issues; the stack choice (the spike's, where there was one) and the
       decisions recorded here -> first ADRs.
+      [game] It has no game variant yet: take what fits, and file on the kit
+      what the project had to work out for itself (the engine's setup, large
+      assets, store builds).
 - [ ] [hw] A repo anyway (firmware, code, docs), plus docs/hardware/: BOM with
       sources and prices, wiring diagram or labeled photo, build log,
       calibration notes.

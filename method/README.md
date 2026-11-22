@@ -13,11 +13,12 @@ gap a project finds in a guide is filed on the kit as an issue, by `task_review.
 - **`idea_gauntlet.md`** — pre-project stage-gate: an evening on whether the idea is
   worth its cost (its journeys, the best existing option tried by hand), an evening
   shaping it (the IA, a picture only where needed), then one decision — make, park,
-  or kill. Covers software, hardware, and mixed builds. Every idea lives in a
-  private ideas home repo: one folder each, with `IDEA.md` and its evidence
-  (`docs/product/`, `design/`). A graduated idea moves out into its own repo with
-  its kill criteria, `IDEA.md` freezes into `docs/product/idea.md`, and the home
-  checks the project on a schedule; a killed one moves to the home's `archive/`.
+  or kill. Covers software, hardware, and mixed builds, and games built from any
+  of them. Every idea lives in a private ideas home repo: one folder each, with
+  `IDEA.md` and its evidence (`docs/product/`, `design/`). A graduated idea moves
+  out into its own repo with its kill criteria, `IDEA.md` freezes into
+  `docs/product/idea.md`, and the home checks the project on a schedule; a killed
+  one moves to the home's `archive/`.
 - **`ideas_home_template.md`** — the ideas home's `AGENTS.md`, which a home adapts: its
   layout and how to capture, kill, graduate and check, for any agent opened in it.
   Setting a home up where there is none is `idea_gauntlet.md` § The ideas home.
