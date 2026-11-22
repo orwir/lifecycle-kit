@@ -8,6 +8,15 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## [0.13.0] — 2026-11-22
+
+### Changed
+- The AGENTS template's *Clarify* points to `task_review.md` for when a plan is accepted without "go" (#30)
+
+### Fixed
+- A drawn plan waits for "go" in every repository's contract, as the guide and the clarify skill say (#30)
+- The Clarify brief says "going ahead" only for a skipped round's plan with no drawing (#30)
+
 ## [0.12.2] — 2026-11-22
 
 ### Changed

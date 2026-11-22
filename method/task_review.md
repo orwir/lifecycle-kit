@@ -102,7 +102,7 @@ What the maintainer reads before any code: the issue holds the plan, and the bri
 
 **Round** <k> findings · <n> folded into the plan · <n> to answer (D…) · <D… disputed | none disputed> | skipped, no shape
 
-**Next** <answer D1, then | > "go" | nothing to answer, no shape: going ahead.
+**Next** <answer D1, then | > "go" | nothing to answer, no shape, no drawing: going ahead.
 ```
 
 ## The work round

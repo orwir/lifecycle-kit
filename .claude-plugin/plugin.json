@@ -1,6 +1,6 @@
 {
   "name": "lifecycle",
-  "version": "0.12.2",
+  "version": "0.13.0",
   "description": "The lifecycle method's review rounds, close-out and release as skills, a read-only reviewer, and the checks every project on the kit shares.",
   "author": {
     "name": "orwir"
