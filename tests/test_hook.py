@@ -55,12 +55,14 @@ def test_session_start_says_nothing_of_a_release_that_asks_nothing(repo, monkeyp
 
 def test_session_start_lists_what_an_owed_upgrade_brings(repo, monkeypatch, tmp_path):
     upgrade(repo, adopt=True)
-    (tmp_path / "CHANGELOG.md").write_text("## v1.3.0\n\n- a change\n", encoding="utf-8")
+    (tmp_path / "CHANGELOG.md").write_text(
+        "## v1.3.0\n\n### Removed\n- `lifecycle gone`\n", encoding="utf-8"
+    )
     (tmp_path / "UPGRADING.md").write_text("## v1.3.0\n\n- add `x.json`\n", encoding="utf-8")
     monkeypatch.setattr(hook.doctor, "KIT_ROOT", tmp_path)
     monkeypatch.setattr(hook.doctor, "kit_version", lambda: "1.3.0")
     text = hook.session_start({"cwd": str(repo.root)})
-    assert "runs the upgrade skill" in text and "\n  - a change" in text
+    assert "runs the upgrade skill" in text and "\n  - Removed: `lifecycle gone`" in text
     assert "a task whose edits are in the tree lands before the upgrade" in text
 
 

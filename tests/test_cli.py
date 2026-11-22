@@ -25,12 +25,16 @@ def test_doctor_prints_each_finding_and_its_details(monkeypatch, capsys, repo, t
     from lifecycle import doctor, guides
 
     guides.upgrade(repo, adopt=True)
-    (tmp_path / "CHANGELOG.md").write_text("## v1.3.0\n\n- a change\n", encoding="utf-8")
+    (tmp_path / "CHANGELOG.md").write_text(
+        "## v1.3.0\n\n### Removed\n- `lifecycle gone`\n", encoding="utf-8"
+    )
     (tmp_path / "UPGRADING.md").write_text("## v1.3.0\n\n- add `x.json`\n", encoding="utf-8")
     monkeypatch.setattr(doctor, "KIT_ROOT", tmp_path)
     monkeypatch.setattr(doctor, "kit_version", lambda: "1.3.0")
     code, out, _ = run(monkeypatch, capsys, ["doctor"], cwd=repo.root)
-    assert code == 0 and out.startswith("block:") and "\n  - a change" in out
+    assert code == 0 and out.startswith("block:") and "\n  - Removed: `lifecycle gone`" in out
+    code, out, _ = run(monkeypatch, capsys, ["doctor", "--json"], cwd=repo.root)
+    assert code == 0 and "Removed: `lifecycle gone`" in json.loads(out)[0]["details"]
 
 
 def test_doctor_says_nothing_of_a_release_that_asks_nothing(monkeypatch, capsys, repo, tmp_path):

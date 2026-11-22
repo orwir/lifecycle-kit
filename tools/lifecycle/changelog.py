@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import NamedTuple
 
 from . import release
 
@@ -70,23 +71,34 @@ def qualify(entry: str, repository: str) -> str:
     return _ISSUE.sub(lambda m: f"{repository}#{m.group(1)}", entry)
 
 
-def sections(path: Path, after: str, upto: str) -> list[tuple[str, list[str]]]:
+class Entry(NamedTuple):
+    #: The ``### `` heading above the entry in its release, as written; None above any.
+    group: str | None
+    text: str
+
+
+def sections(path: Path, after: str, upto: str) -> list[tuple[str, list[Entry]]]:
     """Each release after ``after`` up to ``upto`` with its entries, in the file's order.
 
-    Any ``## `` line ends a release's entries, so a heading in another shape drops its
-    own entries rather than lending them to the release above it. A missing file has none.
+    An entry keeps its group, since a line read without it can claim the opposite: one
+    under Removed reads as the feature it removed. Any ``## `` line ends a release's
+    entries and its group, so a heading in another shape drops its own entries rather
+    than lending them to the release above it. A missing file has none.
     """
     if not path.is_file():
         return []
-    found: list[tuple[str, list[str]]] = []
+    found: list[tuple[str, list[Entry]]] = []
     taking = False
+    group = None
     for line in path.read_text(encoding="utf-8").splitlines():
         if line.startswith("## "):
             version = release_of(line)
             taking = bool(version) and release(after) < release(version) <= release(upto)
+            group = None
             if taking:
                 found.append((version, []))
-            continue
-        if taking and line.startswith("- "):
-            found[-1][1].append(line[2:])
+        elif line.startswith("### "):
+            group = line[4:].strip()
+        elif taking and line.startswith("- "):
+            found[-1][1].append(Entry(group, line[2:]))
     return found

@@ -8,6 +8,11 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## [0.14.2] — 2026-11-22
+
+### Fixed
+- Each change line `lifecycle doctor` shows opens with its group, so a removal no longer reads as a feature (#23)
+
 ## [0.14.1] — 2026-11-22
 
 ### Changed

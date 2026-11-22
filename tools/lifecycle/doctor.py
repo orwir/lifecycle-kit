@@ -55,26 +55,27 @@ class Finding:
         }
 
 
-def _entries(name: str, after: str, upto: str) -> list[tuple[str, list[str]]]:
+def _entries(name: str, after: str, upto: str) -> list[tuple[str, list[_changelog.Entry]]]:
     """A kit file's releases after ``after`` up to ``upto``, newest first, each entry's
     ``#N`` naming the kit's issue: these lines are read in other repositories."""
-    repository = kit_repository()
+    repo = kit_repository()
     return [
-        (version, [_changelog.qualify(entry, repository) for entry in entries])
+        (version, [entry._replace(text=_changelog.qualify(entry.text, repo)) for entry in entries])
         for version, entries in _changelog.sections(KIT_ROOT / name, after, upto)
     ]
 
 
 def changes_since(pinned: str, installed: str) -> list[str]:
-    """The kit CHANGELOG's entries for the releases after ``pinned`` up to ``installed``.
+    """The kit CHANGELOG's entries for the releases after ``pinned`` up to ``installed``,
+    each opened by its group (``Removed: …``), so none reads as the opposite of its claim.
 
     A ``Repositories:`` entry is left out: its steps, from ``steps_since``, stand in for it.
     """
     return [
-        entry
+        f"{entry.group}: {entry.text}" if entry.group else entry.text
         for _, entries in _entries("CHANGELOG.md", pinned, installed)
         for entry in entries
-        if not entry.startswith(REPOSITORIES)
+        if not entry.text.startswith(REPOSITORIES)
     ]
 
 
@@ -84,7 +85,7 @@ def steps_since(pinned: str, installed: str) -> list[str]:
     the order they are made in. Each opens ``Upgrade <release>:``, since a step can speak
     of its release and a first move runs several releases' steps together."""
     return [
-        f"{UPGRADE_STEP} {version}: {step}"
+        f"{UPGRADE_STEP} {version}: {step.text}"
         for version, steps in reversed(_entries("UPGRADING.md", pinned, installed))
         for step in steps
     ]

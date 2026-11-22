@@ -139,7 +139,7 @@ def test_both_heading_shapes_are_read_and_another_lends_its_entries_to_none(monk
         encoding="utf-8",
     )
     monkeypatch.setattr(doctor, "KIT_ROOT", tmp_path)
-    assert doctor.changes_since("1.2.0", "1.5.0") == ["dated", "an older kit's push"]
+    assert doctor.changes_since("1.2.0", "1.5.0") == ["Changed: dated", "an older kit's push"]
 
 
 def test_every_release_heading_in_the_kit_changelog_and_upgrading_is_read():
@@ -173,7 +173,7 @@ def test_a_kit_issue_reads_as_the_kits_outside_it(repo, monkeypatch, tmp_path):
     kit = kit_repository()
     assert finding.details == (
         f"Upgrade 1.3.0: add `x.json`, as {kit}#9 says",
-        f"a fix ({kit}#9)",
+        f"Fixed: a fix ({kit}#9)",
     )
 
 
@@ -255,3 +255,30 @@ def test_the_kit_notes_an_installed_kit_older_than_its_release(kit_checkout, mon
     manifest = kit_checkout.root / ".claude-plugin" / "plugin.json"
     manifest.write_text('{"name": "lifecycle", "version": "10.0.0"}\n', encoding="utf-8")
     assert doctor.check(kit_checkout, installed="9.9.9") == []
+
+
+def test_each_change_line_opens_with_its_group(repo, monkeypatch, tmp_path):
+    upgrade(repo, adopt=True)
+    (tmp_path / "CHANGELOG.md").write_text(
+        "## [1.3.0] — 2026-11-22\n\n### Added\n- a skill\n\n### Changed\n- a brief\n\n"
+        "### Fixed\n- a guard\n\n### Removed\n- `lifecycle gone`\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "UPGRADING.md").write_text("## v1.3.0\n\n- add `x.json`\n", encoding="utf-8")
+    monkeypatch.setattr(doctor, "KIT_ROOT", tmp_path)
+    (finding,) = doctor.check(repo, installed="1.3.0")
+    assert finding.details[1:] == (
+        "Added: a skill",
+        "Changed: a brief",
+        "Fixed: a guard",
+        "Removed: `lifecycle gone`",
+    )
+
+
+def test_a_repositories_entry_under_a_group_is_left_out(monkeypatch, tmp_path):
+    (tmp_path / "CHANGELOG.md").write_text(
+        "## [1.3.0] — 2026-11-22\n\n### Changed\n- Repositories: a hook\n- a brief\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(doctor, "KIT_ROOT", tmp_path)
+    assert doctor.changes_since("1.2.0", "1.3.0") == ["Changed: a brief"]

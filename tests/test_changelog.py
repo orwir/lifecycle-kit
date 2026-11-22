@@ -138,3 +138,17 @@ def test_a_kit_issue_is_named_with_the_kits_repository():
         changelog.qualify(entry, "o/kit")
         == "a fix (o/kit#9, o/kit#12), after o/kit#3, not `a/b#4` or x#5"
     )
+
+
+def test_sections_carry_each_entrys_group(tmp_path):
+    path = tmp_path / "CHANGELOG.md"
+    path.write_text(
+        "## [1.3.0] — 2026-11-22\n\n### Added\n- new\n\n### Removed\n- gone\n\n"
+        "## v1.2.0\n\n- loose\n\n### Fixed\n- fixed\n\n## [1.1.0] — 2026-11-20\n\n- older\n",
+        encoding="utf-8",
+    )
+    assert changelog.sections(path, "1.0.0", "1.3.0") == [
+        ("1.3.0", [("Added", "new"), ("Removed", "gone")]),
+        ("1.2.0", [(None, "loose"), ("Fixed", "fixed")]),
+        ("1.1.0", [(None, "older")]),
+    ]
