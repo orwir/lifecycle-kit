@@ -12,6 +12,7 @@ The kit's `clarify` skill runs the plan round, its `review` skill the work round
 - **Packet:** the developer's plan packet and hand-off packet, and the reviewer's plan return and return packet. A packet is never shown to the maintainer.
 - **Brief:** what the maintainer reads of a round, the Clarify or the hand-back brief.
 - **D-row:** a question a brief puts to the maintainer, with options and a recommended one.
+- **One-way door:** a choice that changes user-visible behaviour, is hard to undo, moves the ticket's scope (adds to or drops from its goal) or spends. Every other choice is a **two-way door**. A follow-up filed for what lies outside the goal is a two-way door. A choice the developer could make is a D-row only when it is a one-way door; a two-way door the developer takes, as a `Taken:` line (*Developer rules*). A choice the ticket, an accepted drawing or a doc already settles is neither. Three D-rows stand whatever the door, since none is a choice the developer makes: a disputed finding, a work-round `split`, and an exploitable finding left unfixed where the repository names no private channel. A plan-round `split` the developer accepts is acted on (*The plan round*, step 4) and named in the brief's *Reviewed*; one the developer disputes is a disputed finding.
 - **Required:** a finding the severity table marks so (*Return packet*).
 - **Accepted:** a plan whose status reads `accepted <date>`, set at the maintainer's "go", or where *The plan round* awaits none.
 - **Launch:** a reviewer starts as a fresh agent whose whole task is its packet: a subagent where the assistant can launch one, otherwise a fresh session the packet is pasted into, with the return pasted back. From the launch until the return arrives, the plan or the tree is the reviewer's: nothing in it is edited.
@@ -40,8 +41,8 @@ The developer session runs the whole round. The maintainer sees one line when th
 1. **Plan.** The developer reads the ticket and the code the change touches, and writes the issue's *Plan* with `Status: proposed`, before the round.
 2. **Hand off.** The developer launches the reviewer with the plan packet.
 3. **Review.** The reviewer reads the plan against the code (*Reviewer rules*) and returns the plan return.
-4. **Act.** The developer folds every required finding into the plan, an exploitable one with no location or detail (*Return packet*). A disputed finding becomes a D-row (*Brief rules*). A `split`: the part split off is filed as its own issue, and the plan narrowed to what it keeps. The same write of the plan marks the round run, with what the brief needs: `Status: proposed, plan round <date>: <verdict>[ (no guard) | (pasted)], <k> findings, <n> folded, <D… disputed | none disputed>`. A session that finds the mark renders the Clarify brief from it and the plan, with no second round.
-5. **Accept.** The developer renders the Clarify brief. The maintainer answers its D-rows and says "go"; the developer writes each answer into the plan's *Decisions*, sets `Status: accepted <date>`, and only then writes code.
+4. **Act.** The developer folds every required finding into the plan, an exploitable one with no location or detail (*Return packet*). Each `Decision pending` and each *For the maintainer* question the developer cannot settle is sorted by its door (*Terms*): a one-way one becomes a D-row; a two-way one is taken, at the reviewer's recommendation or at the developer's own pick with the reviewer's option named, and written as a `Taken:` line. A question with no option is sorted the same way, the developer's answer as its recommendation. A disputed finding becomes a D-row (*Brief rules*). A `split`: the part split off is filed as its own issue, and the plan narrowed to what it keeps. The same write of the plan marks the round run, with what the brief needs: `Status: proposed, plan round <date>[ (no guard) | (pasted)]: <nothing required | <r> required, <f> folded[, D… disputed]>[, split off #<M>]`. A session that finds the mark renders the Clarify brief from it and the plan, with no second round; in a mark from before 0.14.0, which carries a verdict and a count of findings, the required count is the folded and the disputed together, and a `split` verdict names the issue split off.
+5. **Accept.** The developer renders the Clarify brief. The maintainer answers its D-rows, may veto a choice taken alone by naming it, and says "go"; the developer writes each answer and veto into the plan's *Decisions*, sets `Status: accepted <date>`, and only then writes code.
 
 A skipped round runs steps 1 and 5. When a skipped round's brief has nothing to answer, the plan is clear, the task having passed triage, so no "go" is awaited: the developer sets the plan accepted and goes straight on. A plan that carries a drawing still waits for "go", which accepts the drawing.
 
@@ -61,7 +62,7 @@ Open: <what the developer could not settle> | none
 
 ## Plan return
 
-Read by the developer: the return packet's form, with the plan questions. Only findings that change the plan count: `Real bug` (the plan as written ships a defect), `Drift` (it contradicts the code, a doc or an ADR), `Decision pending` (the maintainer's call, with a recommended option). Wording and taste are not findings.
+Read by the developer: the return packet's form, with the plan questions. Only findings that change the plan count: `Real bug` (the plan as written ships a defect), `Drift` (it contradicts the code, a doc or an ADR), `Decision pending` (a choice the plan leaves open, with a recommended option). Wording and taste are not findings.
 
 ```
 Verdict: approve | corrections | split: <what this issue keeps, what is filed>
@@ -77,32 +78,32 @@ For the maintainer: <questions the reviewer could not settle; every Decision pen
 
 ## Clarify brief
 
-What the maintainer reads before any code: the issue holds the plan, and the brief what must be answered and what may be vetoed, by *Brief rules*.
+What the maintainer reads before any code: the issue holds the plan, and the brief what will happen, what must be answered and what may be vetoed, by *Brief rules*.
 
 ```
-**Plan #<N>** <title>
-<the shape | no shape> · plan round <approve | corrections | split: <what this issue keeps, what is filed> | skipped>[ (no guard) | (pasted)] · <n> decision(s) to answer | nothing to answer
+**Plan [#<N>](<issue URL>)** · <the task in a few plain words>
 
-**The plan**
-- Visible: <what a user or operator will see differently | nothing>
+<the goal in one plain sentence>
+
+**For you:** <answer D1[–D<n>], then say "go" | nothing to answer; say "go" | nothing to answer and no drawing: going ahead>.
+
+**What we plan**
+- You see: <what a user or operator will see differently | nothing>
 - Under it: <the approach, in a sentence or two>
-- Seams: <where the rule holds | one surface>
 
-**Scenarios to check** | none
+**Scenarios to check**
 - WHEN <situation> THEN <outcome>
 
-**Decisions pending** (a letter each) | none
 **D1.** <the question, naming its part, ending in "?">
 - A: <option>. <consequence>
 - B: <option>. <consequence>
-- Recommended A: <why>.
+- Recommended: A. <why>
 
-**Taken alone** (veto by naming the row) | none
+**Taken alone** (veto by naming one)
 - <what> — <why>.
+- Filed [<#M | <kit owner>/<kit repository>#M>](<issue URL>) <title> — <what was found; why not here>.
 
-**Round** <k> findings · <n> folded into the plan · <n> to answer (D…) · <D… disputed | none disputed> | skipped, no shape
-
-**Next** <answer D1, then | > "go" | nothing to answer, no shape, no drawing: going ahead.
+**Reviewed:** <the reviewer[ (no guard) | (pasted)] asked for <r> required change(s): <all are in the plan | each outcome that occurred: <f> in the plan, D… disputed> | the reviewer[ (no guard) | (pasted)] asked for no required change>[; split off #<M>] | skipped, no shape
 ```
 
 ## The work round
@@ -111,9 +112,9 @@ The developer session runs the whole round. The maintainer sees one line when th
 
 1. **Hand off.** The developer renders the hand-off packet and launches the reviewers its lenses call for (*Lens reviewers*) at once, each with the packet and its own *Lens* line.
 2. **Review.** Each reviewer reads the tree against the packet (*Reviewer rules*) and returns its return packet.
-3. **Act.** The developer fixes every required finding and every `Cleanup` and `Minor` inside the diff — one defect two returns report is one finding — and re-runs the gate. What the brief must ask becomes a D-row (*Brief rules*). A `Real bug`'s reviewer gets its second pass: a reply per finding id — `fixed <how>` / `disputed <why>` / `deferred #N` / `reported privately` — to the same reviewer, which keeps its context, and its second return is acted on the same way. A `disputed` reply is for the reviewer's information: the dispute goes to the brief. Without a second pass, no reply is written: the brief's *Round* line carries the tally.
+3. **Act.** The developer fixes every required finding and every `Cleanup` and `Minor` inside the diff — one defect two returns report is one finding — and re-runs the gate. Each `Decision pending` and each *For the maintainer* question the developer cannot settle is sorted by its door, as at the plan round: a two-way one is made in the tree and written as a `Taken:` line (*Developer rules*). What the brief must ask becomes a D-row (*Brief rules*). A `Real bug`'s reviewer gets its second pass: a reply per finding id — `fixed <how>` / `disputed <why>` / `deferred #N` / `reported privately` — to the same reviewer, which keeps its context, and its second return is acted on the same way. A `disputed` reply is for the reviewer's information: the dispute goes to the brief. Without a second pass, no reply is written: the brief's *Reviewed* line carries the tally.
 4. **Hand back.** The developer renders the hand-back brief.
-5. **Land.** The maintainer answers the brief's D-rows, may veto a *Taken alone* row by naming it, and gives *Complete*'s go-ahead, in one message or several. Before anything lands, the developer makes each answer: its pick and reason go under the plan's *Departures* (for an untracked task, into the commit body alone), the tree is made the pick where it is not, and the gate runs again. A pick bigger than the size the brief stated, and any veto, which the brief gives no size, end in the brief rendered again, and *Complete* waits for a new go-ahead. That brief shows a made answer or veto only in *In the tree*.
+5. **Land.** The maintainer answers the brief's D-rows, may veto a choice taken alone by naming it, and gives *Complete*'s go-ahead, in one message or several. Before anything lands, the developer makes each answer: its pick and reason go under the plan's *Departures* (for an untracked task, into the commit body alone), the tree is made the pick where it is not, and the gate runs again. A pick bigger than the size the brief stated, and any veto, which the brief gives no size, end in the brief rendered again, and *Complete* waits for a new go-ahead. That brief shows a made answer or veto only in *What changed*.
 
 ### Lens reviewers
 
@@ -150,7 +151,7 @@ Reconciliation (one line per box in the plan):
 Scenarios (one line per scenario in the plan):
 - WHEN <situation> — <test id> | not covered: <why>
 
-Decisions taken alone: <options picked without the maintainer; hypotheses left untested and where they are marked; spend> | none
+Decisions taken alone: <the plan's `Taken:` lines and the options picked since; hypotheses left untested and where they are marked; each spend and where it was asked> | none
 
 Where to look (2-3 hunks):
 - <path:line> — relies on <invariant>; enforced by <test> | stated only
@@ -172,7 +173,7 @@ Read by the developer. Every finding is a commitment: a location, a severity fro
 | Cleanup          | fixed inside the diff; outside it, left                                       |
 | Minor            | fixed inside the diff; outside it, left                                       |
 | Acceptable       | recorded in the return                                                        |
-| Decision pending | a D-row, with a recommended option                                            |
+| Decision pending | by its door (*Terms*): a D-row, with a recommended option, or a `Taken:` line |
 
 - **An exploitable finding**, whatever its label, is fixed in the task or goes by [review_machinery.md § The private route](review_machinery.md#the-private-route), never into a filed issue; one sent by the private route is counted in the hand-back as reported privately, with the channel and the report's private link. Where the repository names no private channel, an unfixed one becomes a D-row in the hand-back, which is private, and counts as reported privately. A fix for one the diff introduced is described like any other. For one in released code, no public record carries its location or detail until its fix ships: the issue and its plan, the commit, the PR's title and body, the CHANGELOG and the close-out comment.
 - **The verdict:** `approve` with no required finding and nothing for the maintainer; `corrections` with either; `split` when the diff does two things that should land apart.
@@ -194,55 +195,62 @@ For the maintainer: <questions the reviewer could not settle; every Decision pen
 What the maintainer reads of the work round: a reader who was at *Clarify* but saw nothing of the round, and answers or vetoes from the brief alone, by *Brief rules*.
 
 ```
-**Hand-back #<N>** <title> | **Hand-back** untracked: <one line of intent>
-<approve | corrections | split proposed: D… | round skipped: untracked micro-task> · <k> pass(es) · <the lenses that read the tree, each[ (no guard) | (pasted)] | no reviewer> · <<integration>, uncommitted on <sha> | branch <name> | PR #<M>> · gate <green | not run> · <n> decision(s) to answer | nothing to answer
+**Hand-back [#<N>](<issue URL>)** · <the task in a few plain words> | **Hand-back** · <the task in a few plain words>
 
-**In the tree**
-- Visible: <what a user or operator sees differently | nothing>
+<the goal in one plain sentence>[ <untracked: what was asked and why, in a few sentences>]
+
+**For you:** <answer D1[–D<n>], then say | nothing to answer; say> "lgtm" to land <it | branch <name> | PR [#<M>](<PR URL>)>.[ <the non-routine Complete steps>]
+
+**What changed**
+- You see: <what a user or operator sees differently | nothing>
 - Under it: <what changed beneath that>
 - Removed: <what is gone | nothing>
 
-**Decisions pending** (a letter each) | none
 **D1.** <the question, ending in "?">
-- A: <option>. <consequence>
-- B: <option>. <consequence>
-- Recommended A: <why>. Tree now: <untouched, and A is <size in lines or files>, B is <size> | already A, and B is a <size> revert>.
+- A: <option>. <consequence>. <in the tree now | <size in lines or files> to make>
+- B: <option>. <consequence>. <in the tree now | <size in lines or files> to make>
+- Recommended: A. <why>
 
-**Taken alone** (veto by naming the row) | none
+**Taken alone** (veto by naming one)
 - <what> — <why>.
-- Filed #<M> <title> — <what was found; why not here>.
+- Filed [<#M | <kit owner>/<kit repository>#M>](<issue URL>) <title> — <what was found; why not here>.
 
-**Verified** <N passed · coverage X% · lint clean · <n> tests fail without the change (<where checked>)>
-**Not run** <what, why> | nothing
-**Round** <k> findings · <n> fixed · <n> deferred (#…) · <n> reported privately (<channel and link>…) · <n> recorded · <n> to answer (D…) · <D… disputed | none disputed> | skipped, untracked micro-task
+**Spent:** <amount, on what, where it was asked>
 
-**Next** <answer D1, then | > "lgtm". <non-routine Complete steps | Nothing unusual at Complete.>
+**Verified:** <N passed · coverage X% · lint clean · <<n> tests fail without the change (<where checked>) | no test fails without the change: <why>>> | gate not run: <why>
+
+**Not run:** <what, why>
+
+**Reviewed:** <<the lenses that read the tree, each[ (no guard) | (pasted)]> asked for <r> required fix(es)[ over a second pass]: <all made | each outcome that occurred: <f> made, D… disputed, <p> reported privately (<channel and link>…)> | <the lenses> asked for no required fix>[; <q> other finding(s) reported privately (<channel and link>…)] | skipped: untracked micro-task
 ```
 
 ## Brief rules
 
 Both briefs:
 
-- **Chat markdown, exactly as the template shows:** the task, then its status; every lead bold, a list on the line after its lead, other content on the lead's line; nothing before the first line or after *Next*, and no headings, tables or fenced blocks.
+- **Chat markdown, as the template shows:** every lead bold, a list on the line after its lead, other content on the lead's line; a blank line between every two blocks and between D-rows, so no chat folds a lead into the list above it; nothing before the first line or after the last block, and no headings, tables or fenced blocks. A block with nothing in it is left out, and no count of zero is printed, save *Verified*'s tests that fail without the change: there a zero is the news, said in words with its reason.
+- **Readable alone, in plain words:** the first line links the issue and names the task in a few plain words, and the goal follows in one plain sentence; the detail stays in the ticket, and an untracked hand-back gives it in a few sentences after the goal. *For you* says what the maintainer does next. The plan, or what changed, comes before the questions, so the maintainer knows what will happen before answering.
 - **Every row stands on its own, and names no finding id:** a row says in words what it rests on — "the reviewer asked", "disputed: the reviewer holds A, I hold B". "I" is the developer, "you" the maintainer.
-- **A D-row is answerable from the brief alone:** a question ending in "?", one bullet per option with its consequence, and a last bullet with the recommended letter and its reason. The Clarify brief's question names the part of the system it touches, as `AGENTS.md` § Task workflow names them, or none for a docs or process choice. The hand-back's last bullet adds what the tree does now, with each option's size. Every `Decision pending` of a return, every disputed finding (A the reviewer's position, B the developer's), every *For the maintainer* question the developer could not settle and every work-round `split` (A the split, B the diff landed whole) is a D-row.
+- **A D-row is answerable from the brief alone:** the question, ending in "?", on its own line; one bullet per option with its consequence; a last bullet with the recommended letter and its reason. The Clarify brief's question names the part of the system it touches, as `AGENTS.md` § Task workflow names them, or none for a docs or process choice. At the hand-back each option ends with what it takes against the tree: in the tree now, or its size to make. Which choices are D-rows is *Terms*' rule, one-way doors and the three that stand whatever the door; a disputed finding's options are the reviewer's position as A and the developer's as B, a work-round `split`'s the split as A and the diff landed whole as B.
 - **"go" or "lgtm" with a D-row left open** takes its recommended option, written into the plan as taken at the go-ahead.
-- **A reviewer subagent launched without the kit's guard** is marked `(no guard)` where the status line shows it; one read in a pasted session, `(pasted)`.
-- ***Taken alone*** holds only choices the maintainer has not made and might reverse. At *Clarify*: scope added to or dropped from the ticket, a mechanism the ticket did not name, a follow-up to file. At the hand-back: scope moved beyond or dropped from the accepted plan, a departure from it, a filed follow-up by number and title, a hypothesis left untested and where it is marked, spend. One sentence each, what and why, at most five; a sixth is a D-row or the close-out comment. Not a row: a description of the implementation, a choice made at *Clarify* or answered at the hand-back, a fix inside the plan's scope (a count in *Round*).
+- ***Taken alone*** shows, one sentence each with its reason, the choices taken alone that might draw the maintainer's attention — one a reasonable reviewer could take the other way, one that reaches beyond this task, a hypothesis left untested and where it is marked — and every follow-up filed, by number, title and link, a kit issue named `<kit owner>/<kit repository>#M`. A minor one stays in the plan's `Taken:` lines, unmentioned in the brief; the maintainer may veto it there by naming it, as any choice the brief shows. An untracked task has no plan to hold them, so its hand-back shows every choice taken alone. Not a row: a description of the implementation, a choice made at *Clarify* (the plan's `Taken:` lines from before its acceptance among them) or answered at the hand-back, a fix inside the plan's scope, a spend (the hand-back's *Spent*).
+- ***Reviewed*** says in plain words what the round asked for and what became of it, never the reviewer's verdict: the required findings, one defect two returns report counted once, by each outcome that occurred (in the plan or fixed, disputed by its D-number, split off, reported privately); and every other finding sent by the private route, whatever its label, with its channel and private link. A reviewer subagent launched without the kit's guard is marked `(no guard)`; one read in a pasted session, `(pasted)`.
 - **Nothing in a brief that is not in a packet, the plan or the tree, and no new argument.**
+- **About 400 words**, counted as the whitespace-separated words of the brief as printed; past that, the task wants a split.
 
-The Clarify brief points at the plan instead of repeating it. Its *Scenarios to check* holds the scenarios a reader might argue with — a failure path, a wait, a default — not all of them. About fifteen lines; past twenty-five, the task wants a split. "go" opens implementation, never landing.
+The Clarify brief points at the plan instead of repeating it. Its *Scenarios to check* holds the scenarios a reader might argue with — a failure path, a wait, a default — not all of them. "go" opens implementation, never landing.
 
-The hand-back brief's verdict is the strictest of the returns — split over corrections over approve — its lenses are the reviewers that read the tree, its count of passes is the most any one reviewer made, and *Round* counts the findings of every return. *In the tree* is the tree after the round's fixes: three bullets with those leads, one or two sentences each. *Next* names the maintainer's action and only the non-routine *Complete* steps. About twenty-five lines; past that, the task wants a split.
+The hand-back brief's *Reviewed* names the reviewers that read the tree and says when one made a second pass. *What changed* is the tree after the round's fixes: three bullets with those leads, one or two sentences each. *Spent* names each spend the task made, its amount and where it was asked. *For you* names the maintainer's action, where "lgtm" lands the work when it is not the integration branch, and only the non-routine *Complete* steps.
 
 ## Developer rules
 
 - A gap the task finds in one of the kit's guides is filed on the kit as an issue when it is found: what the guide says, what the task met, and the gap, in the kit's words and naming no issue or surface of the repository. It is carried in *Taken alone* as a filed follow-up, named `<kit owner>/<kit repository>#M`. The guide changes by the kit's own task, never in the repository.
-- Every section is filled or says `none`. An empty *Decisions* is a claim too, and the reviewer checks it.
+- Every section of the plan and of a packet is filled or says `none`; a brief leaves an empty block out (*Brief rules*). An empty *Decisions* is a claim too, and the reviewer checks it.
 - `NOT RUN` is honest: a gate that did not run in this session after the last edit runs before the packet or the brief is rendered, and what still could not run is listed with its reason.
 - Do not pre-argue findings.
 - The plan is in the issue before the plan round, and the maintainer's answers are in it before any code: a session that picks the task up cold continues from the issue, its ticked boxes and the tree, never from a conversation it did not see.
-- After acceptance the plan changes only by its *Departures*: what changed and why, written when it happens. A departure that is user-visible, hard to undo or changes scope stops for the maintainer first.
+- A choice taken alone is written in the issue when it is taken, under the plan's *Decisions*: `Taken: <what> — <why>`, naming the reviewer's option where the developer's pick differs from it (for an untracked task, into the hand-back and the commit body). After acceptance, one that changes the plan is a departure as well.
+- After acceptance the plan changes only by its *Departures* and its `Taken:` lines: what changed and why, written when it happens. A departure through a one-way door (*Terms*) stops for the maintainer first.
 
 ## Reviewer rules
 
@@ -255,11 +263,11 @@ The hand-back brief's verdict is the strictest of the returns — split over cor
   3. **Defaults** — what do absence, a cap, a truncation or an unknown value mean, and is that right for every case they cover?
   4. **State** — where does each piece of state come from, and when is it read or resolved?
   5. **Changes** — who depends on what the plan changes or removes, and is each one named?
-  6. **Decisions** — is every choice the maintainer should make asked, with a recommended option, and none taken silently?
+  6. **Decisions** — is every one-way door the plan leaves open (*Terms*) asked, with a recommended option, every two-way door it takes written as a `Taken:` line, and none taken silently?
   7. **Reuse** — does existing code already do part of this, and is there a smaller shape?
 - In the work round, the base reviewer asks, in this order:
   1. **Scope** — does the diff do what the accepted plan says, and only that, with every departure recorded under its *Departures*? Drive-by changes are findings even when correct.
-  2. **Decisions** — would the maintainer have made each one the packet lists, and each one it omits?
+  2. **Decisions** — would the maintainer have made each one the packet lists, and each one it omits? Did each one-way door among them (*Terms*) stop for the maintainer first?
   3. **Invariants** — is every invariant the change relies on enforced by a test or a loader check, or only stated in prose? Does each rule the diff adds hold at every sibling — the other entry point, writer, route, transport or reply site?
   4. **Tests** — does each scenario in the plan, and each other new behaviour, have a test that fails without it, the refused, failed, empty and capped paths included, each asserting its true reason? Can every new test fail, with no skip, glob or parametrize that can run empty? Is the database real where it could be?
   5. **Truth** — is every sentence the diff adds, or leaves beside what it changes, true of the code for each reader and state it reaches: copy, messages, help, model-facing text, docs, comments? Comments within the repository's comment budget, present tense, why not what, no tombstones or issue-number changelogs.
@@ -276,4 +284,4 @@ The hand-back brief's verdict is the strictest of the returns — split over cor
 
 ## Where the packets land
 
-The packets sit in each reviewer's task and its result, and nothing of them reaches GitHub, before the maintainer's approval or after: the rounds are the team's own process. The plan is not a packet: it lives in the issue, where the developer writes it and the maintainer accepts it, and a plan-round finding reaches GitHub only as the change it made to the plan, with the round's mark (*The plan round*, step 4) until `accepted <date>` replaces it. At *Complete*, a feature branch's PR body follows the repository's PR template, written for a reader who never saw the round: no packet field, finding id or reviewer verdict in it. What that reader needs, such as a decision, a deviation or a follow-up, goes into the PR body or an issue in their words. On the integration branch the close-out comment may quote the brief's *In the tree* bullets.
+The packets sit in each reviewer's task and its result, and nothing of them reaches GitHub, before the maintainer's approval or after: the rounds are the team's own process. The plan is not a packet: it lives in the issue, where the developer writes it and the maintainer accepts it, and a plan-round finding reaches GitHub only as the change it made to the plan, with the round's mark (*The plan round*, step 4) until `accepted <date>` replaces it. At *Complete*, a feature branch's PR body follows the repository's PR template, written for a reader who never saw the round: no packet field, finding id or reviewer verdict in it. What that reader needs, such as a decision, a deviation or a follow-up, goes into the PR body or an issue in their words. On the integration branch the close-out comment may quote the brief's *What changed* bullets.

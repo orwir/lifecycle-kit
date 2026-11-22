@@ -10,24 +10,24 @@ Read `task_review.md` in the kit's `method/`, in the folder `lifecycle where` pr
 
 ## Gather, don't recall
 
-1. **Coordinates.** `git status --short`, `git rev-parse --short HEAD`; the flow and, on a branch or PR, `gh pr view --json number,url,baseRefName,state`, an `OPEN` PR being the flow's. From this session's return packets:
-   - the verdict, the strictest of the returns;
-   - the count of passes, the most any one reviewer made;
-   - the lenses that read the tree, each marked `(no guard)` or `(pasted)` as it was launched;
+1. **Coordinates.** `git status --short`, `git branch --show-current`; the flow and, on a branch or PR, `gh pr view --json number,url,baseRefName,state`, an `OPEN` PR being the flow's. The issue's link by `gh issue view <issue> --json url -q .url`; the task in a few plain words, and its goal in one plain sentence from the issue's *Goal*, or for an untracked task from what was asked, with a few sentences of detail. From this session's return packets:
+   - the lenses that read the tree, each marked `(no guard)` or `(pasted)` as it was launched, and whether any made a second pass;
    - `round skipped` for an untracked micro-task.
-2. **The tree.** *In the tree* is the tree after the round's fixes, not the hand-off's summary; *Visible* links each drawing the task closed.
-3. **Decisions pending,** numbered D1, D2, …: every `Decision pending` of every return, every finding you disputed, every *For the maintainer* question you could not settle and every work-round `split`; none the maintainer already answered at this hand-back.
-4. **Taken alone:**
-   - the hand-off's *Decisions taken alone*;
+2. **What changed** is the tree after the round's fixes, not the hand-off's summary; *You see* links each drawing the task closed.
+3. **Decisions pending,** numbered D1, D2, …: every one-way door left open (§ Terms) — a return's `Decision pending`, a *For the maintainer* question you could not settle — every finding you disputed, every work-round `split` and every exploitable finding left unfixed where the repository names no private channel; none the maintainer already answered at this hand-back. Each option ends with what it takes against the tree.
+4. **Taken alone.** Gather:
+   - the plan's `Taken:` lines written since its acceptance, and the hand-off's *Decisions taken alone*, spend aside;
    - every box dropped or added beyond the accepted plan, or beyond the ticket's boxes for an issue with no `## Plan`;
    - every *Departures* entry in `<issue>`;
    - every fix that picked an option or moved scope;
-   - every deferred finding, its title verbatim by `gh issue view <new> --json title`; one reported privately has no issue, and *Round* counts it with its channel and private link;
-   - every issue filed on the kit for a gap in a kit guide, named `<kit owner>/<kit repository>#M`, its title by `gh issue view <M> --repo <kit owner>/<kit repository> --json title`, the repository being the one the kit's `.claude-plugin/plugin.json` names;
-   - then drop what the maintainer decided at *Clarify* or answered or vetoed at this hand-back (*In the tree* shows it), what only describes the implementation, and every fix inside the plan's scope, a count in *Round*.
-5. **The gate** is `gate.commands`, else AGENTS.md § Commands' lint and tests. If the tree changed after its last run in this session, run it now; a red gate goes back to the review skill's § 3, and no brief is rendered on it. The numbers go under *Verified*; what still could not run under *Not run*, with its reason; a repository with no gate reads `gate not run`.
-6. **Round.** Count the findings of every return, one defect two returns report counted once, by outcome — fixed, deferred, reported privately, recorded, to answer — and name the disputed ones by their D-number.
-7. **Next.** The maintainer's action, then only the non-routine *Complete* steps.
+   - every deferred finding, its title verbatim and its link by `gh issue view <new> --json title,url`; one reported privately has no issue, and *Reviewed* counts it with its channel and private link;
+   - every issue filed on the kit for a gap in a kit guide, named `<kit owner>/<kit repository>#M`, its title and link by `gh issue view <M> --repo <kit owner>/<kit repository> --json title,url`, the repository being the one the kit's `.claude-plugin/plugin.json` names.
+
+   Then drop what was settled at *Clarify* (the maintainer's answers and the `Taken:` lines that stood at "go") or answered or vetoed at this hand-back (*What changed* shows it), what only describes the implementation, and every fix inside the plan's scope. Of the rest, show every filed issue and only the choices that might draw the maintainer's attention (§ Brief rules); the others stay in the plan's `Taken:` lines and go to the commit body. An untracked task shows every one.
+5. **Spent:** each spend the task made, from the hand-off's *Decisions taken alone*: its amount, on what, and where it was asked.
+6. **The gate** is `gate.commands`, else AGENTS.md § Commands' lint and tests. If the tree changed after its last run in this session, run it now; a red gate goes back to the review skill's § 3, and no brief is rendered on it. The numbers go under *Verified*; what still could not run under *Not run*, with its reason; a repository with no gate reads `gate not run`.
+7. **Reviewed.** Count the required findings of every return, one defect two returns report counted once, by each outcome that occurred — fixed, disputed by its D-number, reported privately — and every other finding sent by the private route, whatever its label, with its channel and private link.
+8. **For you.** The maintainer's action, where "lgtm" lands the work when it is not the integration branch, then only the non-routine *Complete* steps.
 
 ## Output
 

@@ -8,6 +8,29 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## [0.14.0] — 2026-11-22
+
+### Changed
+- A brief opens with the issue's link, the task in plain words and its goal, then what you do next (#32)
+- A brief shows the plan, or what changed, before its questions (#32)
+- A brief keeps a blank line between blocks and between questions, so a chat never runs them together (#32)
+- A D-row puts its question, each option and the recommendation on lines of their own (#32)
+- A choice you haven't made is a D-row only when it is a one-way door: user-visible, hard to undo, scope or spend (#32)
+- A two-way choice, a reviewer's included, is taken and written into the plan as a `Taken:` line, open to veto (#32)
+- *Taken alone* shows only the choices that might draw your attention, and every follow-up filed (#32)
+- A brief's *Reviewed* line says what the round asked for and what became of it, never the verdict (#32)
+- A hand-back names each spend, its amount and where it was asked, and so does the commit (#32)
+- A brief's size is about 400 words, not a count of lines (#32)
+- A hand-back always says how many tests fail without the change, a zero in words with its reason (#32)
+- The hand-back's *In the tree* is *What changed*, and both briefs' *Visible* is *You see* (#32)
+- The task and bug templates' *Decisions* hold the one-way doors and a `Taken:` line per choice taken alone (#32)
+- A plan round's mark carries what it required in place of the verdict (#32)
+
+### Removed
+- The briefs' status line, *Round* and *Next*, whose content moves to *For you* and *Reviewed* (#32)
+- The Clarify brief's *Seams*, which stays in the plan (#32)
+- *Taken alone*'s five-row cap (#32)
+
 ## [0.13.1] — 2026-11-22
 
 ### Added

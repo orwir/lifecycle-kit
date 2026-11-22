@@ -26,14 +26,14 @@ You are the developer and you run the whole round here, before any code. The mai
    - `proposed`, unmarked: check it against the code, then run its round;
    - `proposed, plan round …` (§ The plan round, step 4): the round ran; render the Clarify brief (§ 5) from the mark and the plan;
    - `accepted`: *Clarify* is over, and the work continues from its ticked boxes and the tree.
-2. **The root cause.** A bug's root cause is a hypothesis until real data confirms it, from the evidence sources AGENTS.md § Task workflow names (logs, the database, a live probe). The issue's *Root cause* says what holds, with the evidence as coordinates. Where the data does not confirm it, *Root cause* says so, and the plan's first box takes the next evidence, or a D-row asks how.
+2. **The root cause.** A bug's root cause is a hypothesis until real data confirms it, from the evidence sources AGENTS.md § Task workflow names (logs, the database, a live probe). The issue's *Root cause* says what holds, with the evidence as coordinates. Where the data does not confirm it, *Root cause* says so, and the plan's first box takes the next evidence; where how to get it is a one-way door (§ Terms), a D-row asks.
 3. **The plan.** The template's `## Plan`, with `**Status:** proposed`, as the body's last section. An issue in an older shape gets its plan now: its technical details, options and verification move in, checked against the code.
-   - A WHEN … THEN line per scenario, failure paths included; *Seams*; a box per path; the D-rows; *Verification*; *Departures* `none`.
+   - A WHEN … THEN line per scenario, failure paths included; *Seams*; a box per path; a D-row per one-way door the ticket leaves open and a `Taken:` line per two-way choice you make (§ Terms, § Developer rules); *Verification*; *Departures* `none`.
    - Every D-row names the part it touches, one AGENTS.md § Task workflow names, or none for a docs or process choice.
    - *Verification* names a test per WHEN line; a scenario no test can score names how it is scored, or says `not covered: <why>`. That each test fails without the change is the work round's to prove.
    - Coordinates, never payload: an attack is described by its shape and where the evidence sits. No live person is named: invent a name of the same shape, or give a count.
 4. **Write it.** `gh issue view <N> --json body -q .body`, fresh; the whole new body, everything outside the plan as it stands, to a file in a scratch folder outside the tree; then `gh issue edit <N> --body-file <file>`. Every later change to the plan is written the same way.
-5. **The drawing.** Where AGENTS.md § Task workflow names drawn surfaces and the change touches one, draw it now, as part of the plan, by `design_workflow.md`. Each open decision is a D-row, and the brief's *Visible* links the drawing. The reviewer cannot see it, so the packet states its region and decisions in words.
+5. **The drawing.** Where AGENTS.md § Task workflow names drawn surfaces and the change touches one, draw it now, as part of the plan, by `design_workflow.md`. Each open decision is a D-row, and the brief's *You see* links the drawing. The reviewer cannot see it, so the packet states its region and decisions in words.
 6. **The shape:** which of § When it runs' four shapes the plan has, and where it meets it.
    - One or more: the round runs (§ 2).
    - None: the round is skipped; go to the Clarify brief (§ 5), the round marked skipped.
@@ -51,19 +51,23 @@ Launch one reviewer with the plan packet as its whole task, by the review skill'
 By § The plan round, step 4:
 
 - fold every `Real bug` and `Drift` into the plan, which stays `proposed`; an exploitable one goes in with no location or detail;
-- every `Decision pending`, and every *For the maintainer* question you cannot settle, becomes a D-row with its recommended option;
+- every `Decision pending`, and every *For the maintainer* question you cannot settle, goes by its door (§ Terms): a one-way one becomes a D-row with its recommended option; a two-way one is taken, at the reviewer's recommendation or at your own pick with the reviewer's option named, and written as a `Taken:` line (§ Developer rules); a question with no option goes the same way, your answer as its recommendation;
 - a finding you dispute becomes a D-row: the reviewer's position as A, yours as B;
-- a `split`: file the part split off as a capture, the template's sections above the plan, labelled as the repository's `AGENTS.md` says, and, where the settings name a board, `lifecycle board <new> Backlog`; narrow this plan to what it keeps, and name `<new>` on the brief's status line;
+- a `split`: file the part split off as a capture, the template's sections above the plan, labelled as the repository's `AGENTS.md` says, and, where the settings name a board, `lifecycle board <new> Backlog`; narrow this plan to what it keeps, and name `<new>` on the brief's *Reviewed* line;
 - write the plan back as in § 1 step 4, with the round's mark in the same write;
 - one plan round per plan: what stays disputed goes to the maintainer, never to a second pass.
 
 ## 5. The Clarify brief
 
-Render it by § Clarify brief's template and § Brief rules.
+Render it by § Clarify brief's template and § Brief rules:
+
+1. The first line links the issue, from `gh issue view <N> --json url -q .url`, and names the task in a few plain words; the goal is the issue's *Goal* in one plain sentence.
+2. *Taken alone*, by § Brief rules: the plan's `Taken:` lines that might draw the maintainer's attention, and every follow-up filed, its title and link by `gh issue view <M> --json title,url`.
+3. *Reviewed* is read off the round's mark.
 
 ## 6. On "go"
 
-1. Write each answer into the plan: the pick and its reason in place of the recommendation, and whatever it changes in the scenarios or the boxes. A D-row left unanswered takes its recommendation, written as taken at "go".
+1. Write each answer into the plan: the pick and its reason in place of the recommendation, and whatever it changes in the scenarios or the boxes. A D-row left unanswered takes its recommendation, written as taken at "go". A vetoed choice taken alone: its `Taken:` line gives way to the maintainer's pick, and the plan is made that way.
 2. Set `**Status:** accepted <YYYY-MM-DD>`, write the body back as in § 1 step 4, and only then write code.
 3. A correction to the drawing before "go" is a redraw and a brief rendered again, not a new round.
 4. A skipped round with nothing to answer awaits no "go" (§ The plan round): set the plan accepted and go on, unless it carries a drawing.

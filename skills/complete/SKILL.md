@@ -17,18 +17,18 @@ This is the *Complete* phase of AGENTS.md § Task workflow. It runs only on the 
 
 ## 1. Before anything lands
 
-1. **The hand-back's answers,** by `task_review.md` § The work round, step 5: each answer to the hand-back's D-rows given with this go-ahead or before it; each D-row left unanswered, which takes its recommendation, written as taken at the go-ahead; each *Taken alone* row the maintainer vetoed. The gate runs again after them. A pick bigger than the size the brief stated, or any veto, stops the batch: render the brief again by the handback skill and wait for a new go-ahead.
+1. **The hand-back's answers,** by `task_review.md` § The work round, step 5: each answer to the hand-back's D-rows given with this go-ahead or before it; each D-row left unanswered, which takes its recommendation, written as taken at the go-ahead; each choice taken alone the maintainer vetoed. The gate runs again after them. A pick bigger than the size the brief stated, or any veto, stops the batch: render the brief again by the handback skill and wait for a new go-ahead.
 2. **The gate** — `gate.commands`, else AGENTS.md § Commands' lint and tests — passed in this session after the last edit; if not, run it now. A red gate stops the batch. A repository with no gate says so in the report.
 3. `git status --short` lists only this task's files. Anything else is someone's in-progress work: leave it out and name it in the report.
 
 ## 2. Kit issues
 
-A gap this task found in a kit guide was filed on the kit when it was found (`task_review.md` § Developer rules), and the hand-back carries it as a *Taken alone* row. One found and not yet filed is filed now, on the repository the kit's `.claude-plugin/plugin.json` names (in the folder `lifecycle where` prints), in the kit's words. Nothing of the kit's lands from this repository.
+A gap this task found in a kit guide was filed on the kit when it was found (`task_review.md` § Developer rules), and the hand-back's *Taken alone* names it. One found and not yet filed is filed now, on the repository the kit's `.claude-plugin/plugin.json` names (in the folder `lifecycle where` prints), in the kit's words. Nothing of the kit's lands from this repository.
 
 ## 3. Commit
 
 1. Stage the task's files by name; never `git add -A`.
-2. One Conventional Commit (AGENTS.md § Branching and commits): the body says why, names every decision taken alone, every departure and each answer to the hand-back, and ends `Closes #<issue>` on a tracked task. A fix for an exploitable finding in released code keeps its location and detail out of every public record `task_review.md` § Return packet lists, until its fix ships.
+2. One Conventional Commit (AGENTS.md § Branching and commits): the body says why, names every decision taken alone with its reason (the plan's `Taken:` lines, the hand-off's and the hand-back's), every departure, each answer to the hand-back and each spend with its amount, and ends `Closes #<issue>` on a tracked task. A fix for an exploitable finding in released code keeps its location and detail out of every public record `task_review.md` § Return packet lists, until its fix ships.
 3. The message goes in a file in a scratch folder outside the tree, passed with `-F`.
 4. A failing hook is fixed at its cause and the commit made again; never `--no-verify`, never amend a pushed commit.
 
@@ -52,7 +52,7 @@ Where the shell's interpreter is not the project's, put the project's environmen
 ## 5. Close the issue
 
 1. A pushed `Closes #<issue>` closes the issue only when it lands on the repository's default branch (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`), and a PR merge only into it. Where the work landed on another branch, `gh issue close <issue>` too.
-2. Comment with `gh issue comment <issue> --body-file <file>`, quoting at most the hand-back brief's *In the tree*: no round tally, verdict or finding id.
+2. Comment with `gh issue comment <issue> --body-file <file>`, quoting at most the hand-back brief's *What changed*: no round tally, verdict or finding id.
 
 ## 6. Board
 
