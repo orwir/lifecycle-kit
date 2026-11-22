@@ -8,6 +8,11 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## [0.13.1] — 2026-11-22
+
+### Added
+- The sections the guides, skills, reviewer and upgrade steps cite are held by a test to exist
+
 ## [0.13.0] — 2026-11-22
 
 ### Changed
