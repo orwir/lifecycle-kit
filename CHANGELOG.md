@@ -8,6 +8,27 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## [0.12.0] — 2026-11-22
+
+### Changed
+- The AGENTS template's body is a sixth shorter, with every rule kept (#29)
+- The AGENTS template leaves the comment rules' reasons to `codebase_review.md` § Phase 2 (#29)
+- The AGENTS template's commit gate allows WIP commits on a feature branch (#29)
+- The AGENTS template's release gate holds a release that ships without a workflow (#29)
+- The AGENTS template moves a board card only where `.lifecycle.toml` names a board (#29)
+- The AGENTS template writes a new doc file where the accepted plan has a box for it, an ADR among them (#29)
+- The AGENTS template lands a feature branch by the complete skill (#29)
+- The AGENTS template holds the parts, evidence sources, drawn surfaces and test command the skills read (#29)
+- The clarify skill has each D-row name the part of the system it touches (#29)
+- The README says what the install changes on this machine without asking (#29)
+- *Put a repository on the kit* stops at an empty repository before it installs anything (#29)
+- A clone install writes its pull into the maintainer's global agent instructions (#29)
+
+### Fixed
+- The ideas home commits an upgrade's changes only on the user's go-ahead (#29)
+- The ideas home's graduation freezes `IDEA.md` and deletes its split branch (#29)
+- The AGENTS template's placeholder instructions and project-type notes match its body (#29)
+
 ## [0.11.0] — 2026-11-22
 
 ### Changed

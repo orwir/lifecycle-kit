@@ -176,7 +176,7 @@ Use a branch when the change is:
 - Something you want to **review as a diff** before merging
 - Something that benefits from a **PR description as a mini-changelog**
 
-When those apply, automate the flow end to end: AI assistants can drive it whole, in about thirty seconds per feature. The commands, and the deletion of a merged branch on both ends, are the AGENTS template's § Branching and commits: a branch listed by `git branch` is either active work or it shouldn't exist.
+When those apply, automate the flow end to end: AI assistants can drive it whole, in about thirty seconds per feature. The kit's complete skill runs it: the PR, the merge once every check passed, and the merged branch deleted on both ends, since a branch listed by `git branch` is either active work or it shouldn't exist.
 
 ### Team / open-source flow
 

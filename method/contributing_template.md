@@ -13,7 +13,7 @@ kit's
 
 ## Local setup
 
-1. Clone and install dependencies: `{{SETUP_COMMANDS}}` ({{e.g., `uv sync`, `npm install`}}).
+1. Clone and install dependencies: `{{SETUP_CMD}}` ({{e.g., `uv sync`, `npm install`}}).
 2. Install the git hooks: `{{HOOK_INSTALL_COMMAND}}` ({{e.g., `pre-commit install
    --hook-type pre-commit --hook-type pre-push`}}). Non-negotiable — the pre-push
    stage is the local CI gate.

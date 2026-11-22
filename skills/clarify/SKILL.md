@@ -21,7 +21,7 @@ You are the developer and you run the whole round here, before any code. The mai
 1. **The ticket.** `gh issue view <N>` and the code the change touches: every path, caller and entry point it meets. A *Plan* already in the issue is where this session continues: `proposed` is checked against the code and goes on to its round; `accepted` means *Clarify* is over, and the work continues from its ticked boxes and the tree.
 2. **The root cause.** A bug's root cause is a hypothesis until real data confirms it — the evidence sources AGENTS.md names (logs, the database, a live probe). Before the plan is written, the issue's *Root cause* says what holds, with the evidence as coordinates.
 3. **The plan.** The template's `## Plan` with `**Status:** proposed`, as the body's last section, where the template puts it. A WHEN … THEN line per scenario, failure paths included; *Seams*; a box per path; the D-rows; *Verification*; *Departures* `none`. An issue in an older shape gets its plan now: its top-level technical details, options and verification move into it, re-checked against the code.
-   - Every D-row names the layer it touches — one AGENTS.md names, such as the runtime, a prompt or an eval — or none, for a docs or process choice.
+   - Every D-row names the part it touches — one AGENTS.md § Task workflow names, such as the runtime, a prompt or an eval — or none, for a docs or process choice.
    - *Verification* names a test per WHEN line. A scenario a test cannot score names how it is scored, or says `not covered: <why>`. That each test fails without the change is proven at the work round, on a worktree of the base; it is not claimed here.
    - Coordinates, never payload: an attack is described by its shape and where the evidence sits, never quoted. No live person is named: invent a name of the same shape, or give a count.
 4. **Write it.** Fetch the body fresh with `gh issue view <N> --json body -q .body`; write the whole new body to a file in a scratch folder outside the tree, everything outside the plan as it stands; then `gh issue edit <N> --body-file <file>`. Every later change to the plan goes in the same way.
@@ -53,7 +53,7 @@ Print one line: the reviewer is reading the plan for the task and the Clarify br
 
 ## 5. The Clarify brief
 
-Render it by the guide's template, exactly, as chat markdown: no headings, tables or fenced block, nothing before the first line and nothing after *Next*. It points at the plan instead of repeating it. No finding ids — a row says in words what it rests on; "I" is the developer, "you" the maintainer; each D-row's question names its layer. About fifteen lines; past twenty-five, the task wants a split.
+Render it by the guide's template, exactly, as chat markdown: no headings, tables or fenced block, nothing before the first line and nothing after *Next*. It points at the plan instead of repeating it. No finding ids — a row says in words what it rests on; "I" is the developer, "you" the maintainer; each D-row's question names its part. About fifteen lines; past twenty-five, the task wants a split.
 
 ## 6. On "go"
 

@@ -18,7 +18,7 @@ gap a project finds in a guide is filed on the kit as an issue, by `task_review.
   (`docs/product/`, `design/`). A graduated idea moves out into its own repo with
   its kill criteria, `IDEA.md` freezes into `docs/product/idea.md`, and the home
   checks the project on a schedule; a killed one moves to the home's `archive/`.
-- **`ideas_home_template.md`** — the ideas home's `AGENTS.md`, word for word: its
+- **`ideas_home_template.md`** — the ideas home's `AGENTS.md`, which a home adapts: its
   layout and how to capture, kill, graduate and check, for any agent opened in it.
   Setting a home up where there is none is `idea_gauntlet.md` § The ideas home.
 - **`project_kickstart.md`** — language-agnostic playbook for standing up and

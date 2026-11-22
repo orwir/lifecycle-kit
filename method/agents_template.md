@@ -9,7 +9,7 @@ Companion to `project_kickstart.md`: the kickstart explains *why* each rule exis
 ## How to use this template
 
 1. **Copy** the section under "Template" (everything inside the fenced block) into a new `AGENTS.md` at your repo root.
-2. **Fill placeholders.** Every `{{token}}` is a fill-in. The comments after each one tell you what kind of value goes there.
+2. **Fill placeholders.** Every named `{{TOKEN}}` has a row in the *Placeholder reference* below, with example values. A choice token, `{{a | b}}`, keeps one option; an example token, `{{e.g., …}}`, takes the repository's own value.
 3. **Prune by project type.** Some sections include alternative paragraphs marked `[web-service]`, `[desktop]`, `[mobile]`, `[cli]`, `[library]` — keep the one that matches and delete the others. Sections with no marker apply to all project types.
 4. **No vendor shims.** `AGENTS.md` is read natively by most tools (Claude Code from v2.1.277, Codex, Cursor, Windsurf, Gemini CLI, Copilot). Don't add a `CLAUDE.md`, `.claude/CLAUDE.md` or `CLAUDE.local.md`: any one of them makes Claude Code read `CLAUDE.md` only. Put Claude-only additions in `.claude/rules/`; a one-line `CLAUDE.md` containing `@AGENTS.md` is only for sessions that can't read `AGENTS.md` directly (an older Claude Code). Tool support shifts quarterly, so check the current docs of each assistant you adopt.
 5. **Keep it under ~200 lines.** Longer files get skimmed instead of read. Rationale lives in the kickstart and ADRs, setup and release steps in `CONTRIBUTING.md`; keep `AGENTS.md` as the compressed contract.
@@ -39,69 +39,64 @@ You are working in the `{{OWNER}}/{{REPO}}` repository: a {{LANGUAGE}} {{PROJECT
 
 These rules are the compressed operating contract. Why each exists is the lifecycle kit's [project_kickstart.md](https://github.com/orwir/lifecycle-kit/blob/main/method/project_kickstart.md); setting up and releasing is [CONTRIBUTING.md](CONTRIBUTING.md). Every link to the lifecycle kit, here or in any other file, opens its `main` on GitHub: read the file at the same path in the folder `lifecycle where` prints instead (`method/…`, `docs/guide.md`), the release this machine runs.
 
-**Hard gates, before anything else:** never start a release workflow without the release's own "proceed"; never commit, push, merge, or close work without explicit approval (see *Task workflow*); never bypass hooks with `--no-verify`; never commit or print secrets. Everything below is detail around these four.
+**Hard gates, before anything else** (everything below is detail around them):
+- Never ship a release without that release's own "proceed".
+- Never commit, push, merge or close work without explicit approval (*Task workflow*), except WIP commits on a feature branch.
+- Never bypass a hook with `--no-verify`: fix what it caught, or, if the hook is wrong, say so and propose a fix.
+- Never commit or print secrets.
 
 ---
 
 ## Commands
 
 - Setup: `{{SETUP_CMD}}`
-- Test: `{{TEST_CMD}}`
+- Test: `{{TEST_CMD}}`; given tests alone: `{{TARGETED_TEST_CMD}}`
 - Lint + format: `{{LINT_CMD}}`
 - Run locally: `{{RUN_CMD}}`
-- Lifecycle: `lifecycle doctor` before a task; `.lifecycle.toml` holds this repository's settings for the lifecycle kit's skills and command
+- Lifecycle: `lifecycle doctor --json` before a task. A finding whose fix is `upgrade` runs the lifecycle kit's upgrade skill first, alone, unless a task's edits are in the tree: that task lands first. Any other `block`, or a failure of the command, goes to the user. `.lifecycle.toml` holds this repository's settings for the kit's skills and command.
 
 These are the canonical invocations — the same ones the hooks and CI run. Don't improvise variants.
 
 ## Branching and commits
 
-- **Default flow:** {{commit directly to the integration branch | open a feature branch}}. {{Reason: solo-maintained with pre-push hooks mirroring CI | reason: multiple contributors review via PR}}. Pick one and stick to it; mixing flows breaks the project board lifecycle.
-- **When to use a feature branch:** open one (`feat/…`, `fix/…`, `chore/…`, `docs/…`, `refactor/…`, `perf/…`) when the work is multi-commit and should land atomically, is risky or invasive (schema migrations, auth, payments, cross-cutting refactors), spans multiple sessions, or benefits from a diff-review pass before merging. When in doubt, branch.
-- **A push ships nothing.** `{{INTEGRATION_BRANCH}}` is the one long-lived branch; a release {{deploys | publishes artifacts}} only through the release workflow, dispatched on the commit the release review read (*Versioning and release* below), which creates the `v*` tag. Never create one by hand. A production fix that cannot wait for what `{{INTEGRATION_BRANCH}}` holds goes on a `hotfix/…` branch cut from the last release's tag ([CONTRIBUTING.md § Hotfixes](CONTRIBUTING.md)).
-- **Automated feature-branch flow:**
-  ```bash
-  git checkout -b feat/my-thing
-  # ... work, commit, push ...
-  git push -u origin feat/my-thing
-  gh pr create --base {{INTEGRATION_BRANCH}} --title "<subject>" --body-file <pr.md outside the tree>
-  gh pr checks feat/my-thing --watch && gh pr merge feat/my-thing --squash --delete-branch
-  git fetch --prune
-  ```
-  The PR body is `.github/pull_request_template.md`, filled for a reader who never saw the review rounds ([task_review.md](https://github.com/orwir/lifecycle-kit/blob/main/method/task_review.md)); `--fill` would send the commit messages instead. The merge runs only once `--watch` exits 0, every check passed (before the first check registers it reports none and fails: run it again); `--delete-branch` then deletes the branch on GitHub and here, after switching to `{{INTEGRATION_BRANCH}}` and pulling it, and `git fetch --prune` drops its remote-tracking ref. A branch listed by `git branch` is either active work or it shouldn't exist.
-- Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/):
-  * Allowed prefixes: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `perf`.
-  * Optional scope in parentheses: `fix(parser): …`, `chore(deps): …`, `chore(ci): …`.
-  * Subject in imperative mood, no trailing period, under 72 characters.
-  * Body (when used) explains **why**, not what. The diff shows what.
-- Never use `--no-verify` to bypass hooks. If a hook fails, fix the underlying issue. If the hook is wrong, say so and propose a fix — do not skip.
+- **Default flow:** {{commit directly to the integration branch | open a feature branch}}, {{since one maintainer's pre-push hooks mirror CI | since contributors review by PR}}.
+- **A feature branch** (`feat/…`, `fix/…`, `chore/…`, `docs/…`, `refactor/…`, `perf/…`), whatever the default, for work that is multi-commit and should land atomically, risky or invasive (schema migrations, auth, payments, cross-cutting refactors), spans sessions, or wants a diff review before merging. When in doubt, branch. It lands by the lifecycle kit's `complete` skill: a PR from `.github/pull_request_template.md` for a reader who never saw the review rounds, merged once every check passed, the branch deleted on both ends. A branch listed by `git branch` is either active work or it shouldn't exist.
+- **A push ships nothing.** `{{INTEGRATION_BRANCH}}` is the one long-lived branch. A release {{deploys | publishes artifacts}} only as *Versioning and release* says: where `[release]` in `.lifecycle.toml` names a workflow, dispatched on the commit the release review read, which creates the `v*` tag (never one by hand); otherwise by the steps in CONTRIBUTING.md § Releasing. A production fix that cannot wait for what `{{INTEGRATION_BRANCH}}` holds goes on a `hotfix/…` branch cut from the last release's tag ([CONTRIBUTING.md § Hotfixes](CONTRIBUTING.md)).
+- **Commits** follow [Conventional Commits](https://www.conventionalcommits.org/): a prefix of `feat`, `fix`, `refactor`, `docs`, `test`, `chore` or `perf`, an optional scope (`fix(parser): …`, `chore(deps): …`), a subject in the imperative with no trailing period and under 72 characters, and a body, when used, that says **why**: the diff shows what.
 
 ## Task workflow — three phases
 
-Every tracked task moves through three explicit phases. **Do not collapse them** — each gate is the user's, not yours to assume. The issue carries the task between sessions: a session that picks it up cold continues from the issue body, its ticked boxes and the tree, so nothing a later session needs may live only in the conversation.
+Every tracked task moves through three phases. **Do not collapse them**: each gate is the user's, not yours to assume. The issue carries the task between sessions: a session that picks it up cold continues from the issue body, its ticked boxes and the tree, so nothing a later session needs may live only in the conversation.
 
-1. **Clarify.** Read the ticket and the code it touches, ask for any missing detail, and surface scope or constraint conflicts *before* writing code. Move the board item to `In Progress` when you pick it up (an untracked task has no board item; the approval gates still apply). Write the issue's *Plan* and run the plan round where it applies. Implementation begins only once the plan is accepted: by the maintainer's "go", or, when the round was skipped and nothing is left to answer, by you. Accepting a plan opens implementation and nothing more.
-2. **Implement & stop.** Do the work in full to the *Definition of Done* below, ticking each Technical-details box as its path lands and recording a departure under the plan's *Departures* when you make it. Run the local gate in this session, and say what could not run. Run the work round, then **stop and hand back** with the hand-back brief: on `{{INTEGRATION_BRANCH}}` the changes stay **uncommitted**; on a feature branch WIP commits are fine. Corrections, and answers to the brief given without the go-ahead, are worked here, then you stop again. Do **not** push, merge, or close anything in this phase.
-   - The rounds, their packets and the briefs are the lifecycle kit's [task_review.md](https://github.com/orwir/lifecycle-kit/blob/main/method/task_review.md); its `clarify`, `review` and `handback` skills run them, and its `complete` skill the close-out.
-3. **Complete — on explicit approval only.** An explicit go-ahead ("complete the task", "lgtm", or equivalent) is the *only* trigger to commit the task work, push, close the ticket, move the board item to `Done`, and delete a merged feature branch, remote and local. No approval → no commit, no push, no close. Answers to the brief given with the go-ahead are made first, within the size the brief stated; a veto, or a bigger change, renders the brief again and waits for a new go-ahead. A gap found in one of the kit's guides is filed on the kit ([task_review.md](https://github.com/orwir/lifecycle-kit/blob/main/method/task_review.md) § Developer rules). The same gate applies to `git push`, `gh pr create` and `gh pr merge`: auto mode is permission to write code without re-asking, not permission to land it.
+The rounds, their packets and the briefs are the lifecycle kit's [task_review.md](https://github.com/orwir/lifecycle-kit/blob/main/method/task_review.md); its `clarify`, `review` and `handback` skills run them, and its `complete` skill the close-out. Where `.lifecycle.toml` names a board, the card moves by `lifecycle board`: to `In Progress` at *Clarify*, to `Done` at *Complete*.
+
+1. **Clarify.** Read the ticket and the code it touches, ask for any missing detail, and surface scope or constraint conflicts *before* writing code. Write the issue's *Plan* and run the plan round where it applies. Implementation begins only once the plan is accepted: by the maintainer's "go", or, when the round was skipped and nothing is left to answer, by you. Accepting a plan opens implementation and nothing more.
+2. **Implement & stop.** Do the work in full to the *Definition of Done*, ticking each Technical-details box as its path lands and recording a departure under the plan's *Departures* when you make it. Run the local gate in this session, say what could not run, and run the work round. Then **stop and hand back** with the hand-back brief, the changes **uncommitted** outside a feature branch. Corrections, and answers to the brief given without the go-ahead, are worked here, then you stop again. A gap found in one of the kit's guides is filed on the kit (task_review.md § Developer rules).
+3. **Complete — on explicit approval only.** An explicit go-ahead ("complete the task", "lgtm", or equivalent) is the *only* trigger to commit the task work, push, close the ticket and delete a merged feature branch. Answers to the brief given with it are made first, within the size the brief stated; a veto, or a bigger change, renders the brief again and waits for a new go-ahead. The same gate holds `git push`, `gh pr create` and `gh pr merge`: auto mode is permission to write code without re-asking, not permission to land it.
+
+What the kit's skills read here:
+- **Parts a decision can touch:** {{PARTS}}.
+- **Evidence a root cause is confirmed from:** {{EVIDENCE_SOURCES}}.
+- **Drawn surfaces:** {{DRAWN}}; when a change to one is drawn and closed is [design_workflow.md](https://github.com/orwir/lifecycle-kit/blob/main/method/design_workflow.md)'s.
 
 ### Definition of Done
 
-A task is done when all five hold. The gate and the work round prove some of them; the rest are the developer's to show before the hand-back, and a brief that cannot claim one says which, instead of calling the task done.
+A task is done when all five hold; a brief that cannot claim one says which, instead of calling the task done.
 
-1. **It serves the ticket's goal at real scale, not only its named mechanism.** A control, a copy line or a shape the ticket names is where the work starts, not a defense of how it turned out. If it serves the goal badly with real data — the whole list, the longest locale, the smallest screen — raise it at *Clarify* or take it through the design loop ([design_workflow.md](https://github.com/orwir/lifecycle-kit/blob/main/method/design_workflow.md)); never ship it because it was named.
+1. **It serves the ticket's goal at real scale, not only its named mechanism.** If what the ticket names serves the goal badly with real data — the whole list, the longest locale, the smallest screen — raise it at *Clarify* or take it through the design loop ([design_workflow.md](https://github.com/orwir/lifecycle-kit/blob/main/method/design_workflow.md)); never ship it because it was named.
 2. **It was used the way its user uses it.** A UI change is looked at running, with real data: at the smallest and the largest supported width, in every shipped locale, by keyboard alone, and without scripts where the surface promises to work without them. A CLI, API or library change is called the way its caller calls it. Not having looked is a task not done, not a *Not run* line.
 3. **Every scenario in the plan, and every other new behaviour, has a test that fails without it** (*Tests and quality gates*).
-4. **The gate is green and the work round ran** (above).
-5. **The docs are in sync** (*Keep documentation in sync with code*): every doc the change touches, a `CHANGELOG.md` entry for any user-visible change, new env vars, commands, config options, labels or workflows documented where an operator looks, an ADR for a non-obvious decision referenced where it surfaces, and a pattern reusable across projects filed on the lifecycle kit ([task_review.md](https://github.com/orwir/lifecycle-kit/blob/main/method/task_review.md) § Developer rules).
+4. **The gate is green and the work round ran**, or the brief says why it was skipped, as an untracked micro-task's does.
+5. **The docs are in sync** (*Keep documentation in sync with code*): every doc the change touches, a `CHANGELOG.md` entry for any user-visible change, new env vars, commands, config options, labels or workflows documented where an operator looks, an ADR for a non-obvious decision (a box in the plan) referenced where it surfaces, and a pattern reusable across projects filed on the lifecycle kit.
 
 The bar is the maintainer's. A shortfall in 1 or 2 found after landing is unfinished work, and its fix is never declined on cost or on the demand not being there yet.
 
 ## Code layout
 
-- `{{ENTRY_DIR}}` ({{e.g., `apps/`, `cmd/`, `bin/`}}) contains transport / entry points. These are thin — they know about {{e.g., HTTP, chat-platform APIs, CLI args, OS event loops, native UI frameworks}}.
-- `{{LOGIC_DIR}}` ({{e.g., `packages/`, `lib/`, `internal/`, `core/`}}) contains pure logic. **Never import transport libraries ({{e.g., `fastapi`, `express`, `tauri`, `react-native`, `pyqt`, `cobra`}}) from `{{LOGIC_DIR}}`.** Logic must be testable without spinning up the transport.
-- `tests/` mirrors the source tree 1:1. A new file `{{LOGIC_DIR}}/foo/bar.{{EXT}}` gets a new file `tests/{{LOGIC_DIR}}/foo/test_bar.{{EXT}}`. No clever grouping.
-- `migrations/` (if applicable) contains numbered schema files. Don't rewrite applied migrations — add a new one.
+- `{{ENTRY_DIR}}` ({{e.g., `apps/`, `cmd/`, `bin/`}}) holds the thin transport / entry points, which know about {{e.g., HTTP, chat-platform APIs, CLI args, OS event loops, native UI frameworks}}.
+- `{{LOGIC_DIR}}` ({{e.g., `packages/`, `lib/`, `internal/`, `core/`}}) holds pure logic. **Never import transport libraries ({{e.g., `fastapi`, `express`, `tauri`, `react-native`, `pyqt`, `cobra`}}) from `{{LOGIC_DIR}}`.** Logic must be testable without spinning up the transport.
+- `tests/` mirrors the source tree 1:1, with no clever grouping: `{{LOGIC_DIR}}/foo/bar.{{EXT}}` is tested in `tests/{{LOGIC_DIR}}/foo/test_bar.{{EXT}}`.
+- `migrations/` (if any) holds numbered schema files: add one, never rewrite an applied one.
 - `scripts/` is for one-off tooling. Don't move runtime code here.
 - Do not create new top-level directories without a clear reason and user sign-off.
 
@@ -113,12 +108,11 @@ The bar is the maintainer's. A shortfall in 1 or 2 found after landing is unfini
 
 ## Tests and quality gates
 
-- Every new feature or bug fix gets tests. New code without tests is incomplete.
 - Tests run with `{{TEST_RUNNER}}` ({{e.g., `pytest`, `vitest`, `jest`, `go test`, `cargo test`, `xctest`}}). See `{{PKG_MANIFEST}}` for config.
-- Coverage floor is `{{COVERAGE_FLOOR}}%` and enforced by both pre-commit (pre-push stage) and CI. If your change drops coverage below the floor, add tests, don't lower the floor.
+- The coverage floor, `{{COVERAGE_FLOOR}}%`, is enforced at the pre-push stage and in CI: a change that drops below it adds tests, never lowers the floor.
 - Integration tests hit real I/O ({{e.g., a real SQLite database, a real filesystem, a real local HTTP listener}}). **Do not mock the {{primary-side-effect target}} in integration tests.** Unit tests of pure functions are fine without it.
-- Lint + format: `{{LINT_TOOL}}` only ({{e.g., `ruff`, `eslint` + `prettier`, `gofmt` + `golangci-lint`, `rustfmt` + `clippy`, `swiftlint` + `swift-format`}}). Never introduce competing tools that do the same job — pick one per role and stick with it.
-- Pre-commit hooks are wired to run the same commands as CI. If something passes locally, it should pass CI. **If this project lacks a local hook config covering lint, format, full test suite, coverage threshold, and secret scan**, set one up before the first commit — see [project_kickstart.md § Day-zero guardrails](https://github.com/orwir/lifecycle-kit/blob/main/method/project_kickstart.md). Coverage threshold and lint checks should fail the *push*, not just CI.
+- Lint + format: `{{LINT_TOOL}}` only ({{e.g., `ruff`, `eslint` + `prettier`, `gofmt` + `golangci-lint`, `rustfmt` + `clippy`, `swiftlint` + `swift-format`}}). One tool per role, never a competing one.
+- Pre-commit hooks run the same commands as CI, so what passes locally passes CI, and coverage and lint fail the *push*, not just CI. **If this project lacks a local hook config covering lint, format, the full test suite, the coverage floor and a secret scan**, set one up before the first commit: [project_kickstart.md § Day-zero guardrails](https://github.com/orwir/lifecycle-kit/blob/main/method/project_kickstart.md).
 
 ## Documentation
 
@@ -130,26 +124,26 @@ The bar is the maintainer's. A shortfall in 1 or 2 found after landing is unfini
   * `docs/architecture/` — the "how": components, data flow, config reference
   * `docs/guides/` — the project's own task-oriented howtos (deploy / publish / package, extend). The lifecycle kit's guides (kickstart, task review, the comprehensive reviews) are not copied here
   * `docs/adr/` — architecture decision records, one per significant choice
-- **Do not create new documentation files unprompted.** Work from conversation context; if you need to capture a decision, suggest an ADR and wait for approval.
+- **A new documentation file is written only where the accepted plan has a box for it, or, outside a tracked task, where the user asks for it.** An ADR for a non-obvious decision is proposed as a box; a file a mapping row names that the project lacks is surfaced (*Change → required doc mapping*). A file a kit flow writes (a review's report, an upgrade's port) is that flow's.
 - **Do not recreate `roadmap.md`** or any equivalent tracking file. Tracked work lives on GitHub: issues, milestones, the project board.
-- When referencing code, cite `file.{{EXT}}:123` style. Markdown links in docs use **file-relative paths** so they resolve in every renderer (GitHub web, IDE preview, static site generators). From a doc under `docs/adr/`, that means `[{{LOGIC_DIR}}/foo.{{EXT}}](../../{{LOGIC_DIR}}/foo.{{EXT}})` — workspace-root-relative paths like `[foo.{{EXT}}]({{LOGIC_DIR}}/foo.{{EXT}})` only resolve in workspace-aware IDE tooling and 404 everywhere else.
-- Avoid `#L123` line anchors in long-lived docs (ADRs especially). Line numbers rot on every refactor — keep the file ref, drop the line.
-- When writing an ADR, use the four-section format: Status / Context / Decision / Consequences. Number it sequentially.
+- Cite code as `file.{{EXT}}:123`. Markdown links in docs use **file-relative paths**, which resolve in every renderer: from a doc under `docs/adr/`, `[{{LOGIC_DIR}}/foo.{{EXT}}](../../{{LOGIC_DIR}}/foo.{{EXT}})`, never a workspace-root path, which 404s outside workspace-aware IDE tooling.
+- Avoid `#L123` line anchors in long-lived docs (ADRs especially): keep the file ref, drop the line.
+- An ADR has four sections, Status / Context / Decision / Consequences, and the next number.
 
 ### How a doc is written
 
-The comment budget governs prose *inside* code; these govern prose in `docs/` and the root markdown. Same instinct — the reader is looking for something, and every line they read before finding it is a line you charged them.
+The reader is looking for something, and every line before it is a line charged to them.
 
-- **Open with orientation: what this covers, who it is for, and what it deliberately does not cover.** Two or three sentences, before the first `##`. A reader who is in the wrong document must be able to leave inside five seconds. Never open with a bare heading and a horizontal rule.
-- **Conclusion first, evidence under it.** State what is true, then why — never a paragraph of reasoning that arrives at its point in the last sentence. This is what makes a doc skimmable by a human and retrievable in fragments by a model.
-- **One claim per paragraph, and keep a paragraph under ~700 characters.** Past that, split it or demote the detail to sub-bullets. A numbered step in a how-to is a *step*: if it needs three caveats, they are sub-bullets under it, not more sentences inside it.
-- **Tables scan; prose explains.** A table cell that needs a paragraph is content in the wrong container — put the sentence in the cell and the paragraph below the table.
-- **One name for one thing.** `{{PROJECT_NAME}}` everywhere, never an older or longer name the project has outgrown. Cross-references use one form (`ADR-0007`, not `ADR 0007`). A concept keeps the same word in every doc that mentions it — a synonym is a retrieval miss for a model and a re-read for a human.
-- **A list lives in exactly one place.** Where a full list exists (an ADR index, a command reference), other docs link to it and may quote a handful with a stated reason for the selection. Two copies of a list is two things to update, and one of them will be stale.
+- **Open with orientation:** what the doc covers, who it is for, and what it leaves out, in two or three sentences before the first `##`.
+- **Conclusion first,** the evidence under it.
+- **One claim per paragraph,** each under ~700 characters; a how-to step's caveats are sub-bullets under it.
+- **Tables scan, prose explains:** a cell that needs a paragraph holds one sentence, and the paragraph goes below the table.
+- **One name for one thing:** `{{PROJECT_NAME}}` everywhere, one form for a cross-reference (`ADR-0007`), one word for a concept in every doc.
+- **A list lives in one place;** other docs link to it, and quote a few items only with the reason for the pick.
 
 ## Keep documentation in sync with code
 
-Documentation is a first-class deliverable. **Before you commit any change, check whether any existing doc becomes wrong, incomplete, or misleading because of it. If yes, update the doc in the same commit.** Do not defer doc updates to "later" — drift compounds, and a doc that lies is worse than a doc that's missing.
+**Before you commit any change, check whether any existing doc becomes wrong, incomplete or misleading because of it, and update it in the same commit.** A doc that lies is worse than a missing one.
 
 ### Change → required doc mapping
 
@@ -158,7 +152,7 @@ Documentation is a first-class deliverable. **Before you commit any change, chec
 | New user command, argument, response format, or UI surface         | the user guide (`README.md`, or `docs/guide.md` once split) and its twins; the front page when its bullets or install steps change  |
 | New env var, config option, or changed default                     | `.env.example` (or equivalent config schema) + the user guide and its twins; also `docs/guides/{{deploy_or_publish_guide}}.md` if it affects shipping |
 | New component, changed data flow, new integration                  | `docs/architecture/architecture.md`                                                                                                  |
-| Non-obvious design decision                                        | new ADR in `docs/adr/` (Status / Context / Decision / Consequences)                                                                  |
+| Non-obvious design decision                                        | new ADR in `docs/adr/`                                                                                                               |
 | Any user-visible change                                            | `CHANGELOG.md` entry under Added / Changed / Fixed / Removed                                                                         |
 | New capability or extension point                                  | `docs/guides/extension_guide.md`                                                                                                     |
 | New/changed UI component or pattern (if the project has a surface) | the design-language reference (e.g. `docs/guides/design_language.md`)                                                                |
@@ -170,23 +164,20 @@ If a row points at a doc the project doesn't have yet (extension guide, design r
 
 ## Issues and pull requests
 
-- New issues use the templates in `.github/ISSUE_TEMPLATE/`:
-  * `bug.md` for defects and regressions
-  * `task.md` for features, refactors, docs, infra
+- New issues use the templates in `.github/ISSUE_TEMPLATE/`: `bug.md` for defects and regressions, `task.md` for features, refactors, docs, infra.
 - An issue is captured with no plan; its *Plan* is written at *Clarify*, and changes after acceptance only through its *Departures*. Tick a Technical-details box when its path lands; never edit prose to track progress.
 - **Labels:** {{LABELS}}. Add the issue to the milestone if scoped.
-- **The board:** every write is `lifecycle board <N> <column>`, which puts the card at the top of its column: **Backlog** when you file an issue; the other moves are *Task workflow*'s, and `Backlog → Ready` is the maintainer's triage. What each column means, milestones, why an issue is filed in two stages, and the label taxonomy behind the labels above: [project_kickstart.md § GitHub tracking setup](https://github.com/orwir/lifecycle-kit/blob/main/method/project_kickstart.md).
-- PRs use `.github/pull_request_template.md`. Every PR has a Summary, a linked issue (`Closes #N`), and a concrete Verification section.
-- Reference issues in commit bodies and PR descriptions. Do not invent issue numbers — confirm they exist with `gh issue view <N>` first.
-- **Dependabot PRs:** treat as normal PRs — read the bump's changelog/release notes before merging. Patch/minor bumps may merge once CI is green; major bumps always get a manual review.
+- **The board,** where `.lifecycle.toml` names one: every write is `lifecycle board <N> <column>`, which puts the card at the top of its column: **Backlog** when you file an issue; the other moves are *Task workflow*'s, and `Backlog → Ready` is the maintainer's triage. The columns, milestones, two-stage issues and the label taxonomy: [project_kickstart.md § GitHub tracking setup](https://github.com/orwir/lifecycle-kit/blob/main/method/project_kickstart.md).
+- PRs use `.github/pull_request_template.md`: a Summary, a linked issue (`Closes #N`), and a concrete Verification section.
+- Reference issues in commit bodies and PR descriptions, each confirmed with `gh issue view <N>` first; never invent a number.
+- **Dependabot PRs** are normal PRs: read the bump's changelog or release notes before merging. Patch and minor bumps may merge once CI is green; major bumps always get a manual review.
 
 ## Secrets and security
 
 - Never commit `.env`, credentials, API keys, signing certificates, provisioning profiles, or any file matching common secret patterns. A `gitleaks` (or equivalent) pre-commit hook should catch most of this — do not disable it.
-- Never log decrypted secrets, auth tokens, or payment data. Log identifiers (`provider`, `user_id`, `key_fingerprint`), not values.
-- Never print secret values into the conversation, command output, or debug dumps — not even to diagnose. Reference keys by name (`API_TOKEN is set/empty`), never by value.
-- Document secret rotation in `docs/guides/{{deploy_or_publish_guide}}.md` for every long-lived credential. When you're being paged at 2am you do not want to improvise.
-- All new CI/CD workflows declare least-privilege `permissions:` blocks, not inherit repo defaults.
+- Never log or print a secret's value (a decrypted secret, an auth token, payment data), in the conversation, command output or a debug dump, not even to diagnose: log identifiers (`provider`, `user_id`, `key_fingerprint`) and name keys (`API_TOKEN is set/empty`).
+- Document the rotation of every long-lived credential in `docs/guides/{{deploy_or_publish_guide}}.md`.
+- Every new CI/CD workflow declares a least-privilege `permissions:` block, not the repo's defaults.
 
 [web-service] Run the production container as a non-root user. Reverse-proxy and TLS termination live outside the application image.
 [desktop] Code-sign release artifacts; document the signing certificate location and rotation procedure.
@@ -196,42 +187,38 @@ If a row points at a doc the project doesn't have yet (extension guide, design r
 
 ## Executing actions
 
-- Carefully consider blast radius before destructive actions. Freely: edit files, run tests locally, create feature branches. Confirm first: `git reset --hard`, `git push --force`, force-pushing, deleting branches with unmerged work, dropping {{database/state-store}} tables, amending published commits, pushing to shared remotes, publishing to a registry, uploading a release artifact. (Deleting a just-merged feature branch is routine close-out, not a confirm item.)
-- Tool approval in one scope does not extend to other scopes (see *Task workflow* and *Versioning and release* for the per-workflow gates).
-- If you hit unfamiliar files, branches, or config, investigate before deleting — it may be the user's in-progress work.
-- When running into a failing check, diagnose the root cause. Do not bypass with `--no-verify`, test-skip markers, lint-suppress comments, or similar. Ask the user if you're stuck.
+- Weigh the blast radius. Freely: edit files, run tests locally, create feature branches. Confirm first: `git reset --hard`, force-pushing, deleting a branch with unmerged work, dropping {{database/state-store}} tables, amending published commits, pushing to shared remotes, publishing to a registry, uploading a release artifact. Deleting a just-merged feature branch is routine close-out.
+- Approval in one scope does not extend to another (*Task workflow*, *Versioning and release*).
+- Investigate unfamiliar files, branches or config before deleting them: they may be the user's in-progress work.
+- Diagnose a failing check at its root cause; never bypass it with `--no-verify`, test-skip markers, lint-suppress comments or the like. Ask the user if you're stuck.
 
 ## When editing code
 
-- **Simplicity First.** When you touch a load-bearing abstraction (decorator, cache, ContextVar / thread-local, registry, factory, protocol, DI container), ask whether the assumption that forced its shape still holds. If the shape outlived its justification, surface the simplification *before* layering on another patch; coupled residue (e.g. a cache + decorator that only make sense together) lands as one change, not two. Full stance and worked example: [codebase_review.md § Stance: Simplicity First](https://github.com/orwir/lifecycle-kit/blob/main/method/codebase_review.md).
-- **Stay in scope.** The diff for a task contains only what that task needs. No drive-by refactors, renames, dependency bumps, or reformatting of untouched code — surface those as suggestions instead of bundling them in.
-- Prefer editing existing files over creating new ones.
-- **If the project ships a user-facing surface, conform to its design language.** Any UI edit — web, desktop, or TUI, and a CLI's flag/output conventions — reuses the documented components, data rendering, and UX patterns in the design-language reference (e.g. `docs/guides/design_language.md`); don't introduce a parallel variant. Applies to every UI edit, not just new screens. Where the project keeps a design file per screen, **one screen, one design file**: a change to a screen lands inside its file rather than beside it, and the pairing that holds that lives in the design-language reference. (Drop this rule for a headless service or library. See the *User-facing surface foundation* section in [project_kickstart.md](https://github.com/orwir/lifecycle-kit/blob/main/method/project_kickstart.md).)
-- Don't add comments that explain **what** — the code shows that. Only add comments when the **why** is non-obvious (a hidden constraint, a subtle invariant, a workaround for an external bug).
-- **Comments have a length budget: {{COMMENT_BLOCK_BUDGET}} lines for a comment block, {{DOC_COMMENT_BUDGET}} for a doc comment, {{FILE_HEADER_BUDGET}} for a file/module header.** The rule above bounds the *kind* of comment and never its *volume*, so prose that is entirely legitimate "why" still grows without limit — one paragraph appended per issue that touches the file, until a reader cannot find the code between them. Past the budget the fix is to cut it or move it out, never to keep appending; needing more *is the signal* that the content belongs in an ADR. **The budget counts prose only** — a structured parameter/return block (`Args:`, `@param`, `# Arguments`, `<param>`) is API contract, not narrative, and does not count against it. **Derive the three numbers from your own codebase rather than copying anyone's** — the procedure is in [codebase_review.md](https://github.com/orwir/lifecycle-kit/blob/main/method/codebase_review.md) § Phase 2 — and re-derive them if the codebase changes shape. A cap set by taste flags the wrong files in both directions.
-- **Write for the next editor, not for the reviewer of the change that added it.** A comment answers one question: *what breaks if I change this?* Keep the surviving constraint; drop how it was found. Measurement runs, variants tried, benchmark numbers, cases that regressed, dates, and issue-by-issue narrative are discovery, not constraint — they feel like documentation but are review-time persuasion, and their home is the PR description, read once by the right person and then archived. **Present tense is the test:** a sentence written in the past ("used to", "was tried", "regressed", "turned out to be") is history, and history belongs in version control, the issue tracker, or the ADR. Never in source.
-- **Displaced rationale has a home — move it, don't delete it.** A design decision → a numbered ADR in `docs/adr/`. Domain rationale → whichever doc owns that domain in the change → doc mapping above. Experiment logs, benchmarks, and measurement history → the issue that produced them. Then cite the destination from the code in one line (`See ADR-0012.`) instead of restating it.
-- **Prefer making the code say it.** A named constant, an extracted function, or a test with a sentence for a name beats a paragraph — and unlike a comment, it fails when it stops being true. Reach for prose only once those are exhausted.
-- **Tracker references in comments / doc comments:** a reference (`#123`, `PROJ-456`) is allowed only when it anchors load-bearing rationale (an ADR, a specific external bug, a non-obvious constraint). Test by deleting it — if the remaining prose still answers "why", keep the ref; if it collapses to a WHAT-comment, inline the rationale instead. Bare `added in #123` / `fixes #123` tombstones are banned, in test doc comments too. A comment carrying three or more references is a changelog: move it per the rule above.
-- No backwards-compatibility shims, dead-code tombstones, or `# removed X` comments. Delete cleanly.
-- No feature flags for work that can simply ship.
-- No half-finished implementations. If scope is too big, split the PR and say so; don't leave stubs.
-- Do not add error handling for impossible scenarios. Validate at system boundaries (user input, external APIs, deserialization), trust internal invariants.
-- Match existing patterns in the file you're editing. If the existing pattern is wrong, fix it in a separate commit with a clear message.
+- **Simplicity First.** Touching a load-bearing abstraction (decorator, cache, ContextVar / thread-local, registry, factory, protocol, DI container), ask whether the assumption that forced its shape still holds; if not, surface the simplification *before* another patch, and land coupled residue (a cache and the decorator that only makes sense with it) as one change: [codebase_review.md § Stance: Simplicity First](https://github.com/orwir/lifecycle-kit/blob/main/method/codebase_review.md).
+- **Stay in scope.** A task's diff holds only what it needs: no drive-by refactors, renames, dependency bumps or reformatting of untouched code; surface those as suggestions.
+- **Conform to the design language** where the project ships a user-facing surface: every UI edit (web, desktop, TUI, a CLI's flags and output) reuses the design-language reference's components, data rendering and patterns (e.g. `docs/guides/design_language.md`), never a parallel variant, and a change to a screen with a design file lands inside that file. (A headless service or library drops this rule; see [project_kickstart.md § User-facing surface foundation](https://github.com/orwir/lifecycle-kit/blob/main/method/project_kickstart.md).)
+- **A comment says why, never what,** and only where the why is non-obvious: a hidden constraint, a subtle invariant, a workaround for an external bug.
+- **Comments have a length budget: {{COMMENT_BLOCK_BUDGET}} lines for a comment block, {{DOC_COMMENT_BUDGET}} for a doc comment, {{FILE_HEADER_BUDGET}} for a file/module header.** It counts prose, not a parameter or return block (`Args:`, `@param`); past it, cut or move the prose to an ADR, never append. The numbers are derived from this codebase by [codebase_review.md](https://github.com/orwir/lifecycle-kit/blob/main/method/codebase_review.md) § Phase 2, which says why, and re-derived when it changes shape.
+- **Write for the next editor:** a comment answers *what breaks if I change this?* Present tense is the test: a sentence in the past ("used to", "was tried", "regressed") is history. Measurements, variants tried, dates and issue narrative go in the PR description or the tracker, never in source.
+- **Displaced rationale moves, cited in one line (`See ADR-0012.`):** a design decision to an ADR, domain rationale to the doc the mapping names, measurements to their issue.
+- **Prefer making the code say it:** a named constant, an extracted function, a test named in a sentence; unlike prose, it fails when it stops being true.
+- **A tracker reference in a comment** (`#123`, `PROJ-456`) only anchors load-bearing rationale (an ADR, an external bug, a non-obvious constraint). Delete it to test: if the comment still answers "why", the reference may stay; if it falls back to a WHAT-comment, inline the rationale. `added in #123` / `fixes #123` tombstones are banned, in test doc comments too, and three or more references are a changelog, which moves out.
+- No backwards-compatibility shims, dead-code tombstones or `# removed X` comments: delete cleanly. No feature flags for work that can simply ship. No half-finished implementations: split the PR and say so; don't leave stubs.
+- Validate at system boundaries (user input, external APIs, deserialization) and trust internal invariants: no error handling for impossible scenarios.
+- Match the existing patterns of the file you edit; a wrong pattern is fixed in a commit of its own, with a clear message.
 
 ## What NOT to do
 
 - Do not use emojis in code or docs unless the user explicitly asks.
 - Do not add `print()` / `console.log` / `println!` for debugging — use the project's structured logger.
 - Do not add dependencies casually. New dependencies need a reason that justifies the supply-chain surface.
-- Do not improvise a review process: the comprehensive reviews follow the kit's guides on [review_machinery.md](https://github.com/orwir/lifecycle-kit/blob/main/method/review_machinery.md) — [codebase_review.md](https://github.com/orwir/lifecycle-kit/blob/main/method/codebase_review.md), [ux_review.md](https://github.com/orwir/lifecycle-kit/blob/main/method/ux_review.md), [ia_review.md](https://github.com/orwir/lifecycle-kit/blob/main/method/ia_review.md), [design_review.md](https://github.com/orwir/lifecycle-kit/blob/main/method/design_review.md) and [llm_review.md](https://github.com/orwir/lifecycle-kit/blob/main/method/llm_review.md).
+- Do not improvise a review process: a comprehensive review follows the kit's guide for it, on [review_machinery.md](https://github.com/orwir/lifecycle-kit/blob/main/method/review_machinery.md), which names them.
 
 ## When in doubt
 
-1. Read the lifecycle kit's guide for it: [project_kickstart.md](https://github.com/orwir/lifecycle-kit/blob/main/method/project_kickstart.md) says why each rule exists.
-2. Check if an existing file already solves the problem. Reuse before creating.
-3. Mid-task fork: internal and easily reversible → decide, record it under the plan's *Departures*, continue. User-visible, hard to undo, or scope-changing → stop and ask.
-4. Otherwise ask the user. A 30-second clarification beats a 30-minute undo.
+1. Check if an existing file already solves the problem. Reuse before creating.
+2. Mid-task fork: internal and easily reversible → decide, record it under the plan's *Departures*, continue. User-visible, hard to undo, or scope-changing → stop and ask.
+3. Otherwise ask the user. A 30-second clarification beats a 30-minute undo.
 ````
 
 ---
@@ -245,6 +232,7 @@ Quick reference for each `{{token}}` used above.
 | `{{PROJECT_NAME}}` | "Acme Reader", "Widget CLI" | Human-readable name |
 | `{{OWNER}}/{{REPO}}` | `acme/reader` | GitHub slug |
 | `{{SETUP_CMD}}` / `{{TEST_CMD}}` / `{{LINT_CMD}}` / `{{RUN_CMD}}` | `uv sync` / `pytest --cov` / `ruff check . && ruff format .` / `docker compose up` | The canonical invocations CI and hooks run |
+| `{{TARGETED_TEST_CMD}}` | `pytest <tests>`, `npx vitest run <tests>`, `go test <packages>` | The new or changed tests alone, as the review skill runs them on a worktree to prove each fails without the change. `.lifecycle.toml`'s `gate.targeted`, read first where it is set, holds the same run with `{root}` and `{tests}`. None: the review skill reports `not covered: no targeted run` |
 | `{{LANGUAGE}}` | "Python 3.13", "Rust 2024", "TypeScript / Node 22", "Swift 5.10" | Primary language and version |
 | `{{PROJECT_TYPE}}` | "chat bot", "macOS menu-bar app", "iOS app", "CLI tool", "library" | One-noun shape |
 | `{{ONE_LINE_DESCRIPTION}}` | "REST API with SQLite storage, Docker deployment" | Sub-30 words |
@@ -255,6 +243,9 @@ Quick reference for each `{{token}}` used above.
 | `{{TEST_RUNNER}}` | `pytest`, `vitest`, `jest`, `go test`, `cargo test`, `xctest`, `flutter test` | One command, one runner |
 | `{{COVERAGE_FLOOR}}` | `55`, `70`, `80` | Pick something you can defend |
 | `{{CHANGELOG_CAP}}` | `120` | **Derive, don't copy** — `project_kickstart.md` § CHANGELOG style |
+| `{{PARTS}}` | "the runtime, a prompt, an eval"; "the API, the schema, the client" | The parts of the system a decision can touch, as the plan's D-rows name them. A repository with one part writes "the code" |
+| `{{EVIDENCE_SOURCES}}` | "the service logs, the database, a live probe"; "a failing test and the user's report" | What confirms a bug's root cause. A repository with no logs or data names what it does have |
+| `{{DRAWN}}` | "the web app's screens"; "the CLI's output"; "nothing: a headless service" | The surfaces a person sees; when to draw is `design_workflow.md`'s |
 | `{{LABELS}}` | "one `type/…`, one `priority/…`, one `area/…` when one fits" | The repository's own set; the kickstart's taxonomy is the default |
 | `{{COMMENT_BLOCK_BUDGET}}` / `{{DOC_COMMENT_BUDGET}}` / `{{FILE_HEADER_BUDGET}}` | `8` / `20` / `25` | **Derive, don't copy** — `codebase_review.md` § Phase 2 has the procedure. The doc-comment number is the larger of the first two: a doc comment is also an API contract |
 | `{{LINT_TOOL}}` | `ruff`, `eslint` + `prettier`, `golangci-lint`, `clippy` + `rustfmt`, `swiftlint` | One per role |
@@ -271,36 +262,30 @@ Where the template's defaults assume a long-running service, here's how each pro
 
 ### Web service / bot / API
 
-- Default template fits.
-- `/health` version probe is mandatory; smoke-check it post-deploy.
-- The release workflow deploys to a runtime host.
+- The default template fits: the release workflow deploys to a runtime host.
+- A `/health` endpoint reports the version, and the checklist's version probe calls it after a deploy.
 
 ### Desktop app (Electron / Tauri / Qt / native)
 
-- Replace "deploy to VPS" with "publish signed installer to GitHub Releases".
-- Drop `/health` for an About dialog showing the version.
-- Add a `signing` section under Secrets covering certificate storage and rotation.
+- The release publishes a signed installer to GitHub Releases; an About dialog shows the version.
+- Keep the `[desktop]` line under *Secrets and security*.
 - Integration tests hit a real filesystem; UI tests are their own category.
 
 ### Mobile app (iOS / Android / React Native / Flutter)
 
-- Replace "deploy" with "upload to TestFlight / Play Console internal track".
-- Use Fastlane lanes (or equivalent) for the release pipeline; document the lanes in the publish guide.
-- Signing certificates and provisioning profiles never enter the repo — use Match / EAS / App Store Connect.
-- The "version probe" is the app's settings screen.
+- The release uploads to TestFlight / the Play Console internal track, by Fastlane lanes (or equivalent) the publish guide documents.
+- Keep the `[mobile]` line under *Secrets and security*; the version probe is the app's settings screen.
 
 ### CLI tool
 
-- Replace "deploy" with "publish to PyPI / npm / crates.io / Homebrew tap".
-- `--version` flag is mandatory and reads from the single source of truth.
-- Smoke check: install the published artifact in a clean environment and run `--version`.
+- The release publishes to PyPI / npm / crates.io / a Homebrew tap; keep the `[cli]` line under *Secrets and security*.
+- A `--version` flag reads the single source of truth, and the smoke check installs the published artifact in a clean environment and runs it.
 
 ### Library
 
-- No transport layer — drop the `{{ENTRY_DIR}}` row from Code layout and keep only `{{LOGIC_DIR}}`.
-- Replace "release" with "publish to registry".
-- Cut the "Executing actions" line about deploys; keep the publish gate.
-- Coverage floor is usually higher (libraries get reused; bugs hurt more callers).
+- No transport layer: drop the `{{ENTRY_DIR}}` line from *Code layout*.
+- The release publishes to a registry; keep the `[library]` line under *Secrets and security*, and publishing under *Executing actions*' confirm list.
+- The coverage floor is usually higher: a library's bugs reach more callers.
 
 ### Monorepo with multiple project types
 
