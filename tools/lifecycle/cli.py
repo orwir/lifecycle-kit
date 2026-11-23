@@ -13,6 +13,7 @@ from pathlib import Path
 from . import (
     KIT_ROOT,
     METHOD,
+    base,
     board,
     ci,
     doctor,
@@ -153,6 +154,12 @@ def _ci(args: argparse.Namespace) -> int:
     return code
 
 
+def _base(args: argparse.Namespace) -> int:
+    config = _config()
+    print(base.base(config.root, config.integration))
+    return 0
+
+
 def _gap(args: argparse.Namespace) -> int:
     filed = gap.file(_config(), args.title, Path(args.body_file).resolve())
     line = f"filed {filed.reference} {filed.url}"
@@ -283,6 +290,11 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("commit", nargs="?", help="the pushed commit")
     p.add_argument("--ref", help="the branch it was pushed to (default: the integration branch)")
     p.add_argument("--pr", type=int, help="a pull request: wait on its checks instead")
+    sub.add_parser(
+        "base",
+        help="the commit a task's work is measured from: where HEAD forked from the integration "
+        "branch, here or on origin, as a full SHA",
+    )
     p = sub.add_parser(
         "gap",
         help="file a gap in a kit guide: on the kit where you can push to it, otherwise here, "
@@ -345,6 +357,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "board": _board,
             "release": _release,
             "ci": _ci,
+            "base": _base,
             "gap": _gap,
             "home": _home,
             "hook": _hook,
@@ -352,6 +365,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return handler(args)
     except (
         ConfigError,
+        base.BaseError,
         guides.GuidesError,
         board.BoardError,
         ship.ReleaseError,

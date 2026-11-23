@@ -12,6 +12,7 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ### Added
 - `lifecycle ci` waits on the CI a push started, or a pull request's checks, with an exit code per outcome (#59)
+- `lifecycle base` prints the commit a task's work is measured from, read from the integration branch here or on origin (#55)
 
 ### Changed
 - The complete skill holds a task open while the CI its push started is red (#59)
@@ -21,6 +22,7 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ### Fixed
 - The release skill never ships a commit whose CI is red (#59)
+- The work round's fails-without check and diff start where the task's branch forked, not at a stale local branch (#55)
 - The complete skill reads the CI a direct push started and reports how it ended (#59)
 - `lifecycle home` takes back all a failed or timed-out setup wrote or staged, on Linux and macOS too (#58)
 - An upgrade leaves accepted ADRs, released changelog sections and frozen records as written, whatever a step lists (#42)

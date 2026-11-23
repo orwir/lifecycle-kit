@@ -142,7 +142,7 @@ Read by the reviewer: claims with coordinates, never the diff, and self-containe
 Review request: #<N> <title> | untracked: <one line of intent>
 Lens: base | person-facing | model-facing
 Flow: direct on <integration>, uncommitted (base <sha>) | branch <name> | PR #<M>, checked out here
-Diff: git diff HEAD | git diff --merge-base <integration>
+Diff: git diff HEAD | git diff <the base's full SHA, which `lifecycle base` prints>
 New files: <paths, which git diff does not show> | none
 Ticket: <the command or link that shows issue N> | untracked
 Read first: <the docs, ADR sections or guides the diff is held to, beyond the operating contract> | none

@@ -89,7 +89,7 @@ Without `[templates]`, a repository follows a project's templates: `agents_templ
 | Layer | Holds | Run by |
 |---|---|---|
 | `method/` | the guides: kickstart, task review, the review kinds, the templates | anyone who reads |
-| `tools/lifecycle/` | the `lifecycle` command: settings, doctor, upgrade, board, ci, release, gap, home, hooks | any agent, a git hook, CI, a person |
+| `tools/lifecycle/` | the `lifecycle` command: settings, doctor, upgrade, board, base, ci, release, gap, home, hooks | any agent, a git hook, CI, a person |
 | `skills/`, `agents/` | capture, clarify, review, handback, complete, release, upgrade; the read-only reviewer | any agent that loads Agent Skills |
 | `.claude-plugin/`, `hooks/`, `bin/` | the Claude Code adapter: marketplace, plugin manifest, hook wiring, the command on PATH | Claude Code |
 

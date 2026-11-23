@@ -26,7 +26,7 @@ You are the developer and you run the whole round here. The maintainer reads onl
 
 ## 1. Render the hand-off packet — gather, don't recall
 
-1. **Coordinates.** `git status --short`, `git diff --stat`, `git rev-parse --short HEAD` (the base). On a branch with no `<PR>` from § 0, `gh pr view --json number,state,baseRefName`: an `OPEN` one is `<PR>`. The flow and its diff command are § Hand-off packet's: the integration branch (`branches.integration`), a branch, or `<PR>` checked out here. List every new file by path.
+1. **Coordinates.** `lifecycle base` prints `<base>`, the full SHA of the commit the task's work is measured from: where HEAD forked from the integration branch. Where it fails, stop and tell the maintainer what it printed. Then `git status --short` and `git diff --stat <base>`. On a branch with no `<PR>` from § 0, `gh pr view --json number,state,baseRefName`: an `OPEN` one is `<PR>`. The flow and its diff command are § Hand-off packet's: the integration branch (`branches.integration`), a branch, or `<PR>` checked out here. List every new file by path.
 2. **Lenses** (§ Lens reviewers):
    - `base` always;
    - `person-facing` where the diff changes what a person reads or drives;
@@ -41,7 +41,7 @@ You are the developer and you run the whole round here. The maintainer reads onl
 4. **Reconciliation.** One line per box of the plan, `landed` or `dropped: <why>`, and an `added beyond the plan: <why>` line per path the tree changed outside them. Tick every landed box still open: the body to a file in a scratch folder outside the tree, then `gh issue edit <issue> --body-file <file>`.
 5. **Departures:** the plan's section as it stands, or `none`.
 6. **Scenarios.** One line per WHEN line of the plan's *Behaviour*: the test that fails without the change, or `not covered: <why>`, a scenario no test can score naming how it is scored. The same ids go on *Verification*. "Fails without" is proven on a worktree of the base, never by `git stash`:
-   1. `git worktree add --detach <scratch folder>/<dir> <base>` — `HEAD` on the integration branch, `git merge-base <integration> HEAD` on a branch — with the new or changed test files copied in;
+   1. `git worktree add --detach <scratch folder>/<dir> <base>`, `<base>` from step 1, with the new or changed test files copied in;
    2. run those tests there by `gate.targeted`, `{root}` the worktree and `{tests}` the tests in the form it takes; with none, by the targeted run AGENTS.md § Commands gives, pointed at the worktree; with neither, the scenario reads `not covered: no targeted run`;
    3. check the run loaded the code under test from the worktree: one that loaded this tree is run again from the worktree, or reads `not covered: the targeted run loaded this tree`; a run that collected no tests reads `not covered: the targeted run collected none`;
    4. `git worktree remove --force <worktree>`.
