@@ -495,6 +495,21 @@ def test_a_failed_add_claims_nothing_staged(tmp_path):
     assert listing(folder) == [".claude", ".claude/settings.json"]
 
 
+def test_what_a_failed_add_did_stage_is_unstaged(tmp_path):
+    folder = tmp_path / "ideas"
+    (folder / ".claude").mkdir(parents=True)
+    (folder / ".claude" / "settings.json").write_text("{}\n", encoding="utf-8")
+    sh(folder, "init", "-q")
+    with (folder / ".git" / "info" / "exclude").open("a", encoding="utf-8") as exclude:
+        exclude.write(".claude/\n")
+    with pytest.raises(home.HomeError) as failed:
+        home.setup(folder)
+    assert "git add failed" in str(failed.value)
+    assert "Nothing was kept" in str(failed.value)
+    assert sh(folder, "ls-files") == ""
+    assert listing(folder) == [".claude", ".claude/settings.json"]
+
+
 def test_a_failed_unstaging_is_named_with_its_reason(tmp_path, isolated, monkeypatch):
     refuse_commits(tmp_path, isolated)
     folder = tmp_path / "ideas"

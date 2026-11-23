@@ -301,7 +301,7 @@ def setup(folder: Path) -> Setup:
     written = [*files, guides.LOCK]
     committed = sorted([*written, *([SETTINGS] if (folder / SETTINGS).is_file() else [])])
     message = f"Set up the ideas home on lifecycle kit {guides.kit_version()}"
-    staged: list[str] = []  # a failed git add stages nothing: git writes the index whole
+    added: list[str] = []  # what a git add was asked for, which may stage some and fail
     folder.mkdir(parents=True, exist_ok=True)
     try:
         if not repository:
@@ -313,11 +313,11 @@ def setup(folder: Path) -> Setup:
             path.write_text(body, encoding="utf-8", newline="\n")
         lock = guides.Lock(kit=guides.kit_version(), templates={TEMPLATE: template})
         guides.write_lock(folder, lock)
+        added = committed
         _ok(git(folder, "add", "--", *committed), "git add")
-        staged = committed
         _ok(git(folder, "commit", "-q", "-m", message), "git commit")
     except HomeError as error:
-        left = _undo(folder, written, staged, existed, repository)
+        left = _undo(folder, written, added, existed, repository)
         kept = (
             f"Not taken away: {'; '.join(left)}. Remove {'it' if len(left) == 1 else 'them'} and,"
             if left
@@ -330,18 +330,22 @@ def setup(folder: Path) -> Setup:
 
 
 def _undo(
-    folder: Path, written: list[str], staged: list[str], existed: bool, repository: bool
+    folder: Path, written: list[str], added: list[str], existed: bool, repository: bool
 ) -> list[str]:
     """Take away what a failed setup wrote, so nothing reads as a home and the folder is as
-    it was: the files, what it staged, a repository and a folder it made. Raises nothing:
-    returns what could not be taken away, each named in full for a reader anywhere."""
+    it was: the files, what its git add staged, a repository and a folder it made. Raises
+    nothing: returns what could not be taken away, each named in full for a reader anywhere."""
     left = []
-    if repository and staged:
-        try:
-            result = git(folder, "rm", "-r", "-q", "--cached", "--ignore-unmatch", "--", *staged)
-            why = None if result.returncode == 0 else _first_line(result.stderr or result.stdout)
-        except HomeError as error:
-            why = str(error)
+    if repository and added:
+        staged, why = _staged(folder, added), None
+        if staged:
+            try:
+                result = git(folder, "rm", "-r", "-q", "--cached", "--", *staged)
+            except HomeError as error:
+                why = str(error)
+            else:
+                if result.returncode != 0:
+                    why = _first_line(result.stderr or result.stdout)
         if why:
             left.append(f"the staging of {', '.join(staged)} in {folder / '.git'} ({why})")
     for name in written:
@@ -365,6 +369,18 @@ def _undo(
         with contextlib.suppress(OSError):
             folder.rmdir()  # only an empty one goes
     return left
+
+
+def _staged(folder: Path, paths: list[str]) -> list[str]:
+    """Which of ``paths`` the index holds, read without taking its lock; all of them where
+    git cannot say."""
+    try:
+        result = git(folder, "ls-files", "-z", "--", *paths)
+    except HomeError:
+        return paths
+    if result.returncode != 0:
+        return paths
+    return sorted(name for name in result.stdout.split("\0") if name)
 
 
 def _ok(result: subprocess.CompletedProcess, what: str) -> None:
