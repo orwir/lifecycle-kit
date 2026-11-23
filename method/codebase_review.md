@@ -149,9 +149,9 @@ grep -rEn "os\.environ|getenv|os\.getenv" packages apps --include="*.py"
 - **Version string single-source.** Grep for the version string; it should appear in exactly one place. Every reader (deploy workflow, health endpoint, Docker tags) should read from there, not duplicate.
 - **CHANGELOG vs git tags.** Every released tag should have a CHANGELOG section; every CHANGELOG section above the unreleased line should have a tag.
 - **ADR status accuracy.** Each ADR's Status (Proposed / Accepted / Superseded / Deprecated) should match reality. A "Proposed" ADR for a decision shipped six months ago is drift.
-- **Link rot.** Resolve every cross-link in `docs/`. Broken anchors are silent failures.
+- **Link rot.** Resolve every cross-link in `docs/`. Broken anchors are silent failures. One dead link is not rot: in an ADR once accepted (Accepted, Superseded or Deprecated), a link into a file of the guides folder (`docs/guides/`) named like one in the kit's `method/`, in the folder `lifecycle where` prints, points at a copy of a kit guide an upgrade deleted, which the kit's upgrade skill leaves as written (its step 5). Every other dead link in an ADR is rot, one another upgrade step left included, unless the ADR is a frozen record (below).
 - **Module / class docstrings claiming "this calls X" or "used by Y."** Drift candidates — spot-check the high-traffic modules.
-- **Frozen records are exempt.** `docs/reviews/*` and `docs/product/idea.md` are point-in-time; don't flag them for drift against current code.
+- **Frozen records are exempt.** `docs/reviews/*`, `docs/product/idea.md` and any other record the repository's `AGENTS.md` calls frozen are point-in-time; don't flag them for drift against current code, a dead link included.
 
 Severity is usually `Drift`. A wrong env-var name in the README, a `--help` example that crashes, or a CHANGELOG that omits a breaking change escalates to `Real bug`.
 

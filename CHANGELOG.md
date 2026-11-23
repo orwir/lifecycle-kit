@@ -13,6 +13,8 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 ### Fixed
 - `lifecycle home` takes back all a failed or timed-out setup wrote or staged, on Linux and macOS too (#58)
 - An upgrade leaves accepted ADRs, released changelog sections and frozen records as written, whatever a step lists (#42)
+- The codebase review's link check passes over a link from an ADR once accepted into a deleted copy of a kit guide (#62)
+- The codebase review exempts from drift any record a repository's `AGENTS.md` calls frozen (#62)
 
 ## [0.17.1] — 2026-11-23
 
