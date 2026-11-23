@@ -2,7 +2,7 @@ name: ci
 
 on:
   push:
-    branches: [main, next]
+    branches: [main, next, 'hotfix/**']
   pull_request:
 
 permissions:

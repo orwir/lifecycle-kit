@@ -38,23 +38,35 @@ A gap this task found in a kit guide was filed by `lifecycle gap` when it was fo
 
 Where the shell's interpreter is not the project's, put the project's environment first on `PATH` for the commit and the push: its hooks run its own tools (AGENTS.md § Commands).
 
-- **On the integration branch, or a worktree branch whose work lands on it directly:** `git push origin HEAD:<integration>`, or the push AGENTS.md § Task workflow gives in its place. The pre-push hook runs the gate. A push refused because the branch moved: `git fetch origin`, rebase onto `origin/<integration>`, push again; a conflict stops for the maintainer.
-- **On a `hotfix/<name>` branch:** `git push -u origin <branch>`, and nothing more: no PR and no merge. Write § 5's comment, naming the branch, and skip the rest of §§ 5 to 7: the release ships the branch, its merge into the integration branch closes the issue by its `Closes #<issue>`, and the release skill moves the card and deletes the branch.
+- **On the integration branch, or a worktree branch whose work lands on it directly:** `git push origin HEAD:<integration>`, or the push AGENTS.md § Task workflow gives in its place. The pre-push hook runs the gate. A push refused because the branch moved: `git fetch origin`, rebase onto `origin/<integration>`, push again; a conflict stops for the maintainer. Then the push's CI, below, on `<integration>`.
+- **On a `hotfix/<name>` branch:** `git push -u origin <branch>`, then the push's CI, below, on the branch, and nothing more: no PR and no merge. Write § 5's comment, naming the branch and the CI's last line, and skip the rest of §§ 5 to 7: the release reads that CI again and ships the branch, its merge into the integration branch closes the issue by its `Closes #<issue>`, and the release skill moves the card and deletes the branch.
 - **On a feature branch:**
   1. `git push -u origin <branch>`.
   2. `gh pr view <branch> --json number,state`: an `OPEN` PR is `<PR>`. With none, or only a closed or merged one from an earlier use of the branch name, `gh pr create --base <integration> --title "<subject>" --body-file <file>`, the body `.github/pull_request_template.md` filled for a reader who never saw the review rounds; `<PR>` is the number in the URL it prints.
-  3. `gh pr checks <PR> --watch`:
-     - every check passed or was skipped: step 4;
-     - a check failed or was cancelled: stop for the maintainer, the PR left open;
-     - "no checks reported" where a workflow under `.github/workflows/` has a `pull_request` trigger: run it again, up to five times a minute apart; still none, stop for the maintainer;
-     - "no checks reported" where no workflow has one: the repository runs no PR CI; the report says so, and step 4 follows;
-     - the shell cut the wait off: the PR stays open; read the checks again, and merge nothing on a result nobody read.
+  3. `lifecycle ci --pr <PR>` waits on the PR's checks, with up to five reads a minute apart where a workflow runs on its pull requests but no check has appeared yet. Its last line says how it ended, and its exit code matches:
+     - 0, `passed`, or `no PR CI` where no workflow runs on its pull requests: step 4;
+     - 1 with `failed` (a check failed or was cancelled), or 3, `missing` (no check appeared): stop for the maintainer, the PR left open;
+     - 1 with a `lifecycle:` line (a read that failed: unread, not red), 4, `running`, or a last line of `ci: waiting on …` or none at all (the shell cut the wait off): the PR stays open; read its checks again by the same command, and merge nothing on a result nobody read.
   4. `gh pr merge <PR> --squash --delete-branch`. A refused merge (a conflict, a required review) stops for the maintainer, the PR left open.
+
+**The push's CI:** `lifecycle ci <the pushed commit> --ref <branch>` waits on the CI that push started, for as long as it runs: run it where a long command may run, in the background where you can. Its last line says how it ended, and its exit code matches:
+
+- 0, `passed`, or `no CI` where no workflow runs on a push to the branch; 3, `missing` (CI is expected, but no run appeared, a `paths` filter skipping it most often); 5, `superseded` (a later push to the branch cancelled its run, the line naming that push's run): § 5 follows, and the report carries the line;
+- 1 with `failed`: the task is held, by § 5's *A red push*;
+- 1 with a `lifecycle:` line (a read that failed), 4, `running`, or a last line of `ci: waiting on …` or none at all (the shell cut the wait off): CI is unread, never red. Read it again by the same command, and go on by its outcome as above. Still unread, the batch stops before § 5: the report gives each run's link and that command, and once it reads, on the maintainer's go-ahead, this skill goes on from that reading.
 
 ## 5. Close the issue
 
 1. A pushed `Closes #<issue>` closes the issue only when it lands on the repository's default branch (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`), and a PR merge only into it. Where the work landed on another branch, `gh issue close <issue>` too.
 2. Comment with `gh issue comment <issue> --body-file <file>`, quoting at most the hand-back brief's *What changed*: no round tally or finding id.
+
+**A red push** holds the task, landed but not done, whether its own change turned CI red or it landed on a branch red already. In place of steps 1 and 2 (an untracked task has no issue or card: its report names the failure):
+
+1. Where its `Closes #<issue>` closed the issue on the default branch, `gh issue reopen <issue>`.
+2. Comment, as in step 2, with each failed job, step and link from `lifecycle ci`'s line.
+3. Where the settings name a board, `lifecycle board <issue> "In Progress"`; §§ 6 and 7 are skipped.
+
+The fix is the maintainer's next call: a fix landed through the task workflow, or the run re-run where its failure was not the commit's (`gh run rerun <id> --failed`). Once `lifecycle ci <the branch's head> --ref <branch>` reads 0, on the maintainer's go-ahead, this skill goes on as § 4 sends the branch: from § 5 on the integration branch; on a hotfix branch, § 5's comment alone, its issue left open and its card where it is for the release.
 
 ## 6. Board
 
@@ -67,4 +79,4 @@ Where the settings name a board, `lifecycle board <issue> Done` puts the card in
 
 ## 8. Report
 
-One line per step with its coordinates: the named `Watch:` lines and the kit gaps filed, each where it landed, and any left unfiled with why, the commit, where it was pushed, the PR, the issue's state, the board column. Anything skipped says why.
+One line per step with its coordinates: the named `Watch:` lines and the kit gaps filed, each where it landed, and any left unfiled with why, the commit, where it was pushed, the PR, `lifecycle ci`'s last line on the push or the PR's checks, the issue's state, the board column. Anything skipped says why.

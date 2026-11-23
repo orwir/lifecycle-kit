@@ -61,13 +61,16 @@ def gh(*args: str) -> str:
     return result.stdout
 
 
-def _read(*args: str) -> str:
+def read(*args: str, none: str = "") -> str | None:
     """A read, safe to repeat, so a passing failure of ``gh`` is retried a bounded number
-    of times. The dispatch is never retried: a second one would start a second run."""
+    of times. The dispatch is never retried: a second one would start a second run. A failure
+    whose message holds ``none`` is gh's way of answering "nothing": ``None``, not retried."""
     for attempt in range(READ_ATTEMPTS):
         try:
             return gh(*args)
-        except ReleaseError:
+        except ReleaseError as error:
+            if none and none in str(error):
+                return None
             if attempt == READ_ATTEMPTS - 1:
                 raise
             time.sleep(POLL_SECONDS)
@@ -75,7 +78,7 @@ def _read(*args: str) -> str:
 
 
 def _runs(workflow: str, ref: str) -> set[int]:
-    listed = _read(
+    listed = read(
         "run", "list", "--workflow", workflow, "--branch", ref, "--event", "workflow_dispatch",
         "--limit", "20", "--json", "databaseId",
     )  # fmt: skip
@@ -103,7 +106,7 @@ def watch(run_id: str) -> dict:
     """The run once it has completed; a run still going at the timeout is the caller's."""
     deadline = time.monotonic() + TIMEOUT_SECONDS
     while True:
-        run = json.loads(_read("run", "view", run_id, "--json", "status,conclusion,url,jobs"))
+        run = json.loads(read("run", "view", run_id, "--json", "status,conclusion,url,jobs"))
         if run["status"] == "completed":
             return run
         if time.monotonic() >= deadline:

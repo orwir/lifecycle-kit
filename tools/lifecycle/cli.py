@@ -14,6 +14,7 @@ from . import (
     KIT_ROOT,
     METHOD,
     board,
+    ci,
     doctor,
     gap,
     guides,
@@ -116,23 +117,39 @@ def _board_setup(args: argparse.Namespace) -> int:
     return 0
 
 
+def _commit(config: Config, name: str) -> str:
+    """``name`` as the full SHA of a commit in this repository."""
+    resolved = subprocess.run(
+        ["git", "-C", str(config.root), "rev-parse", "--verify", f"{name}^{{commit}}"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if resolved.returncode != 0:
+        raise ConfigError(f"{name} is not a commit in this repository")
+    return resolved.stdout.strip()
+
+
 def _release(args: argparse.Namespace) -> int:
     config = _config()
     if not config.release_workflow:
         raise ConfigError(
             ".lifecycle.toml names no [release] workflow: this repository ships no release by it"
         )
-    resolved = subprocess.run(
-        ["git", "-C", str(config.root), "rev-parse", "--verify", f"{args.commit}^{{commit}}"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if resolved.returncode != 0:
-        raise ConfigError(f"{args.commit} is not a commit in this repository")
     ref = args.ref or config.integration
-    code, line = ship.release(config.release_workflow, ref, resolved.stdout.strip())
+    code, line = ship.release(config.release_workflow, ref, _commit(config, args.commit))
     print(f"release: {line}", file=sys.stdout if code == ship.SHIPPED else sys.stderr)
+    return code
+
+
+def _ci(args: argparse.Namespace) -> int:
+    config = _config()
+    if args.pr is not None:
+        code, line = ci.pull_request(config.root, args.pr)
+    else:
+        ref = args.ref or config.integration
+        code, line = ci.push(config.root, _commit(config, args.commit), ref)
+    print(f"ci: {line}", file=sys.stdout if code == ci.PASSED else sys.stderr)
     return code
 
 
@@ -214,6 +231,13 @@ def _check_board(args: argparse.Namespace) -> None:
         args.board_parser.error("--number is setup's: a move uses the board .lifecycle.toml names")
 
 
+def _check_ci(args: argparse.Namespace) -> None:
+    if (args.commit is None) == (args.pr is None):
+        args.ci_parser.error("name a pushed commit, or a pull request by --pr, not both")
+    if args.pr is not None and args.ref:
+        args.ci_parser.error("--ref is a push's: a pull request's checks are its own")
+
+
 def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(prog="lifecycle", description=__doc__)
     root.add_argument("-C", dest="directory", help="run as if started in this directory")
@@ -251,6 +275,14 @@ def parser() -> argparse.ArgumentParser:
     p = sub.add_parser("release", help="ship a reviewed commit by the release workflow, watched")
     p.add_argument("commit", help="the head the release review read")
     p.add_argument("--ref", help="the branch to dispatch on (default: the integration branch)")
+    p = sub.add_parser(
+        "ci",
+        help="wait on the CI a push started, or a pull request's checks, and say how it ended",
+    )
+    p.set_defaults(ci_parser=p)
+    p.add_argument("commit", nargs="?", help="the pushed commit")
+    p.add_argument("--ref", help="the branch it was pushed to (default: the integration branch)")
+    p.add_argument("--pr", type=int, help="a pull request: wait on its checks instead")
     p = sub.add_parser(
         "gap",
         help="file a gap in a kit guide: on the kit where you can push to it, otherwise here, "
@@ -293,6 +325,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser().parse_args(argv)
     if args.command == "board":
         _check_board(args)
+    if args.command == "ci":
+        _check_ci(args)
     if args.directory:
         os.chdir(args.directory)
     try:
@@ -310,6 +344,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "upgrade": _upgrade,
             "board": _board,
             "release": _release,
+            "ci": _ci,
             "gap": _gap,
             "home": _home,
             "hook": _hook,

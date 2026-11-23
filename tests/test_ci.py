@@ -1,28 +1,18 @@
 """The kit's CI runs where its commits land: tasks on the integration branch, releases on
-``main``, which the marketplace serves."""
+``main``, which the marketplace serves, and a hotfix on its own branch, so the release that
+ships it reads its CI."""
 
 from __future__ import annotations
 
-import re
-
-from lifecycle import KIT_ROOT
+import pytest
+from lifecycle import KIT_ROOT, ci
 from lifecycle.config import load
 
-CI = KIT_ROOT / ".github" / "workflows" / "ci.yml"
+
+@pytest.mark.parametrize("branch", ["main", load(KIT_ROOT).integration, "hotfix/a-fix"])
+def test_ci_runs_on_a_push_where_the_kit_lands_or_ships(branch):
+    assert ci.runs_on(KIT_ROOT, "push", branch)
 
 
-def push_branches(workflow: str) -> set[str]:
-    """The branches under ``on: push:``, written as the flow list ``[a, b]``."""
-    found = re.search(r"^  push:\n    branches: \[([^\]]*)\]", workflow, re.MULTILINE)
-    return {name.strip() for name in found.group(1).split(",")} if found else set()
-
-
-def test_ci_runs_on_a_push_to_main_and_to_the_integration_branch():
-    integration = load(KIT_ROOT).integration
-
-    assert {"main", integration} <= push_branches(CI.read_text(encoding="utf-8"))
-
-
-def test_a_push_trigger_in_another_shape_names_no_branch():
-    assert push_branches("on:\n  push:\n    branches:\n      - main\n") == set()
-    assert push_branches("on:\n  push:\n    branches: [main, next]\n") == {"main", "next"}
+def test_ci_runs_on_no_other_push():
+    assert not ci.runs_on(KIT_ROOT, "push", "probe/1.2.3")

@@ -10,12 +10,18 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ## Unreleased
 
+### Added
+- `lifecycle ci` waits on the CI a push started, or a pull request's checks, with an exit code per outcome (#59)
+
 ### Changed
+- The complete skill holds a task open while the CI its push started is red (#59)
 - A task files a follow-up only for a seen instance, a job of its own and a likely change (#64)
 - A trigger nothing has met is a `Watch:` line in the plan and the commit, not an issue (#64)
 - A comprehensive review's Phase 0 checks the `Watch:` lines tasks have landed (#64)
 
 ### Fixed
+- The release skill never ships a commit whose CI is red (#59)
+- The complete skill reads the CI a direct push started and reports how it ended (#59)
 - `lifecycle home` takes back all a failed or timed-out setup wrote or staged, on Linux and macOS too (#58)
 - An upgrade leaves accepted ADRs, released changelog sections and frozen records as written, whatever a step lists (#42)
 - The codebase review's link check passes over a link from an ADR once accepted into a deleted copy of a kit guide (#62)
