@@ -10,7 +10,7 @@ holds beside it. The release's `Repositories:` entries in [CHANGELOG.md](CHANGEL
 say in one claim each what its steps do. A task's steps wait under `## Unreleased`
 at the top until a release dates them.
 
-## Unreleased
+## [0.18.0] — 2026-11-23
 
 - on GitHub, where the repository is public and its `SECURITY.md` (at the root, in `.github/` or in `docs/`) sends reporters to GitHub's private vulnerability reporting, on the maintainer's go-ahead: where `gh api repos/{owner}/{repo}/private-vulnerability-reporting` prints `"enabled":false`, turn it on with `gh api -X PUT repos/{owner}/{repo}/private-vulnerability-reporting` and read it back; a private repository has no such setting (the read returns 404), and nothing changes there.
 - in the git hooks (`.githooks/`, `.husky/`, `lefthook.yml`, a local hook in `.pre-commit-config.yaml`, and any script they call), a step that skips a check where its tool is not installed, with no word (`if command -v <tool>` and no `else`; `git grep -n -e "command -v" -e "which " -e "hash " -- .githooks .husky lefthook.yml .pre-commit-config.yaml scripts` lists the usual guards, and each hook file is read too), prints instead, on every run where the tool is missing, a line naming the tool and saying its check did not run, and under pre-commit that hook takes `verbose: true`, so the line shows when the hook passes; a fallback that does the same work another way, such as a path converter, stays as it is.

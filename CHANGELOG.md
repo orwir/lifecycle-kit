@@ -8,7 +8,7 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
-## Unreleased
+## [0.18.0] — 2026-11-23
 
 ### Added
 - `lifecycle ci` waits on the CI a push started, or a pull request's checks, with an exit code per outcome (#59)
