@@ -385,27 +385,82 @@ def test_check_answers_as_json_with_git_missing(tmp_path, monkeypatch):
     assert not (tmp_path / "ideas").exists()
 
 
-def test_a_failed_commit_keeps_nothing_and_says_what_next(tmp_path, isolated):
+def refuse_commits(tmp_path, gitconfig):
+    """Every commit fails, by a pre-commit hook git runs on every OS: executable, since git
+    skips a hook without that bit on Linux and macOS. Returns the hook."""
     hooks = tmp_path / "hooks"
     hooks.mkdir()
-    (hooks / "pre-commit").write_text("#!/bin/sh\nexit 1\n", encoding="utf-8", newline="\n")
-    (hooks / "pre-commit").chmod(0o755)  # git skips a hook without its executable bit
-    with isolated.open("a", encoding="utf-8") as config:
+    hook = hooks / "pre-commit"
+    hook.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8", newline="\n")
+    hook.chmod(0o755)
+    with gitconfig.open("a", encoding="utf-8") as config:
         config.write(f"[core]\n\thooksPath = {hooks.as_posix()}\n")
+    return hook
+
+
+def test_a_failed_commit_keeps_nothing_and_says_what_next(tmp_path, isolated):
+    hook = refuse_commits(tmp_path, isolated)
     folder = tmp_path / "ideas"
     with pytest.raises(home.HomeError) as failed:
         home.setup(folder)
     assert "git commit failed" in str(failed.value)
+    assert "Nothing was kept" in str(failed.value)
     assert f"`lifecycle home {folder}` again" in str(failed.value)
-    assert not home.is_home(folder)
-    assert listing(folder) == []
+    assert not folder.exists()
     empty = tmp_path / "empty"
     empty.mkdir()
     with pytest.raises(home.HomeError, match="Nothing was kept"):
         home.setup(empty)
     assert empty.is_dir() and not any(empty.iterdir())
-    (hooks / "pre-commit").unlink()
+    hook.unlink()
     assert home.setup(folder).made
+
+
+def test_a_failed_commit_in_a_repository_keeps_it_and_stages_nothing(tmp_path, isolated):
+    refuse_commits(tmp_path, isolated)
+    folder = tmp_path / "ideas"
+    (folder / ".claude").mkdir(parents=True)
+    (folder / ".claude" / "settings.json").write_text("{}\n", encoding="utf-8")
+    sh(folder, "init", "-q")
+    with pytest.raises(home.HomeError, match="Nothing was kept"):
+        home.setup(folder)
+    assert (folder / ".git").is_dir()
+    assert sh(folder, "status", "--porcelain", "--untracked-files=all") == (
+        "?? .claude/settings.json"
+    )
+    assert listing(folder) == [".claude", ".claude/settings.json"]
+    assert sh(folder, "symbolic-ref", "--short", "HEAD") == "main"
+
+
+def test_a_timed_out_commit_is_taken_back_and_named(tmp_path, monkeypatch):
+    real = home.git
+
+    def git(folder, *args, timeout=home.CALL_SECONDS):
+        if args[:1] == ("commit",):
+            raise home.HomeError(f"git commit -q gave no answer in {timeout} s")
+        return real(folder, *args, timeout=timeout)
+
+    monkeypatch.setattr(home, "git", git)
+    folder = tmp_path / "ideas"
+    with pytest.raises(home.HomeError) as failed:
+        home.setup(folder)
+    assert "git commit -q gave no answer" in str(failed.value)
+    assert "Nothing was kept" in str(failed.value)
+    assert not folder.exists()
+    monkeypatch.setattr(home, "git", real)
+    assert home.setup(folder).made
+
+
+def test_what_the_rollback_cannot_take_away_is_named(tmp_path, isolated, monkeypatch):
+    refuse_commits(tmp_path, isolated)
+    monkeypatch.setattr(home.shutil, "rmtree", lambda path, ignore_errors=False: None)
+    folder = tmp_path / "ideas"
+    with pytest.raises(home.HomeError) as failed:
+        home.setup(folder)
+    assert "Not taken away: .git. Remove it" in str(failed.value)
+    assert "Nothing was kept" not in str(failed.value)
+    assert f"`lifecycle home {folder}` again" in str(failed.value)
+    assert (folder / ".git").is_dir() and listing(folder) == []
 
 
 def test_github_pushes_a_main_ahead_of_origin(tmp_path, monkeypatch, local_home):

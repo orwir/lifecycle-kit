@@ -294,41 +294,49 @@ def setup(folder: Path) -> Setup:
     headers = log_headers()
     template = guides.text(guides.METHOD / TEMPLATE)
     existed, repository = folder.is_dir(), (folder / ".git").is_dir()
-    folder.mkdir(parents=True, exist_ok=True)
-    if not repository:
-        _ok(git(folder, "init", "-q"), "git init")
-    _ok(git(folder, "symbolic-ref", "HEAD", "refs/heads/main"), "git symbolic-ref")
     files = {TARGET: template, FILE: SETTINGS_TOML, "active/.gitkeep": "", "archive/.gitkeep": ""}
     for (name, title, line), header in zip(LOGS, headers, strict=True):
         files[name] = f"# {title}\n\n{line}\n\n{header}\n"
-    for name, body in files.items():
-        path = folder / name
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(body, encoding="utf-8", newline="\n")
-    guides.write_lock(folder, guides.Lock(kit=guides.kit_version(), templates={TEMPLATE: template}))
-    committed = sorted(
-        [*files, guides.LOCK, *([SETTINGS] if (folder / SETTINGS).is_file() else [])]
-    )
+    written = [*files, guides.LOCK]
+    committed = sorted([*written, *([SETTINGS] if (folder / SETTINGS).is_file() else [])])
     message = f"Set up the ideas home on lifecycle kit {guides.kit_version()}"
-    steps = (
-        ("git add", ("add", "--", *committed)),
-        ("git commit", ("commit", "-q", "-m", message)),
-    )
-    for what, args in steps:
-        result = git(folder, *args)
-        if result.returncode != 0:
-            _undo(folder, [*files, guides.LOCK], existed, repository)
-            raise HomeError(
-                f"{what} failed: {_first_line(result.stderr or result.stdout)}. Nothing was kept: "
-                f"once that is dealt with, run `lifecycle home {folder}` again"
-            )
+    folder.mkdir(parents=True, exist_ok=True)
+    try:
+        if not repository:
+            _ok(git(folder, "init", "-q"), "git init")
+        _ok(git(folder, "symbolic-ref", "HEAD", "refs/heads/main"), "git symbolic-ref")
+        for name, body in files.items():
+            path = folder / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(body, encoding="utf-8", newline="\n")
+        lock = guides.Lock(kit=guides.kit_version(), templates={TEMPLATE: template})
+        guides.write_lock(folder, lock)
+        _ok(git(folder, "add", "--", *committed), "git add")
+        _ok(git(folder, "commit", "-q", "-m", message), "git commit")
+    except HomeError as error:
+        left = _undo(folder, written, committed, existed, repository)
+        kept = (
+            f"Not taken away: {', '.join(left)}. Remove {'it' if len(left) == 1 else 'them'} and,"
+            if left
+            else "Nothing was kept:"
+        )
+        raise HomeError(
+            f"{error}. {kept} once that is dealt with, run `lifecycle home {folder}` again"
+        ) from error
     return Setup(folder, made=True, committed=committed)
 
 
-def _undo(folder: Path, written: list[str], existed: bool, repository: bool) -> None:
-    """Take away what a setup whose commit failed wrote, so nothing reads as a home and the
-    folder is as it was: the files, their index entries, a repository and a folder it made."""
-    git(folder, "rm", "-r", "-q", "--cached", "--ignore-unmatch", "--", *written)
+def _undo(
+    folder: Path, written: list[str], staged: list[str], existed: bool, repository: bool
+) -> list[str]:
+    """Take away what a failed setup wrote, so nothing reads as a home and the folder is as
+    it was: the files, every index entry it staged, a repository and a folder it made.
+    Returns what could not be taken away."""
+    left = []
+    if repository:
+        unstaged = git(folder, "rm", "-r", "-q", "--cached", "--ignore-unmatch", "--", *staged)
+        if unstaged.returncode != 0:
+            left.append("what is staged in .git/index")
     for name in written:
         (folder / name).unlink(missing_ok=True)
     for name in ("active", "archive"):
@@ -341,8 +349,12 @@ def _undo(folder: Path, written: list[str], existed: bool, repository: bool) -> 
             if not path.is_dir():
                 path.chmod(stat.S_IWRITE | stat.S_IREAD)
         shutil.rmtree(folder / ".git", ignore_errors=True)
-    if not existed and not any(folder.iterdir()):
+    left += [name for name in written if (folder / name).exists()]
+    if not repository and (folder / ".git").exists():
+        left.append(".git")
+    if not existed and folder.is_dir() and not any(folder.iterdir()):
         folder.rmdir()
+    return left
 
 
 def _ok(result: subprocess.CompletedProcess, what: str) -> None:
