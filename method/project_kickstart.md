@@ -205,6 +205,7 @@ The checklist itself, the hotfix variant included, is the CONTRIBUTING template'
 - **Plan by Ready's order, ship what has landed.** On a board, triage moves an issue from `Backlog` to `Ready`, in order, and the top card is next; without one, the open issues are the plan (*Project board*). A release ships whatever has landed since the last one, with no list of its own to keep. Where a release's scope is fixed outside the project, a milestone holds it (*GitHub tracking setup*, *Milestones*).
 - **The release is a reviewed commit.** The version bump and the dated CHANGELOG land on `main` like any other commit, and the review reads the compare link from the last tag to that commit. A correction lands on `main`, and the review reads the new head.
 - **A dispatch ships, and only the reviewed commit,** so nothing ships that the review did not read, and a failed release leaves no tag (*CI/CD recipe*, `release.yml`).
+- **What the dispatch's CI will read is read before the bump.** `release.yml` calls `ci.yml` under the dispatch's event, so a job keyed to the event can read more there than on a push: gitleaks-action reads a push's commits, and the whole history under a dispatch. The checklist runs that job's check at the dispatch's reach, with the version and config the job uses, before the bump, and what it finds lands before the review: a secret is rotated and allowlisted (*Secret rotation*). Found at the dispatch instead, its fix moves the branch past the reviewed commit.
 - **An assistant stops before the dispatch.** It is irreversible and deploys to production, so an AI agent drafts, pushes the release commit, surfaces the compare link, and waits for explicit approval; a prior "do the release" does not reach it. The AGENTS template states it as a gate.
 - **A hotfix ships from its own branch.** Cut from the last release's tag while `main` holds unreleased work, it is released from the branch, then merged into `main` with a merge commit, never squashed, so the tag stays in `main`'s history and the next release's compare starts after it. With nothing unreleased on `main`, a fix is an ordinary task and an ordinary patch release.
 
@@ -230,7 +231,9 @@ concurrency:         # by ref: a push's run and a PR's run never cancel each oth
   cancel-in-progress: true
 ```
 
-Jobs: install deps, lint, format check, type check (if applicable), tests with a coverage floor. Nothing else belongs here.
+Jobs: install deps, lint, format check, type check (if applicable), tests with a coverage floor, and a secret scan where the repository runs one in CI. Nothing else belongs here.
+
+A secret scan in CI reads commits — the push's, the pull request's, or all history — never the commit hook's scan of the staged diff run through the hook manager, which finds nothing staged in a CI checkout. A scan of the push's commits may leave unread those of a push whose run a later push cancelled: only a full-history scan is sure to read them, the release's (*Release process*) or the code review's.
 
 ### 2. `release.yml` — run on a dispatch, on the reviewed commit
 
@@ -362,9 +365,11 @@ Two stages:
 
 **Pin each tool once.** A hook manager that pins its own tool version — pre-commit's `rev:`, a lockfile under husky/lefthook — is a second pin beside whatever CI installs. Two pins drift on the next bump, and the failure reads as a broken CI rather than version skew: the commit hook reformats a file one way, CI's `--check` rejects it. A test asserting that the two agree does not survive Dependabot, which bumps each ecosystem in its own PR: every release of the tool arrives as two PRs that each fail the assertion.
 
-**Let CI run the hooks.** CI calls the hook manager's own hooks — `pre-commit run <hook-id> --all-files` — and leaves the tool out of its own install, so the hook's pin is the only one and a bump lands as one PR (`pre-commit` is a Dependabot ecosystem). Keep `--all-files` in local runs too: without it, pre-commit stashes unstaged edits and checks only what is staged.
+**Let CI run the hooks.** CI calls the hook manager's own hooks — `pre-commit run <hook-id> --all-files` — and leaves the tool out of its own install, so the hook's pin is the only one and a bump lands as one PR (`pre-commit` is a Dependabot ecosystem). Keep `--all-files` in local runs too: without it, pre-commit stashes unstaged edits and checks only what is staged. A hook that reads only the staged diff, the secret scan's among them, finds nothing in CI: there the scan runs by a step of its own (*CI/CD recipe*), whose pin of the scanner is a second one beside the hook's, so a bump moves both.
 
-**Secret scanning** (e.g. [gitleaks](https://github.com/gitleaks/gitleaks)) on `pre-commit` is the cheapest credential-leak prevention you can buy. Your `.env` is gitignored, but accidents happen — a secret pasted into a doc example, a config file with a real token committed because you forgot `.gitignore`. A 200ms hook catches all of them.
+**Secret scanning** (e.g. [gitleaks](https://github.com/gitleaks/gitleaks)) on `pre-commit` is the cheapest credential-leak prevention you can buy. Your `.env` is gitignored, but accidents happen — a secret pasted into a doc example, a config file with a real token committed because you forgot `.gitignore`. A 200ms hook catches all of them, on the machines where it runs.
+
+**A check that skips says so.** A hook that runs a tool only where the machine has it — `if command -v gitleaks` — prints, on every run where the tool is missing, a line naming it and saying its check did not run: a scan that skipped in silence reads exactly like one that ran clean. A hook manager that hides a passing hook's output is set to show that hook's (pre-commit: `verbose: true`). Local setup installs every tool the hooks call that the hook manager does not install itself (`CONTRIBUTING.md` § Local setup), and where an assistant makes the commit, its report carries the line.
 
 ---
 
@@ -609,6 +614,8 @@ The target for a service: **release dispatched → container built → deployed 
 
 Document in `docs/guides/deployment.md`: for each secret (API keys, tokens, encryption keys), how to rotate it end-to-end. When you're being paged at 2am you do not want to improvise.
 
+A secret a scan finds in the history is rotated and its finding allowlisted (gitleaks: its fingerprint in `.gitleaksignore`), never only deleted: the history keeps it, and the next full-history scan finds it again.
+
 ### Backups
 
 - Anything you can't regenerate — the SQLite volume, uploaded files — gets an automated, scheduled, **off-host** backup: a cron job shipping `sqlite3 .backup` output or volume tarballs to object storage or another machine. The VPS dying must not be a data event.
@@ -625,12 +632,14 @@ Solo projects have no on-call rotation; nothing notices a dead service except an
 
 The minimum every project should have on day zero:
 
-1. **`SECURITY.md`** — how to report a vulnerability, expected response time, what's in scope. Even for solo projects. [GitHub Security Advisories](https://docs.github.com/en/code-security/security-advisories) provide a private disclosure channel for free.
+1. **`SECURITY.md`** — how to report a vulnerability, expected response time, what's in scope. Even for solo projects. [GitHub Security Advisories](https://docs.github.com/en/code-security/security-advisories) provide a private disclosure channel for free, through private vulnerability reporting, which is off until it is turned on: wherever `SECURITY.md` sends reporters to it, turn it on (`gh api -X PUT repos/<owner>/<repo>/private-vulnerability-reporting`) and read it back (`gh api repos/<owner>/<repo>/private-vulnerability-reporting` prints `"enabled":true`). A private repository has no such setting, and the read returns 404.
 2. **Dependabot** (`.github/dependabot.yml`) — weekly PRs for dependency updates, grouped by ecosystem (pip/npm, actions, docker, pre-commit). Silent security updates become loud when a PR lands in your inbox. Don't omit the hook manager — its pins are the ones with no other bump path.
 3. **CodeQL** (`.github/workflows/codeql.yml`) — scheduled + PR-triggered static analysis. Catches SQL injection, path traversal, hardcoded credentials, unsafe deserialization. Zero-config for most languages. **Public repos and Code Security–enabled orgs only**; not available on private personal repos (see section on `codeql.yml` above).
-4. **Secret scanning** — pre-commit gitleaks hook (local) and GitHub's built-in push protection (server).
+4. **Secret scanning** — pre-commit gitleaks hook (local), loud where it cannot run (*Pre-commit: local == CI*), and GitHub's built-in push protection (server). Push protection runs on pushes to public repositories, and to an organization's private ones with GitHub Secret Protection, never to a person's private one. It blocks the secret formats GitHub knows, providers' tokens above all; a project's own credential — a server password, a key in the app's own format — passes it, since only an organization's repositories can add a custom pattern. So on a public repository the commit hook is the one layer that stops such a secret before it is public, whatever branch the work is pushed to; a CI scan finds it after the push, and a secret found there is rotated and allowlisted (*Secret rotation*).
 5. **Non-root containers** — already covered above.
 6. **Least-privilege workflow permissions** — every job's `permissions:` block should enumerate only what it needs. Default is `read: all`, which is often too much.
+
+**The day a private repository goes public,** its whole history goes public with it. Scan that history first (`gitleaks git -v --redact`) and rotate and allowlist whatever it finds (*Secret rotation*); then turn on private vulnerability reporting where `SECURITY.md` names it, and add `codeql.yml`. Push protection reaches the repository from then on.
 
 ---
 

@@ -19,6 +19,19 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 - A task files a follow-up only for a seen instance, a job of its own and a likely change (#64)
 - A trigger nothing has met is a `Watch:` line in the plan and the commit, not an issue (#64)
 - A comprehensive review's Phase 0 checks the `Watch:` lines tasks have landed (#64)
+- A hook check that skips for a missing tool says so on every run (#48)
+- The CONTRIBUTING template's setup installs every tool the hooks call (#48)
+- The complete skill reports each line a hook printed saying a check did not run (#48)
+- The release skill's review stop names each line a hook printed saying a check did not run (#48)
+- A secret a history scan finds is rotated and allowlisted, never only deleted (#48)
+- The security baseline turns on private vulnerability reporting wherever `SECURITY.md` names it (#48)
+- The security baseline says push protection covers no person's private repository (#48)
+- The security baseline says push protection lets a project's own credential formats through (#48)
+- The security baseline scans the whole history before a private repository goes public (#48)
+- `ci.yml`'s recipe allows a secret scan, one that reads commits, not the commit hook's staged diff (#48)
+- The CONTRIBUTING template reads what the release's CI will read under its dispatch before the bump (#48)
+- Repositories: private vulnerability reporting is turned on where a public repository's `SECURITY.md` names it (#48)
+- Repositories: a git hook that skips a check for a missing tool prints that it did (#48)
 
 ### Fixed
 - The release skill never ships a commit whose CI is red (#59)
@@ -32,6 +45,9 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 - An upgrade leaves accepted ADRs, released changelog sections and frozen records as written, whatever a step lists (#42)
 - The codebase review's link check passes over a link from an ADR once accepted into a deleted copy of a kit guide (#62)
 - The codebase review exempts from drift any record a repository's `AGENTS.md` calls frozen (#62)
+- The codebase review scans history with `gitleaks git`, not the deprecated `gitleaks detect` (#48)
+- The codebase review reads what the scan is told to skip where it is written, never from lines that print the secret (#48)
+- The codebase review reads back that the reporting route `SECURITY.md` names is on (#48)
 
 ## [0.17.1] — 2026-11-23
 

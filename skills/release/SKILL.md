@@ -30,7 +30,7 @@ Reversible; nothing here needs a go-ahead except a paid check.
 
 ## Phase 2 — Review: stop
 
-Surface the compare link from the last tag to the release branch's head (`https://github.com/<owner>/<repo>/compare/v<last>...<head>`, the head as a full SHA), a one-paragraph summary, the checks' readings, `lifecycle ci`'s last line on that head among them, and the reviews that are due, then wait for an explicit "proceed"; "ship it" is not one: ask. The head this stop shows is the one Phase 3 ships, and it carries its own CI reading by Phase 1's step 4: 0, or a missing one this stop names. Corrections are worked here, and you stop again:
+Surface the compare link from the last tag to the release branch's head (`https://github.com/<owner>/<repo>/compare/v<last>...<head>`, the head as a full SHA), a one-paragraph summary, the checks' readings, `lifecycle ci`'s last line on that head among them, each line a hook printed at the release commit or its push saying a check did not run, and the reviews that are due, then wait for an explicit "proceed"; "ship it" is not one: ask. The head this stop shows is the one Phase 3 ships, and it carries its own CI reading by Phase 1's step 4: 0, or a missing one this stop names. Corrections are worked here, and you stop again:
 
 - a finding that holds the release, a red CI reading among them, is fixed or reverted on the release branch through the task workflow, and the checks run again;
 - any other correction re-reads the checks: a reading covers only the commit it ran on, and the next stop shows the new head, its CI read again;

@@ -16,7 +16,9 @@ kit's
 1. Clone and install dependencies: `{{SETUP_CMD}}` ({{e.g., `uv sync`, `npm install`}}).
 2. Install the git hooks: `{{HOOK_INSTALL_COMMAND}}` ({{e.g., `pre-commit install
    --hook-type pre-commit --hook-type pre-push`}}). Non-negotiable — the pre-push
-   stage is the local CI gate.
+   stage is the local CI gate. Install each tool the hooks call that the hook
+   manager does not install itself: {{TOOLS_THE_HOOKS_CALL}} ({{e.g., `gitleaks`}}).
+   A hook that finds one missing says its check did not run.
 3. Copy `.env.example` → `.env` and fill the values (the comments in
    `.env.example` say where each one comes from).
 
@@ -26,26 +28,34 @@ kit's
 release ships what has landed. The checklist is literal — execute it in order,
 no shortcuts:
 
-1. **Bump the version** in `{{VERSION_FILE}}` — the single source of truth.
-2. **Update `CHANGELOG.md`**: date the new section, group entries under
+1. **Read what the dispatch's CI will read** (drop this step where no job of
+   `ci.yml` reads more under the release's dispatch than on a push): run
+   {{WIDENED_CHECK}} ({{e.g., the secret scan, which gitleaks-action runs over
+   the whole history under a dispatch: `gitleaks git -v --redact` on a fresh
+   clone, which holds what the dispatch's checkout holds, at the job's gitleaks
+   version and config}}) and land what it finds before the bump. A
+   secret it finds is rotated and its finding allowlisted ({{e.g., its
+   fingerprint in `.gitleaksignore`}}), never only deleted: the history keeps it.
+2. **Bump the version** in `{{VERSION_FILE}}` — the single source of truth.
+3. **Update `CHANGELOG.md`**: date the new section, group entries under
    Added / Changed / Fixed / Removed, reference issues (`#N`).
-3. **Commit and push** the release commit to `{{INTEGRATION_BRANCH}}`.
-4. **Review the release** on the compare link from the last tag (`git fetch
+4. **Commit and push** the release commit to `{{INTEGRATION_BRANCH}}`.
+5. **Review the release** on the compare link from the last tag (`git fetch
    --tags origin` first: the workflow makes the tags on GitHub) to that commit
    (`https://github.com/<owner>/<repo>/compare/v<last>...<sha>`), with the
    readings of every check that runs only before a release. A correction lands
    on `{{INTEGRATION_BRANCH}}`, and the review reads the new head.
-5. **— Checkpoint —** If an AI assistant is driving, it stops here and waits
-   for explicit approval. Step 6 is irreversible and ships to production; a
+6. **— Checkpoint —** If an AI assistant is driving, it stops here and waits
+   for explicit approval. Step 7 is irreversible and ships to production; a
    prior "do the release" does not extend past this line.
-6. **Dispatch the release workflow** (`{{RELEASE_WORKFLOW}}`, named under
+7. **Dispatch the release workflow** (`{{RELEASE_WORKFLOW}}`, named under
    `[release]` in `.lifecycle.toml`) on the reviewed commit, and watch the run
    to its end: `lifecycle release <sha>`. It refuses when
    `{{INTEGRATION_BRANCH}}` moved since the review (check the version and the
    changelog against the new head, review it, then dispatch that) or when the
    version is tagged already; otherwise it builds, ships, and creates the tag
    and the GitHub Release last.
-7. **Verify the deployment**: `{{VERSION_PROBE}}` ({{e.g., `curl
+8. **Verify the deployment**: `{{VERSION_PROBE}}` ({{e.g., `curl
    https://…/health`, `--version` of the published artifact}}) reports the new
    version. A release isn't done until this passes.
 

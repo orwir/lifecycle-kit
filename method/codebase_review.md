@@ -335,15 +335,17 @@ An exploitable finding follows the machinery's private route (`review_machinery.
 
 Surface tags as in `review_machinery.md` § Surface tags; a tagged block the project lacks is recorded as *n/a*, not skipped silently.
 
-Start by re-verifying the kickstart's security baseline (`project_kickstart.md` § Security baseline): `SECURITY.md`, the dependency-update bot config, secret scanning at both layers, least-privilege workflows, the rotation runbook, static analysis where available. Kickstart wires them once; the review is where they get re-checked.
+Start by re-verifying the kickstart's security baseline (`project_kickstart.md` § Security baseline): `SECURITY.md`, and the route it names turned on (where it names GitHub's private vulnerability reporting on a public repository, `gh api repos/<owner>/<repo>/private-vulnerability-reporting` prints `"enabled":true`; one that prints `false` is a finding); the dependency-update bot config; secret scanning at both layers — each hook step that runs a tool only where it is installed prints where it is not, and the hook manager shows that line (pre-commit: `verbose: true`); the scanner runs on the machine the review runs on; push protection is expected only where the repository's type has it, a person's private repository having none; least-privilege workflows; the rotation runbook; static analysis where available. Kickstart wires them once; the review is where they get re-checked.
 
 #### 5.1 Secrets
 
-- **Scan the current state, not just diffs.**
+- **Scan the whole history, not just diffs.** `gitleaks git` reads every commit; it replaced `gitleaks detect`, deprecated since gitleaks 8.19.0.
 
 ```
-gitleaks detect --source . --no-banner
+gitleaks git -v --redact --no-banner .
 ```
+
+- **What the scan is told to skip.** gitleaks always applies the scanned repository's `.gitleaksignore`, on top of any `--gitleaks-ignore-path`, and skips what its config's allowlists match and any line marked `gitleaks:allow`, so none of those findings shows. Read each where it is written: a `.gitleaksignore` entry, a fingerprint (`<commit>:<file>:<rule>:<line>`, or `<file>:<rule>:<line>` for every commit), each config allowlist and each `gitleaks:allow` line (`git grep -n gitleaks:allow`) is a secret the maintainer confirms was rotated, or a false positive. Not from gitleaks' debug `skipping finding` lines: those for a fingerprint print the secret, `--redact` or not.
 
 - **Logging hygiene.** Grep log calls for sensitive names — credentials *and* personal data:
 

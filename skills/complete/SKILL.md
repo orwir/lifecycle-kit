@@ -33,6 +33,7 @@ A gap this task found in a kit guide was filed by `lifecycle gap` when it was fo
 2. One Conventional Commit (AGENTS.md § Branching and commits): the body says why, names every decision taken alone with its reason (the plan's `Taken:` lines, the hand-off's and the hand-back's), every departure, every `Watch:` line still standing, each answer to the hand-back and each spend with its amount, and ends `Closes #<issue>` on a tracked task. A fix for an exploitable finding in released code keeps its location and detail out of every public record `task_review.md` § Return packet lists, until its fix ships.
 3. The message goes in a file in a scratch folder outside the tree, passed with `-F`.
 4. A failing hook is fixed at its cause and the commit made again; never `--no-verify`, never amend a pushed commit.
+5. A hook that passed but printed that a check did not run, its tool missing, is no failure: here or at the push, its line is kept for the report (§ 8).
 
 ## 4. Land
 
@@ -79,4 +80,4 @@ Where the settings name a board, `lifecycle board <issue> Done` puts the card in
 
 ## 8. Report
 
-One line per step with its coordinates: the named `Watch:` lines and the kit gaps filed, each where it landed, and any left unfiled with why, the commit, where it was pushed, the PR, `lifecycle ci`'s last line on the push or the PR's checks, the issue's state, the board column. Anything skipped says why.
+One line per step with its coordinates: the named `Watch:` lines and the kit gaps filed, each where it landed, and any left unfiled with why, the commit, each line a hook printed saying a check did not run, where it was pushed, the PR, `lifecycle ci`'s last line on the push or the PR's checks, the issue's state, the board column. Anything skipped says why.
