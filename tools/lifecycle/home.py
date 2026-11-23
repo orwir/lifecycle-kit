@@ -10,6 +10,7 @@ runs on the person's go-ahead: gh only creates the repository, and git adds it a
 
 from __future__ import annotations
 
+import contextlib
 import os
 import shutil
 import stat
@@ -300,6 +301,7 @@ def setup(folder: Path) -> Setup:
     written = [*files, guides.LOCK]
     committed = sorted([*written, *([SETTINGS] if (folder / SETTINGS).is_file() else [])])
     message = f"Set up the ideas home on lifecycle kit {guides.kit_version()}"
+    staged: list[str] = []  # a failed git add stages nothing: git writes the index whole
     folder.mkdir(parents=True, exist_ok=True)
     try:
         if not repository:
@@ -312,11 +314,12 @@ def setup(folder: Path) -> Setup:
         lock = guides.Lock(kit=guides.kit_version(), templates={TEMPLATE: template})
         guides.write_lock(folder, lock)
         _ok(git(folder, "add", "--", *committed), "git add")
+        staged = committed
         _ok(git(folder, "commit", "-q", "-m", message), "git commit")
     except HomeError as error:
-        left = _undo(folder, written, committed, existed, repository)
+        left = _undo(folder, written, staged, existed, repository)
         kept = (
-            f"Not taken away: {', '.join(left)}. Remove {'it' if len(left) == 1 else 'them'} and,"
+            f"Not taken away: {'; '.join(left)}. Remove {'it' if len(left) == 1 else 'them'} and,"
             if left
             else "Nothing was kept:"
         )
@@ -330,30 +333,37 @@ def _undo(
     folder: Path, written: list[str], staged: list[str], existed: bool, repository: bool
 ) -> list[str]:
     """Take away what a failed setup wrote, so nothing reads as a home and the folder is as
-    it was: the files, every index entry it staged, a repository and a folder it made.
-    Returns what could not be taken away."""
+    it was: the files, what it staged, a repository and a folder it made. Raises nothing:
+    returns what could not be taken away, each named in full for a reader anywhere."""
     left = []
-    if repository:
-        unstaged = git(folder, "rm", "-r", "-q", "--cached", "--ignore-unmatch", "--", *staged)
-        if unstaged.returncode != 0:
-            left.append("what is staged in .git/index")
+    if repository and staged:
+        try:
+            result = git(folder, "rm", "-r", "-q", "--cached", "--ignore-unmatch", "--", *staged)
+            why = None if result.returncode == 0 else _first_line(result.stderr or result.stdout)
+        except HomeError as error:
+            why = str(error)
+        if why:
+            left.append(f"the staging of {', '.join(staged)} in {folder / '.git'} ({why})")
     for name in written:
-        (folder / name).unlink(missing_ok=True)
+        with contextlib.suppress(OSError):
+            (folder / name).unlink(missing_ok=True)
     for name in ("active", "archive"):
-        if (folder / name).is_dir() and not any((folder / name).iterdir()):
-            (folder / name).rmdir()
+        with contextlib.suppress(OSError):
+            (folder / name).rmdir()  # only an empty one goes
     if not repository:
         # git's objects are read-only, which Windows will not delete; a directory keeps
         # its mode, as one without its search bit hides what is in it on POSIX
-        for path in (folder / ".git").rglob("*"):
-            if not path.is_dir():
-                path.chmod(stat.S_IWRITE | stat.S_IREAD)
+        with contextlib.suppress(OSError):
+            for path in (folder / ".git").rglob("*"):
+                if not path.is_dir():
+                    path.chmod(stat.S_IWRITE | stat.S_IREAD)
         shutil.rmtree(folder / ".git", ignore_errors=True)
-    left += [name for name in written if (folder / name).exists()]
+    left += [str(folder / name) for name in written if (folder / name).exists()]
     if not repository and (folder / ".git").exists():
-        left.append(".git")
-    if not existed and folder.is_dir() and not any(folder.iterdir()):
-        folder.rmdir()
+        left.append(str(folder / ".git"))
+    if not existed:
+        with contextlib.suppress(OSError):
+            folder.rmdir()  # only an empty one goes
     return left
 
 

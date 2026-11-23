@@ -11,9 +11,7 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 ## Unreleased
 
 ### Fixed
-- `lifecycle home` leaves nothing behind on Linux and macOS when its commit fails, where it crashed (#58)
-- `lifecycle home` takes back a setup whose git step timed out, where a rerun took it for a home (#58)
-- `lifecycle home` unstages `.claude/settings.json` from a repository whose setup failed (#58)
+- `lifecycle home` takes back all a failed or timed-out setup wrote or staged, on Linux and macOS too (#58)
 
 ## [0.17.1] — 2026-11-23
 

@@ -457,10 +457,65 @@ def test_what_the_rollback_cannot_take_away_is_named(tmp_path, isolated, monkeyp
     folder = tmp_path / "ideas"
     with pytest.raises(home.HomeError) as failed:
         home.setup(folder)
-    assert "Not taken away: .git. Remove it" in str(failed.value)
+    assert f"Not taken away: {folder / '.git'}. Remove it and," in str(failed.value)
     assert "Nothing was kept" not in str(failed.value)
     assert f"`lifecycle home {folder}` again" in str(failed.value)
     assert (folder / ".git").is_dir() and listing(folder) == []
+
+
+def test_a_file_the_rollback_cannot_delete_is_named_not_raised(tmp_path, isolated, monkeypatch):
+    refuse_commits(tmp_path, isolated)
+    real = home.Path.unlink
+
+    def unlink(path, missing_ok=False):
+        if path.name == home.TARGET:
+            raise PermissionError(13, "held by another process", str(path))
+        real(path, missing_ok=missing_ok)
+
+    monkeypatch.setattr(home.Path, "unlink", unlink)
+    folder = tmp_path / "ideas"
+    with pytest.raises(home.HomeError) as failed:
+        home.setup(folder)
+    assert f"Not taken away: {folder / home.TARGET}. Remove it and," in str(failed.value)
+    assert f"`lifecycle home {folder}` again" in str(failed.value)
+    assert listing(folder) == [home.TARGET] and not (folder / ".git").exists()
+
+
+def test_a_failed_add_claims_nothing_staged(tmp_path):
+    folder = tmp_path / "ideas"
+    (folder / ".claude").mkdir(parents=True)
+    (folder / ".claude" / "settings.json").write_text("{}\n", encoding="utf-8")
+    sh(folder, "init", "-q")
+    (folder / ".git" / "index.lock").write_text("", encoding="utf-8")
+    with pytest.raises(home.HomeError) as failed:
+        home.setup(folder)
+    assert "git add failed" in str(failed.value)
+    assert "Nothing was kept" in str(failed.value)
+    assert "staging" not in str(failed.value)
+    assert listing(folder) == [".claude", ".claude/settings.json"]
+
+
+def test_a_failed_unstaging_is_named_with_its_reason(tmp_path, isolated, monkeypatch):
+    refuse_commits(tmp_path, isolated)
+    folder = tmp_path / "ideas"
+    folder.mkdir()
+    sh(folder, "init", "-q")
+    real = home.git
+    locked = "fatal: Unable to create '.git/index.lock': File exists."
+
+    def git(folder, *args, timeout=home.CALL_SECONDS):
+        if args[:1] == ("rm",):
+            return subprocess.CompletedProcess(["git", *args], 128, "", locked + "\n")
+        return real(folder, *args, timeout=timeout)
+
+    monkeypatch.setattr(home, "git", git)
+    with pytest.raises(home.HomeError) as failed:
+        home.setup(folder)
+    assert "Not taken away: the staging of .lifecycle.lock, .lifecycle.toml, AGENTS.md" in str(
+        failed.value
+    )
+    assert f"in {folder / '.git'} ({locked}). Remove it and," in str(failed.value)
+    assert "Nothing was kept" not in str(failed.value)
 
 
 def test_github_pushes_a_main_ahead_of_origin(tmp_path, monkeypatch, local_home):
