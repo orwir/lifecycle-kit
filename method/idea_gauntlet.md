@@ -435,7 +435,8 @@ never passed on fewer, or on my own play.
       its real name, and put that repo on the kit; add its line
       to graduated.md, with a next check four weeks out.
 - [ ] [sw] Run the kit's project_kickstart.md (an agent can drive it), seeded
-      from the artifacts: done statement -> v0.1 milestone; IN list -> first
+      from the artifacts: done statement -> v0.1's scope, its issues first
+      (at the top of Ready where the project keeps a board); IN list -> first
       issues; the stack choice (the spike's, where there was one) and the
       decisions recorded here -> first ADRs.
       [game] It has no game variant yet: take what fits, and file with

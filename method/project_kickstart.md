@@ -4,7 +4,7 @@ A language-agnostic, tech-agnostic recipe for standing up a new project that sta
 
 Everything here is extracted from deployed production projects, not theory. Keep one of your own as the living reference (see *Keep a living reference* at the end).
 
-Upstream of this playbook sits `idea_gauntlet.md` (beside it in the kit): the gauntlet decides *whether* a project gets built, and its filled instance — the idea's folder, moved out of the ideas home: `IDEA.md` at the root, with the evidence it links in `docs/product/` and `design/` — is this playbook's input. This playbook starts once the gauntlet's answer is yes, and hands day-to-day operation to `AGENTS.md` and the issue board.
+Upstream of this playbook sits `idea_gauntlet.md` (beside it in the kit): the gauntlet decides *whether* a project gets built, and its filled instance — the idea's folder, moved out of the ideas home: `IDEA.md` at the root, with the evidence it links in `docs/product/` and `design/` — is this playbook's input. This playbook starts once the gauntlet's answer is yes, and hands day-to-day operation to `AGENTS.md` and the issues.
 
 ---
 
@@ -198,11 +198,11 @@ Until then, a release as an event of its own costs one dispatch and buys a batch
 
 Codify release as a numbered checklist in `CONTRIBUTING.md`. Not "the maintainer knows how" — a literal numbered list anyone on the team could execute.
 
-Use [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`. Each `MAJOR.MINOR` maps to a milestone; patch releases reuse the same milestone.
+Use [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`, picked by what landed since the last tag.
 
 The checklist itself, the hotfix variant included, is the CONTRIBUTING template's § Releasing and § Hotfixes, which a repository fills in for its own build and deploy. Why it runs that way:
 
-- **Plan by milestone.** Open `v<MAJOR.MINOR>` when you commit to scope, not weeks ahead; triage moves an issue from `Backlog` to `Ready` and into it, and the release waits for its last open issue.
+- **Plan by Ready's order, ship what has landed.** On a board, triage moves an issue from `Backlog` to `Ready`, in order, and the top card is next; without one, the open issues are the plan (*Project board*). A release ships whatever has landed since the last one, with no list of its own to keep. Where a release's scope is fixed outside the project, a milestone holds it (*GitHub tracking setup*, *Milestones*).
 - **The release is a reviewed commit.** The version bump and the dated CHANGELOG land on `main` like any other commit, and the review reads the compare link from the last tag to that commit. A correction lands on `main`, and the review reads the new head.
 - **A dispatch ships, and only the reviewed commit,** so nothing ships that the review did not read, and a failed release leaves no tag (*CI/CD recipe*, `release.yml`).
 - **An assistant stops before the dispatch.** It is irreversible and deploys to production, so an AI agent drafts, pushes the release commit, surfaces the compare link, and waits for explicit approval; a prior "do the release" does not reach it. The AGENTS template states it as a gate.
@@ -411,7 +411,7 @@ Each document answers a different question. If two docs are answering the same q
 
 ### `vision.md` is seeded, not written
 
-It is started in the gauntlet — the problem and the CUJs in Phase 1, the scope and the IA in Phase 2, the bet (appetite, cost ceiling, kill criteria) in Phase 4 — so graduation copies nothing into it, and `IDEA.md` freezes beside it as `docs/product/idea.md`, the never-edited origins artifact. The first UX review builds its **CUJ inventory** on those CUJs (`ux_review.md` § CUJs); a project that skipped the gauntlet creates them there. One living file owns product intent end-to-end; the frozen one remembers where it came from. Don't add a separate requirements doc — that's `roadmap.md` with a different name; tracked work lives in issues, scope history lives in milestones and the CHANGELOG.
+It is started in the gauntlet — the problem and the CUJs in Phase 1, the scope and the IA in Phase 2, the bet (appetite, cost ceiling, kill criteria) in Phase 4 — so graduation copies nothing into it, and `IDEA.md` freezes beside it as `docs/product/idea.md`, the never-edited origins artifact. The first UX review builds its **CUJ inventory** on those CUJs (`ux_review.md` § CUJs); a project that skipped the gauntlet creates them there. One living file owns product intent end-to-end; the frozen one remembers where it came from. Don't add a separate requirements doc — that's `roadmap.md` with a different name; tracked work lives in issues, scope history lives in the CHANGELOG and the tags.
 
 ### ADRs deserve a special note
 
@@ -483,7 +483,7 @@ If you use AI assistants to write code (Claude Code, Codex, Cursor, Gemini CLI, 
 
 **The lifecycle kit carries the mechanics.** The method these guides describe ships with its machinery as the lifecycle kit (`orwir/lifecycle-kit`): the guides are served from the installed kit, never copied; the `lifecycle` command brings a repository's templates and settings up to a new release, moves board cards to the top of their column, ships a reviewed commit through the release workflow and watches the run, files a gap in a guide where its finder can write, and says what a repository needs before its next task; the kit's skills run the review rounds, the close-out and the release for any agent that loads Agent Skills. A new project turns it on at day zero:
 
-- `.lifecycle.toml` at the root names its integration branch, board, gate commands, release workflow and review lenses — the structured values the skills read. Everything else they need stays in `AGENTS.md`.
+- `.lifecycle.toml` at the root names its integration branch, its board where it keeps one, gate commands, release workflow and review lenses — the structured values the skills read. Everything else they need stays in `AGENTS.md`.
 - The kit's upgrade skill makes the first move: it compares any guide named like one of the kit's, runs `lifecycle upgrade --adopt` (which deletes each copy that is the kit's text, keeps the rest for the comparison, and writes `.lifecycle.lock`, the release and the text of each template the repository follows), ports the templates and makes every upgrade step up to the installed release.
 - The agent's adapter: for Claude Code, the kit's marketplace and plugin turned on in the committed `.claude/settings.json`, by the kit's `docs/guide.md` (*Put a repository on the kit*).
 
@@ -491,7 +491,7 @@ If you use AI assistants to write code (Claude Code, Codex, Cursor, Gemini CLI, 
 
 ## GitHub tracking setup
 
-Issues and a project board are the single source of truth for *tracked work*. The `roadmap.md` file in your repo is a lie within a week. The issue list isn't.
+Issues are the single source of truth for *tracked work*, ordered on a project board where the repository keeps one (*Project board*). The `roadmap.md` file in your repo is a lie within a week. The issue list isn't.
 
 ### Label taxonomy
 
@@ -507,13 +507,25 @@ Avoid `good-first-issue`, `help-wanted`, `wontfix` noise until you have contribu
 
 ### Milestones
 
-One per `MAJOR.MINOR` version. Patch releases share the parent minor milestone. Create the milestone when you commit to scope — not weeks in advance.
+None by default. The plan is Ready's order where the repository keeps a board, and its open issues where it keeps none (*Project board*); a release ships what has landed, and the record of what shipped where is the CHANGELOG, whose entries cite their issues, and the tags. A milestone kept beside the board is a second plan, and the two drift apart: scope gets moved out of it at every release.
+
+A milestone earns its place where something outside the project fixes a release's scope, and the maintainer chooses one: a store submission, an event's demo, a v0.1 whose date someone else set. It then adds two steps to the release checklist in `CONTRIBUTING.md`, each for a release a milestone names and no other: before the bump, confirm it is clean (`gh issue list --milestone v<X.Y> --state open` returns nothing; close or move out the rest), and after the ship, close it; the dispatch step's recheck of a moved branch checks that milestone again. A hotfix skips both, since the milestone holds the unreleased work, and the checklist's § Hotfixes says so beside them.
 
 ### Project board
 
-Use GitHub Projects v2 with a Status field, standardized at four columns: `Backlog → Ready → In Progress → Done`. Backlog = captured, not committed; Ready = triaged into a milestone, free to pick up; In Progress = actively worked; Done = landed and closed. Review state lives on the PR itself, not the board — a separate `In Review` column just goes stale. Built-in automations can cover the mechanical edge (issue closed → Done); the other transitions are deliberate moves.
+A board earns its cost where the open issues outnumber what the maintainer holds in mind, or more than one person works on the repository. Otherwise leave it out, and `[board]` in `.lifecycle.toml` with it: the open issues are the plan, and nothing in the kit needs a board. A board whose Ready stays empty mirrors issue state and earns nothing.
 
-If you're working with an AI coding assistant, give it explicit ownership of the transitions it's well-positioned to make: **Backlog** when it creates an issue on your behalf, **In Progress** as the first step when it picks one up (before any code reading or planning), **Done** as part of the same close-out batch that closes the issue. Moving `Backlog → Ready` stays the maintainer's triage call. Codify this in your `AGENTS.md` so the rule survives across sessions. The board lies if the assistant writes code while the issue still says Backlog — and "No Status" is worse, because the item disappears from board views entirely.
+Use GitHub Projects v2 with a Status field, standardized at four columns: `Backlog → Ready → In Progress → Done`. Backlog = captured, not triaged; Ready = triaged and ordered, the top card next, so its order is the plan; In Progress = actively worked; Done = closed, landed or not planned. Review state lives on the PR itself, not the board — a separate `In Review` column just goes stale. No custom fields by default: a field nobody sets is noise on every card.
+
+`lifecycle board setup` makes a board in one pass, or fixes one in place: it writes the four Status options, keeping each existing option's id, links the repository and adds its open issues, then names each built-in workflow to turn on or to confirm in the web UI, since no API creates or turns on a workflow, or reads its value. Keep these on:
+
+- **Item closed → Done**, so an issue closed outside a task (as not planned, by a hotfix's `Closes #N`) leaves Backlog too.
+- **Item added to project → Backlog**, and **Auto-add to project** with `is:issue is:open -label:kit-gap`, so no card sits in "No Status", which hides it from board views. Auto-add is not retroactive: setup adds the open issues once.
+- **Auto-archive items** with `is:closed updated:<@today-14d`, so Done holds two weeks of closed work. `lifecycle board` brings an archived card back when it moves one.
+
+Status options replaced without their ids, in the UI or through the API, clear every card's Status and empty each workflow that set one; setup never does that. A public repository's board goes public once it has been triaged.
+
+If you're working with an AI coding assistant, give it explicit ownership of the transitions it's well-positioned to make: **Backlog** when it creates an issue on your behalf, **In Progress** as the first step when it picks one up (before any code reading or planning), **Done**, at the top, as part of the same close-out batch that closes the issue. Moving `Backlog → Ready`, and the order within Ready, stay the maintainer's triage call. Codify this in your `AGENTS.md` so the rule survives across sessions. The board lies if the assistant writes code while the issue still says Backlog.
 
 ### Issue templates
 
@@ -549,13 +561,9 @@ gh label create "priority/tier-1" --color b60205 --description "High priority qu
 gh label create "priority/tier-2" --color e99695 --description "Medium priority feature"
 gh label create "priority/tier-3" --color c2e0c6 --description "Strategic / research"
 
-# First milestone
-gh api repos/<owner>/<repo>/milestones -X POST -f title=v0.1 -f description="Initial release"
-
-# Project board
-gh project create --owner <owner> --title "<project-name>"
-# Then configure Status field options via the GraphQL API or UI:
-# Backlog / Ready / In Progress / Done
+# Project board, where it earns its cost (*Project board*): creates one, or fixes the one
+# --number names, then prints the [board] lines and the workflows to set in the web UI
+lifecycle board setup
 ```
 
 ---
@@ -654,8 +662,8 @@ git commit -m "chore: initial scaffold"
 # 5. Create the remote and push main, which becomes the default branch
 gh repo create <owner>/<repo> --private --source=. --push --description "..."
 
-# 6. Labels + first milestone (see commands above)
-# 7. Project board (see commands above)
+# 6. Labels (see commands above)
+# 7. Project board, where it earns its cost: lifecycle board setup (see commands above)
 
 # 8. Keep main from force pushes and deletion where the plan allows branch protection
 #    (a public repo, or a paid plan). A private repo on the free plan gets HTTP 403 and

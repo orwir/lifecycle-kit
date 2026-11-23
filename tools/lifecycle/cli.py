@@ -79,11 +79,40 @@ def _upgrade(args: argparse.Namespace) -> int:
 
 
 def _board(args: argparse.Namespace) -> int:
+    if args.issue == "setup":
+        return _board_setup(args)
     config = _config()
     if not config.board_owner:
         raise ConfigError(".lifecycle.toml has no [board]: this repository tracks no board")
     item = board.move(args.issue, args.column, config.board_owner, config.board_number)
     print(f"#{args.issue}: {args.column}, top of the column ({item})")
+    return 0
+
+
+def _board_setup(args: argparse.Namespace) -> int:
+    config = load()
+    named = config.board_owner if config else None
+    repo = json.loads(
+        board.gh("repo", "view", "--json", "id,nameWithOwner,name,owner,visibility,url")
+    )
+    number = args.number or (config.board_number if config else None)
+    done = board.setup(repo, named, number, lambda line: print(line, flush=True))
+    if done.left:
+        print(
+            f"left with no Status: {done.left} card(s) the board tracks no column for "
+            f"(a pull request, a draft, a {gap.LABEL} issue, another repository's)"
+        )
+    if not named or (config and config.board_number != done.number):
+        print("in .lifecycle.toml:")
+        print(f'  [board]\n  owner = "{done.owner}"\n  number = {done.number}')
+    print(f"in the web UI, {done.url}/workflows (no API turns a workflow on or reads its value):")
+    for line in done.workflows:
+        print(f"  {line}")
+    if repo["visibility"] == "PUBLIC" and not done.public:
+        print(
+            "once the board is triaged, make it public as the repository is: "
+            f"gh project edit {done.number} --owner {done.owner} --visibility PUBLIC"
+        )
     return 0
 
 
@@ -165,6 +194,26 @@ def _hook(args: argparse.Namespace) -> int:
     return 0
 
 
+def _issue(value: str) -> int | str:
+    if value == "setup":
+        return value
+    try:
+        return int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"{value!r} is not an issue number or setup") from None
+
+
+def _check_board(args: argparse.Namespace) -> None:
+    """The pairings argparse cannot state, refused with ``lifecycle board``'s own usage."""
+    setup = args.issue == "setup"
+    if setup and args.column:
+        args.board_parser.error("setup takes no column")
+    if not setup and not args.column:
+        args.board_parser.error(f"#{args.issue} needs a column: {', '.join(board.COLUMNS)}")
+    if not setup and args.number is not None:
+        args.board_parser.error("--number is setup's: a move uses the board .lifecycle.toml names")
+
+
 def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(prog="lifecycle", description=__doc__)
     root.add_argument("-C", dest="directory", help="run as if started in this directory")
@@ -185,9 +234,20 @@ def parser() -> argparse.ArgumentParser:
         "like the kit's (--dry-run lists both)",
     )
     p.add_argument("--dry-run", action="store_true")
-    p = sub.add_parser("board", help="put an issue's card in a board column, at the top")
-    p.add_argument("issue", type=int)
-    p.add_argument("column", choices=board.COLUMNS)
+    p = sub.add_parser(
+        "board",
+        help="put an issue's card in a board column, at the top; setup creates a board or "
+        "fixes one in place",
+    )
+    p.set_defaults(board_parser=p)
+    p.add_argument("issue", type=_issue, help="the issue's number, or setup")
+    p.add_argument("column", nargs="?", choices=board.COLUMNS)
+    p.add_argument(
+        "--number",
+        type=int,
+        help="setup: the board to fix in place (default: the one .lifecycle.toml names, "
+        "otherwise a new one)",
+    )
     p = sub.add_parser("release", help="ship a reviewed commit by the release workflow, watched")
     p.add_argument("commit", help="the head the release review read")
     p.add_argument("--ref", help="the branch to dispatch on (default: the integration branch)")
@@ -231,6 +291,8 @@ def _utf8_streams() -> None:
 def main(argv: Sequence[str] | None = None) -> int:
     _utf8_streams()
     args = parser().parse_args(argv)
+    if args.command == "board":
+        _check_board(args)
     if args.directory:
         os.chdir(args.directory)
     try:

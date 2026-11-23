@@ -125,7 +125,7 @@ The bar is the maintainer's. A shortfall in 1 or 2 found after landing is unfini
   * `docs/guides/` — the project's own task-oriented howtos (deploy / publish / package, extend). The lifecycle kit's guides (kickstart, task review, the comprehensive reviews) are not copied here
   * `docs/adr/` — architecture decision records, one per significant choice
 - **A new documentation file is written only where the accepted plan has a box for it, or, outside a tracked task, where the user asks for it.** An ADR for a non-obvious decision is proposed as a box; a file a mapping row names that the project lacks is surfaced (*Change → required doc mapping*). A file a kit flow writes (a review's report, an upgrade's port) is that flow's.
-- **Do not recreate `roadmap.md`** or any equivalent tracking file. Tracked work lives on GitHub: issues, milestones, the project board.
+- **Do not recreate `roadmap.md`** or any equivalent tracking file. Tracked work lives on GitHub: the issues, and the project board where `.lifecycle.toml` names one.
 - Cite code as `file.{{EXT}}:123`. Markdown links in docs use **file-relative paths**, which resolve in every renderer: from a doc under `docs/adr/`, `[{{LOGIC_DIR}}/foo.{{EXT}}](../../{{LOGIC_DIR}}/foo.{{EXT}})`, never a workspace-root path, which 404s outside workspace-aware IDE tooling.
 - Avoid `#L123` line anchors in long-lived docs (ADRs especially): keep the file ref, drop the line.
 - An ADR has four sections, Status / Context / Decision / Consequences, and the next number.
@@ -166,8 +166,8 @@ If a row points at a doc the project doesn't have yet (extension guide, design r
 
 - New issues use the templates in `.github/ISSUE_TEMPLATE/`: `bug.md` for defects and regressions, `task.md` for features, refactors, docs, infra.
 - An issue is captured with no plan; its *Plan* is written at *Clarify*, and changes after acceptance only through its *Departures*. Tick a Technical-details box when its path lands; never edit prose to track progress.
-- **Labels:** {{LABELS}}. Add the issue to the milestone if scoped.
-- **The board,** where `.lifecycle.toml` names one: every write is `lifecycle board <N> <column>`, which puts the card at the top of its column: **Backlog** when you file an issue; the other moves are *Task workflow*'s, and `Backlog → Ready` is the maintainer's triage. The columns, milestones, two-stage issues and the label taxonomy: [project_kickstart.md § GitHub tracking setup](https://github.com/orwir/lifecycle-kit/blob/main/method/project_kickstart.md).
+- **Labels:** {{LABELS}}.
+- **The board,** where `.lifecycle.toml` names one: every write is `lifecycle board <N> <column>`, which puts the card at the top of its column: **Backlog** when you file an issue; the other moves are *Task workflow*'s, and `Backlog → Ready` is the maintainer's triage. Ready's order is the plan: the top card is next. The columns, the workflows the board keeps on, two-stage issues and the label taxonomy: [project_kickstart.md § GitHub tracking setup](https://github.com/orwir/lifecycle-kit/blob/main/method/project_kickstart.md).
 - **A `kit-gap` issue** is the lifecycle kit's work, filed here by `lifecycle gap` for its maintainer to lift: it takes none of these rules (no template, no label from the list, no card on the board).
 - PRs use `.github/pull_request_template.md`: a Summary, a linked issue (`Closes #N`), and a concrete Verification section.
 - Reference issues in commit bodies and PR descriptions, each confirmed with `gh issue view <N>` first; never invent a number.

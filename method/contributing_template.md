@@ -22,32 +22,30 @@ kit's
 
 ## Releasing
 
-[SemVer](https://semver.org). Each `MAJOR.MINOR` maps to a milestone; patches
-reuse it. The checklist is literal — execute it in order, no shortcuts:
+[SemVer](https://semver.org), picked by what landed since the last tag: a
+release ships what has landed. The checklist is literal — execute it in order,
+no shortcuts:
 
-1. **Confirm the milestone is clean.** `gh issue list --milestone v<X.Y>
-   --state open` returns nothing (close or move out the rest).
-2. **Bump the version** in `{{VERSION_FILE}}` — the single source of truth.
-3. **Update `CHANGELOG.md`**: date the new section, group entries under
+1. **Bump the version** in `{{VERSION_FILE}}` — the single source of truth.
+2. **Update `CHANGELOG.md`**: date the new section, group entries under
    Added / Changed / Fixed / Removed, reference issues (`#N`).
-4. **Commit and push** the release commit to `{{INTEGRATION_BRANCH}}`.
-5. **Review the release** on the compare link from the last tag (`git fetch
+3. **Commit and push** the release commit to `{{INTEGRATION_BRANCH}}`.
+4. **Review the release** on the compare link from the last tag (`git fetch
    --tags origin` first: the workflow makes the tags on GitHub) to that commit
    (`https://github.com/<owner>/<repo>/compare/v<last>...<sha>`), with the
    readings of every check that runs only before a release. A correction lands
    on `{{INTEGRATION_BRANCH}}`, and the review reads the new head.
-6. **— Checkpoint —** If an AI assistant is driving, it stops here and waits
-   for explicit approval. Step 7 is irreversible and ships to production; a
+5. **— Checkpoint —** If an AI assistant is driving, it stops here and waits
+   for explicit approval. Step 6 is irreversible and ships to production; a
    prior "do the release" does not extend past this line.
-7. **Dispatch the release workflow** (`{{RELEASE_WORKFLOW}}`, named under
+6. **Dispatch the release workflow** (`{{RELEASE_WORKFLOW}}`, named under
    `[release]` in `.lifecycle.toml`) on the reviewed commit, and watch the run
    to its end: `lifecycle release <sha>`. It refuses when
-   `{{INTEGRATION_BRANCH}}` moved since the review (check the version, the
-   changelog and step 1's milestone against the new head, review it, then
-   dispatch that) or when the version is tagged already; otherwise it builds,
-   ships, and creates the tag and the GitHub Release last.
-8. **Close the milestone.**
-9. **Verify the deployment**: `{{VERSION_PROBE}}` ({{e.g., `curl
+   `{{INTEGRATION_BRANCH}}` moved since the review (check the version and the
+   changelog against the new head, review it, then dispatch that) or when the
+   version is tagged already; otherwise it builds, ships, and creates the tag
+   and the GitHub Release last.
+7. **Verify the deployment**: `{{VERSION_PROBE}}` ({{e.g., `curl
    https://…/health`, `--version` of the published artifact}}) reports the new
    version. A release isn't done until this passes.
 
@@ -65,8 +63,7 @@ work:
 3. Release from the branch by the Releasing steps, with `hotfix/<name>`
    wherever they name `{{INTEGRATION_BRANCH}}`: the patch version, the release
    commit pushed to the branch, corrections landed on it, and the dispatch
-   `lifecycle release <sha> --ref hotfix/<name>`. Skip steps 1 and 8: the
-   milestone holds the unreleased work.
+   `lifecycle release <sha> --ref hotfix/<name>`.
 4. Merge the branch into `{{INTEGRATION_BRANCH}}` with a merge commit (`git
    merge --no-ff`), never squashed, so the tag stays in its history, and push.
 5. Delete the hotfix branch — remote and local.

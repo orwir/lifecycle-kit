@@ -5,6 +5,10 @@
 [branches]
 integration = "main"
 
+[board]
+owner = "orwir"
+number = 17
+
 [gate]
 commands = [".githooks/pre-push"]
 # {root} is a worktree of the base, {tests} the new tests as pytest node ids under it.

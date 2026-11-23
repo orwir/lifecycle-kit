@@ -8,6 +8,27 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## [0.17.0] — 2026-11-23
+
+### Added
+- `lifecycle board setup` creates a board or fixes one in place, keeping each Status option's id, so no card loses it (#53)
+- `lifecycle board setup` links the repository and puts its open issues, and cards with no Status, in their column (#53)
+- `lifecycle board setup` names each built-in workflow to turn on or confirm in the web UI, with its value (#53)
+
+### Changed
+- The kickstart's Ready is triaged and ordered, the top card next: its order is the plan, with no milestone (#53)
+- The kickstart keeps a milestone only for a release whose scope something outside the project fixes (#53)
+- The kickstart makes a board optional, kept where the open issues outnumber what one maintainer holds in mind (#53)
+- The kickstart's board keeps the Item closed, Item added, Auto-add and Auto-archive workflows on (#53)
+- The kickstart's board takes no custom field by default (#53)
+- The CONTRIBUTING template's release checklist has no milestone steps: a release ships what has landed (#53)
+- The AGENTS template files an issue into no milestone (#53)
+- The AGENTS template reads Ready's order as the plan, the top card next (#53)
+- The issue templates keep work state on the board where the repository keeps one, otherwise in the issue (#53)
+- `lifecycle board` brings an archived card back when it moves one (#53)
+- Repositories: a repository's own milestone steps stay in `CONTRIBUTING.md` only while a milestone holds open work (#53)
+- Repositories: a repository with a board runs `lifecycle board setup` on it, then sets its workflows in the web UI (#53)
+
 ## [0.16.0] — 2026-11-23
 
 ### Added

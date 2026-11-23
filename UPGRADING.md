@@ -6,6 +6,11 @@ prints the steps a repository owes, oldest release first, and the upgrade skill 
 them. The release's `Repositories:` entries in [CHANGELOG.md](CHANGELOG.md)
 say in one claim each what its steps do.
 
+## [0.17.0] — 2026-11-23
+
+- in `CONTRIBUTING.md`, beyond what the CONTRIBUTING template's port changes, the release checklist's milestone steps (confirm the milestone is clean before the bump, the dispatch step's recheck of that milestone on a moved branch, close it after the ship, and the hotfix note that skips them) stay as the repository's own text where it has an open milestone holding an open issue (`gh api "repos/{owner}/{repo}/milestones?state=open" --jq '.[] | select(.open_issues > 0) | .title'` lists them), worded to run for a release a milestone names and no other, and go with the port where it has none; the milestones themselves stay as they are, and the steps are renumbered to match.
+- on GitHub, where `.lifecycle.toml` names a `[board]`, on the maintainer's go-ahead: run `lifecycle board setup`, which keeps each Status option's id while it adds the missing of Backlog, Ready, In Progress and Done, links the repository and files its open issues and its cards with no Status; then the maintainer makes, in the board's web UI, each workflow step it prints and checks each value it asks to confirm, Auto-add's repository and filter `is:issue is:open -label:kit-gap` among them, since no API turns a workflow on or reads its value: the upgrade's hand-back carries those lines for the maintainer, and counts only the setup run as made.
+
 ## [0.15.0] — 2026-11-22
 
 - in `AGENTS.md`, `CONTRIBUTING.md` and any other doc that says it (such as `docs/README.md`), beyond what the AGENTS template's port changes, a sentence that sends a gap found in one of the lifecycle kit's guides, or a pattern reusable across projects, to the kit ("filed on the kit as an issue", "filed on the lifecycle kit") says instead that it is filed with `lifecycle gap`: on the kit for one who can push to it, otherwise in this repository, labelled `kit-gap` (`git grep -n -i -e "on the kit" -e "on the lifecycle kit"` lists the candidates); accepted ADRs and released CHANGELOG sections stay as written.

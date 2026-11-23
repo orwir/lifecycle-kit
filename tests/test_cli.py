@@ -232,3 +232,84 @@ def test_an_upgrade_with_nothing_to_change_says_so(monkeypatch, capsys, repo):
     guides.upgrade(repo, adopt=True)
     code, out, _ = run(monkeypatch, capsys, ["upgrade"], cwd=repo.root)
     assert code == 0 and out.endswith("nothing to change beyond the lock\n")
+
+
+SETUP_REPO = {
+    "id": "R",
+    "nameWithOwner": "o/r",
+    "name": "r",
+    "owner": {"login": "o"},
+    "visibility": "PUBLIC",
+    "url": "https://github.com/o/r",
+}
+
+
+def fake_setup(monkeypatch, public=False):
+    from lifecycle import board
+
+    seen = {}
+    monkeypatch.setattr(board, "gh", lambda *args, stdin=None: json.dumps(SETUP_REPO))
+
+    def setup(repo, owner, number, report):
+        seen.update(owner=owner, number=number)
+        report("cards to write: 1")
+        done = board.Setup(owner or "o", number or 7, "https://github.com/users/o/projects/7")
+        done.workflows, done.public = ['turn on "Item closed" with Status: Done'], public
+        return done
+
+    monkeypatch.setattr(board, "setup", setup)
+    return seen
+
+
+def test_board_setup_runs_with_no_settings_file(monkeypatch, capsys, tmp_path):
+    seen = fake_setup(monkeypatch)
+    code, out, _ = run(monkeypatch, capsys, ["board", "setup"], cwd=tmp_path)
+    assert code == 0 and seen == {"owner": None, "number": None}
+    assert out.splitlines()[0] == "cards to write: 1"
+    assert '  [board]\n  owner = "o"\n  number = 7\n' in out
+    assert "/projects/7/workflows" in out and '  turn on "Item closed" with Status: Done' in out
+    assert "gh project edit 7 --owner o --visibility PUBLIC" in out
+
+
+def test_board_setup_runs_where_the_settings_name_no_board(monkeypatch, capsys, repo):
+    fake_setup(monkeypatch, public=True)
+    code, out, _ = run(monkeypatch, capsys, ["board", "setup", "--number", "4"], cwd=repo.root)
+    assert code == 0 and "number = 4" in out and "--visibility" not in out
+
+
+def test_board_setup_fixes_the_board_the_settings_name(monkeypatch, capsys, repo):
+    (repo.root / ".lifecycle.toml").write_text(
+        '[branches]\nintegration = "main"\n\n[board]\nowner = "team"\nnumber = 9\n',
+        encoding="utf-8",
+    )
+    seen = fake_setup(monkeypatch)
+    code, out, _ = run(monkeypatch, capsys, ["board", "setup"], cwd=repo.root)
+    assert code == 0 and seen == {"owner": "team", "number": 9} and "[board]" not in out
+
+
+def test_board_moves_a_card_by_its_number(monkeypatch, capsys, repo):
+    from lifecycle import board
+
+    (repo.root / ".lifecycle.toml").write_text(
+        '[branches]\nintegration = "main"\n\n[board]\nowner = "o"\nnumber = 9\n', encoding="utf-8"
+    )
+    moved = []
+    monkeypatch.setattr(board, "move", lambda *args: moved.append(args) or "ITEM")
+    code, out, _ = run(monkeypatch, capsys, ["board", "4", "In Progress"], cwd=repo.root)
+    assert code == 0 and moved == [(4, "In Progress", "o", 9)] and "#4: In Progress" in out
+
+
+@pytest.mark.parametrize(
+    ("argv", "says"),
+    [
+        (["board", "setup", "Done"], "takes no column"),
+        (["board", "4"], "needs a column"),
+        (["board", "four", "Done"], "not an issue number or setup"),
+        (["board", "4", "Done", "--number", "3"], "--number is setup's"),
+    ],
+)
+def test_a_board_call_out_of_shape_is_a_usage_error(monkeypatch, capsys, repo, argv, says):
+    monkeypatch.chdir(repo.root)
+    with pytest.raises(SystemExit) as exited:
+        cli.main(argv)
+    assert exited.value.code == 2 and says in capsys.readouterr().err
