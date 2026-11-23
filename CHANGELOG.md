@@ -12,6 +12,7 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ### Fixed
 - `lifecycle home` takes back all a failed or timed-out setup wrote or staged, on Linux and macOS too (#58)
+- An upgrade leaves accepted ADRs, released changelog sections and frozen records as written, whatever a step lists (#42)
 
 ## [0.17.1] — 2026-11-23
 

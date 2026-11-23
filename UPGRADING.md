@@ -3,7 +3,10 @@
 What each kit release asks of every repository on the kit beyond its templates,
 newest first, one step per line, each naming the file it changes. `lifecycle doctor`
 prints the steps a repository owes, oldest release first, and the upgrade skill makes
-them. The release's `Repositories:` entries in [CHANGELOG.md](CHANGELOG.md)
+them. Every step, released or to come, leaves a repository's accepted ADRs, released
+CHANGELOG sections and frozen records as written whatever files it lists, by the upgrade
+skill's step 5, which names them: a step need not repeat it, and a step's own exception
+holds beside it. The release's `Repositories:` entries in [CHANGELOG.md](CHANGELOG.md)
 say in one claim each what its steps do. A task's steps wait under `## Unreleased`
 at the top until a release dates them.
 
@@ -27,7 +30,7 @@ at the top until a release dates them.
 ## [0.8.0] — 2026-11-22
 
 - in `.lifecycle.toml`, where `[templates]` names `"idea_gauntlet.md" = "AGENTS.md"` (an ideas home), it names `"ideas_home_template.md" = "AGENTS.md"` instead.
-- in every tracked file, the repository's own guides in the guides folder included (`AGENTS.md` and any nested one, `CONTRIBUTING.md`, `README.md`, `CHANGELOG.md`, `.claude/commands/`, `.claude/rules/`, `docs/` with `docs/README.md` and `docs/reviews/`, `scripts/`, the guides folder's own guides such as `design_language.md`, and an ideas home's idea folders, `archive/` and logs), a link or path to one of the kit's files in the guides folder, in any form (`docs/guides/<file>`, `guides/<file>`, `../guides/<file>`, or a bare `<file>` from a guide beside it), opens the kit's file on GitHub instead, as `https://github.com/orwir/lifecycle-kit/blob/main/method/<file>`: the kit's files are the copies gone from the guides folder once the upgrade skill has run its comparison (those the upgrade's output names deleted, and any older copy removed after it), `git grep -n -F -e <name>` for each name lists the candidates (`README.md` only where it follows `guides/`), and a link to a guide still in the folder, the repository's own, stays.
+- in every tracked file, the repository's own guides in the guides folder included (`AGENTS.md` and any nested one, `CONTRIBUTING.md`, `README.md`, `CHANGELOG.md`, `.claude/commands/`, `.claude/rules/`, `docs/` with `docs/README.md`, `scripts/`, the guides folder's own guides such as `design_language.md`, and an ideas home's idea folders, `archive/` and logs), a link or path to one of the kit's files in the guides folder, in any form (`docs/guides/<file>`, `guides/<file>`, `../guides/<file>`, or a bare `<file>` from a guide beside it), opens the kit's file on GitHub instead, as `https://github.com/orwir/lifecycle-kit/blob/main/method/<file>`: the kit's files are the copies gone from the guides folder once the upgrade skill has run its comparison (those the upgrade's output names deleted, and any older copy removed after it), `git grep -n -F -e <name>` for each name lists the candidates (`README.md` only where it follows `guides/`), and a link to a guide still in the folder, the repository's own, stays.
 - in `AGENTS.md`, `CONTRIBUTING.md` and any other doc that says it (such as `docs/README.md`), a sentence that says the guides folder holds a copy of the lifecycle kit's method, or that a guide edit is pushed to the kit at Complete (`lifecycle guides push`), says instead that the kit's guides are read from the installed kit, and that a gap found in one is filed on the kit as an issue when it is found.
 - in `.claude/settings.json`, the allow rules for `lifecycle guides check` and `lifecycle upgraded` go, and where it allow-lists the kit's other reads, `Bash(lifecycle where:*)` joins them.
 
