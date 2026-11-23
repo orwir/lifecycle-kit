@@ -389,6 +389,7 @@ def test_a_failed_commit_keeps_nothing_and_says_what_next(tmp_path, isolated):
     hooks = tmp_path / "hooks"
     hooks.mkdir()
     (hooks / "pre-commit").write_text("#!/bin/sh\nexit 1\n", encoding="utf-8", newline="\n")
+    (hooks / "pre-commit").chmod(0o755)  # git skips a hook without its executable bit
     with isolated.open("a", encoding="utf-8") as config:
         config.write(f"[core]\n\thooksPath = {hooks.as_posix()}\n")
     folder = tmp_path / "ideas"
