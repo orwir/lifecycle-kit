@@ -335,8 +335,11 @@ def _undo(folder: Path, written: list[str], existed: bool, repository: bool) -> 
         if (folder / name).is_dir() and not any((folder / name).iterdir()):
             (folder / name).rmdir()
     if not repository:
-        for path in (folder / ".git").rglob("*"):  # git's objects are read-only on Windows
-            path.chmod(stat.S_IWRITE | stat.S_IREAD)
+        # git's objects are read-only, which Windows will not delete; a directory keeps
+        # its mode, as one without its search bit hides what is in it on POSIX
+        for path in (folder / ".git").rglob("*"):
+            if not path.is_dir():
+                path.chmod(stat.S_IWRITE | stat.S_IREAD)
         shutil.rmtree(folder / ".git", ignore_errors=True)
     if not existed and not any(folder.iterdir()):
         folder.rmdir()
