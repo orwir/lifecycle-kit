@@ -10,6 +10,7 @@ runs on the person's go-ahead: gh only creates the repository, and git adds it a
 
 from __future__ import annotations
 
+import contextlib
 import os
 import shutil
 import stat
@@ -294,52 +295,92 @@ def setup(folder: Path) -> Setup:
     headers = log_headers()
     template = guides.text(guides.METHOD / TEMPLATE)
     existed, repository = folder.is_dir(), (folder / ".git").is_dir()
-    folder.mkdir(parents=True, exist_ok=True)
-    if not repository:
-        _ok(git(folder, "init", "-q"), "git init")
-    _ok(git(folder, "symbolic-ref", "HEAD", "refs/heads/main"), "git symbolic-ref")
     files = {TARGET: template, FILE: SETTINGS_TOML, "active/.gitkeep": "", "archive/.gitkeep": ""}
     for (name, title, line), header in zip(LOGS, headers, strict=True):
         files[name] = f"# {title}\n\n{line}\n\n{header}\n"
-    for name, body in files.items():
-        path = folder / name
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(body, encoding="utf-8", newline="\n")
-    guides.write_lock(folder, guides.Lock(kit=guides.kit_version(), templates={TEMPLATE: template}))
-    committed = sorted(
-        [*files, guides.LOCK, *([SETTINGS] if (folder / SETTINGS).is_file() else [])]
-    )
+    written = [*files, guides.LOCK]
+    committed = sorted([*written, *([SETTINGS] if (folder / SETTINGS).is_file() else [])])
     message = f"Set up the ideas home on lifecycle kit {guides.kit_version()}"
-    steps = (
-        ("git add", ("add", "--", *committed)),
-        ("git commit", ("commit", "-q", "-m", message)),
-    )
-    for what, args in steps:
-        result = git(folder, *args)
-        if result.returncode != 0:
-            _undo(folder, [*files, guides.LOCK], existed, repository)
-            raise HomeError(
-                f"{what} failed: {_first_line(result.stderr or result.stdout)}. Nothing was kept: "
-                f"once that is dealt with, run `lifecycle home {folder}` again"
-            )
+    added: list[str] = []  # what a git add was asked for, which may stage some and fail
+    folder.mkdir(parents=True, exist_ok=True)
+    try:
+        if not repository:
+            _ok(git(folder, "init", "-q"), "git init")
+        _ok(git(folder, "symbolic-ref", "HEAD", "refs/heads/main"), "git symbolic-ref")
+        for name, body in files.items():
+            path = folder / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(body, encoding="utf-8", newline="\n")
+        lock = guides.Lock(kit=guides.kit_version(), templates={TEMPLATE: template})
+        guides.write_lock(folder, lock)
+        added = committed
+        _ok(git(folder, "add", "--", *committed), "git add")
+        _ok(git(folder, "commit", "-q", "-m", message), "git commit")
+    except HomeError as error:
+        left = _undo(folder, written, added, existed, repository)
+        kept = (
+            f"Not taken away: {'; '.join(left)}. Remove {'it' if len(left) == 1 else 'them'} and,"
+            if left
+            else "Nothing was kept:"
+        )
+        raise HomeError(
+            f"{error}. {kept} once that is dealt with, run `lifecycle home {folder}` again"
+        ) from error
     return Setup(folder, made=True, committed=committed)
 
 
-def _undo(folder: Path, written: list[str], existed: bool, repository: bool) -> None:
-    """Take away what a setup whose commit failed wrote, so nothing reads as a home and the
-    folder is as it was: the files, their index entries, a repository and a folder it made."""
-    git(folder, "rm", "-r", "-q", "--cached", "--ignore-unmatch", "--", *written)
+def _undo(
+    folder: Path, written: list[str], added: list[str], existed: bool, repository: bool
+) -> list[str]:
+    """Take away what a failed setup wrote, so nothing reads as a home and the folder is as
+    it was: the files, what its git add staged, a repository and a folder it made. Raises
+    nothing: returns what could not be taken away, each named in full for a reader anywhere."""
+    left = []
+    if repository and added:
+        staged, why = _staged(folder, added), None
+        if staged:
+            try:
+                result = git(folder, "rm", "-r", "-q", "--cached", "--", *staged)
+            except HomeError as error:
+                why = str(error)
+            else:
+                if result.returncode != 0:
+                    why = _first_line(result.stderr or result.stdout)
+        if why:
+            left.append(f"the staging of {', '.join(staged)} in {folder / '.git'} ({why})")
     for name in written:
-        (folder / name).unlink(missing_ok=True)
+        with contextlib.suppress(OSError):
+            (folder / name).unlink(missing_ok=True)
     for name in ("active", "archive"):
-        if (folder / name).is_dir() and not any((folder / name).iterdir()):
-            (folder / name).rmdir()
+        with contextlib.suppress(OSError):
+            (folder / name).rmdir()  # only an empty one goes
     if not repository:
-        for path in (folder / ".git").rglob("*"):  # git's objects are read-only on Windows
-            path.chmod(stat.S_IWRITE | stat.S_IREAD)
+        # git's objects are read-only, which Windows will not delete; a directory keeps
+        # its mode, as one without its search bit hides what is in it on POSIX
+        with contextlib.suppress(OSError):
+            for path in (folder / ".git").rglob("*"):
+                if not path.is_dir():
+                    path.chmod(stat.S_IWRITE | stat.S_IREAD)
         shutil.rmtree(folder / ".git", ignore_errors=True)
-    if not existed and not any(folder.iterdir()):
-        folder.rmdir()
+    left += [str(folder / name) for name in written if (folder / name).exists()]
+    if not repository and (folder / ".git").exists():
+        left.append(str(folder / ".git"))
+    if not existed:
+        with contextlib.suppress(OSError):
+            folder.rmdir()  # only an empty one goes
+    return left
+
+
+def _staged(folder: Path, paths: list[str]) -> list[str]:
+    """Which of ``paths`` the index holds, read without taking its lock; all of them where
+    git cannot say."""
+    try:
+        result = git(folder, "ls-files", "-z", "--", *paths)
+    except HomeError:
+        return paths
+    if result.returncode != 0:
+        return paths
+    return sorted(name for name in result.stdout.split("\0") if name)
 
 
 def _ok(result: subprocess.CompletedProcess, what: str) -> None:
