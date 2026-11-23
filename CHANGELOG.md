@@ -8,6 +8,20 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## [0.16.0] — 2026-11-23
+
+### Added
+- The capture skill interviews a person about a new idea, one plain question at a time, into their ideas home (#36)
+- `lifecycle home` sets up an ideas home in a folder, in one commit (#36)
+- `lifecycle home --check` names the home it finds, or the folder a new one would go in (#36)
+- `lifecycle home --github` backs an ideas home up to a new private GitHub repository (#36)
+
+### Changed
+- The ideas home template's Capture takes its answers by the capture skill (#36)
+- The ideas home template's Capture never writes over an idea already in `active/` under the same name (#36)
+- An ideas home pushes where it has a remote, and stays on its machine where it has none (#36)
+- The gauntlet sets an ideas home up by `lifecycle home`, which writes its lock, in place of the upgrade skill (#36)
+
 ## [0.15.0] — 2026-11-22
 
 ### Added

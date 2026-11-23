@@ -20,9 +20,11 @@ copied here: a gap found in one is filed with `lifecycle gap`.
   that idea's folder.
 - Facts about an idea go into its own files, not agent memory: memory is usually
   kept per repo, so here it's shared by every idea and stays behind at graduation.
-- Commit the ideas' files at the end of each working session and push, so every
-  idea stays backed up. An upgrade's changes are not among them: they land by the
-  upgrade's own hand-back and the user's go-ahead.
+- Commit the ideas' files at the end of each working session, and push where the
+  home has a remote, so every idea stays backed up. With none, the ideas live only on
+  this machine: `lifecycle home . --github <name>` backs the home up to a new private
+  GitHub repository, on the user's go-ahead. An upgrade's changes are not among the
+  ideas' files: they land by the upgrade's own hand-back and the user's go-ahead.
 
 ## Checks
 
@@ -41,10 +43,14 @@ says.
 
 ## Capture
 
-Check `archived.md` first: if this idea or a close variant was killed, show the
-line; re-opening needs new facts against the logged reason. Then create
-`active/<idea>/IDEA.md` from the template in `idea_gauntlet.md`, with the name, the Captured
-date and `Status: captured`. The folder takes the idea's working name.
+Run the kit's capture skill: it asks the user for Phase 0's answers one plain question
+at a time, writes only what they confirm, and takes these steps. Check `archived.md` first: if
+this idea or a close variant was killed, show the line; re-opening needs new facts
+against the logged reason. Then check `active/`: a folder of the same name holds that
+idea, which the user continues or names the new one apart from, and its `IDEA.md` is
+never written over. Then create `active/<idea>/IDEA.md` from the template in
+`idea_gauntlet.md`, with the name, the Captured date, `Status: captured` and the
+answers. The folder takes the idea's working name.
 
 ## Kill
 

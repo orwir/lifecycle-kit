@@ -11,7 +11,7 @@ small v0.1 in use settle the rest.
 
 Companion to `project_kickstart.md`: the gauntlet ends exactly where the kickstart
 begins. Every idea lives in your ideas home (see *The ideas home*), one folder per
-idea, versioned and backed up from its first line; *The ideas home* says how an agent
+idea, versioned from its first line and backed up once you say yes; *The ideas home* says how an agent
 sets one up, and its `AGENTS.md` how to capture an idea into it. Each phase
 leaves its evidence where the kickstart will read it (see *Artifacts*), so
 graduation moves the folder out into its own repo as it is: `IDEA.md` freezes as
@@ -127,8 +127,8 @@ and leaves its `[hw]` words to a game built of hardware.
 
 One private repo holds every idea from capture to verdict, and the record of every
 project that graduated from it; the host and the name are yours to pick. Each idea
-is versioned and backed up from its first line, and its folder never has to carry
-the final project name.
+is versioned from its first line, and backed up from the moment you say yes to a copy
+online; its folder never has to carry the final project name.
 
 ```
 ideas/
@@ -165,11 +165,14 @@ asks the home for nothing but a change to that template.
 The root `AGENTS.md` carries these steps for any agent opened in an idea's folder. A new
 home starts from `ideas_home_template.md`, beside this guide in the kit, adjusted to taste.
 
-**Setting a home up** (agent instructions). Asked to capture an idea or run the gauntlet
-with no home in reach, find it first: a repo whose root `AGENTS.md` says it is one (the
-user's global agent instructions may name it). Where there is none, offer to set one
-up where the user chooses, private by default, with the layout and settings above,
-then run the kit's upgrade skill for its first move, which writes its lock.
+**Setting a home up** (agent instructions). The kit's capture skill finds a home, or sets
+one up, before it asks for an idea. Asked to run the gauntlet with no home in reach, find
+it the same way: `lifecycle home --check` names the home the folder is in, or `ideas` in
+the user folder, and the user's global agent instructions may name another. Where there
+is none, offer one where the user chooses, the check naming why a folder cannot be one:
+`lifecycle home <folder>` makes it, with the layout, settings and lock above, in one
+commit. It stays on the machine until `lifecycle home <folder> --github <name>` backs it
+up to a new private GitHub repository, on the user's go-ahead.
 
 ## Artifacts
 

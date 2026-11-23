@@ -6,7 +6,7 @@ What the kit keeps in a repository, how it stays current, and its settings. The 
 
 Agent instructions. Commit nothing: the maintainer reads the diff and gives the go-ahead. Change nothing beyond this machine's agent setup and the repository's tree; where a step below would, it stops for the maintainer.
 
-1. **An empty repository** is a new project: stop and tell the maintainer, before anything is installed. A new project starts from its idea, in the ideas home, which runs the method's `project_kickstart.md` in a run of its own; its day zero comes back to the steps below.
+1. **An empty repository** is a new project: stop and tell the maintainer, before anything is installed. A new project starts from its idea, captured into the ideas home by the capture skill, which sets a home up where there is none; the home runs the method's `project_kickstart.md` in a run of its own, and its day zero comes back to the steps below.
 2. **The kit on this machine.**
    - Claude Code: when `claude plugin list` has no `lifecycle@lifecycle-kit`:
 
@@ -89,8 +89,8 @@ Without `[templates]`, a repository follows a project's templates: `agents_templ
 | Layer | Holds | Run by |
 |---|---|---|
 | `method/` | the guides: kickstart, task review, the review kinds, the templates | anyone who reads |
-| `tools/lifecycle/` | the `lifecycle` command: settings, doctor, upgrade, board, release, gap, hooks | any agent, a git hook, CI, a person |
-| `skills/`, `agents/` | clarify, review, handback, complete, release, upgrade; the read-only reviewer | any agent that loads Agent Skills |
+| `tools/lifecycle/` | the `lifecycle` command: settings, doctor, upgrade, board, release, gap, home, hooks | any agent, a git hook, CI, a person |
+| `skills/`, `agents/` | capture, clarify, review, handback, complete, release, upgrade; the read-only reviewer | any agent that loads Agent Skills |
 | `.claude-plugin/`, `hooks/`, `bin/` | the Claude Code adapter: marketplace, plugin manifest, hook wiring, the command on PATH | Claude Code |
 
 The skills keep to what every Agent Skills tool reads; anything only Claude Code understands sits in the adapter. `lifecycle where` names the kit's folder. The tools are standard-library Python 3.11 or later, so they run wherever a repository does.

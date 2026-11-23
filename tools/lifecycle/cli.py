@@ -10,7 +10,19 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from . import KIT_ROOT, METHOD, board, doctor, gap, guides, hook, kit_repository, kit_version, ship
+from . import (
+    KIT_ROOT,
+    METHOD,
+    board,
+    doctor,
+    gap,
+    guides,
+    home,
+    hook,
+    kit_repository,
+    kit_version,
+    ship,
+)
 from .config import Config, ConfigError, load
 
 
@@ -106,6 +118,33 @@ def _gap(args: argparse.Namespace) -> int:
     return 0
 
 
+def _home(args: argparse.Namespace) -> int:
+    folder = Path(args.folder or ".").resolve()
+    if args.check:
+        print(json.dumps(home.check(folder if args.folder else None), indent=2, ensure_ascii=False))
+        return 0
+    if args.github:
+        folder = home.containing(folder) or folder
+    if args.github and not home.is_home(folder):
+        _, why = home.gh_login(home.nearest(folder))
+        if why:
+            raise home.HomeError(f"nothing written or created: {why}")
+    made = home.setup(folder)
+    if made.made:
+        print(f"set up the ideas home in {made.folder}, committed: {', '.join(made.committed)}")
+    elif not args.github:
+        print(f"{made.folder} is an ideas home already: nothing written")
+    if args.github:
+        backup = home.backup(folder, args.github)
+        if backup.created:
+            print(f"backed up to {backup.url}, a new private repository, main pushed")
+        elif backup.pushed:
+            print(f"pushed main to {backup.url}: nothing created")
+        else:
+            print(f"backed up already: main is on {backup.url} as it is here, nothing created")
+    return 0
+
+
 def _hook(args: argparse.Namespace) -> int:
     raw = sys.stdin.buffer.read()
     if args.event == "pre-bash":
@@ -163,6 +202,20 @@ def parser() -> argparse.ArgumentParser:
         required=True,
         help="the gap in the kit's words: what the guide says, what the task met, the gap",
     )
+    p = sub.add_parser(
+        "home",
+        help="set up an ideas home in a folder, committed; --check writes nothing, --github "
+        "backs it up to a new private GitHub repository",
+    )
+    p.add_argument("folder", nargs="?", help="the home's folder (default: the current one)")
+    mode = p.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--check",
+        action="store_true",
+        help="as JSON: the home found, the folder a new one would go in or why none can, "
+        "whether git can commit, gh's login",
+    )
+    mode.add_argument("--github", metavar="NAME", help="the private repository's name")
     p = sub.add_parser("hook", help="an agent hook: the event as JSON on stdin")
     p.add_argument("event", choices=("pre-bash", "session-start"))
     return root
@@ -196,6 +249,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "board": _board,
             "release": _release,
             "gap": _gap,
+            "home": _home,
             "hook": _hook,
         }[args.command]
         return handler(args)
@@ -205,6 +259,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         board.BoardError,
         ship.ReleaseError,
         gap.GapError,
+        home.HomeError,
     ) as error:
         print(f"lifecycle: {error}", file=sys.stderr)
         return 1
