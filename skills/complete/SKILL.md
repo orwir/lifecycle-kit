@@ -13,7 +13,7 @@ This is the *Complete* phase of AGENTS.md § Task workflow. It runs only on the 
 - An earlier approval covers only what it named.
 - Without a go-ahead, stop and ask. With one, every step below runs as one batch, with no prompt between steps.
 
-`lifecycle` is the kit's command: on PATH with the kit's Claude plugin, otherwise `bin/lifecycle` in a checkout of the kit. `lifecycle config` gives the integration branch (`branches.integration`), the gate (`gate.commands`) and whether there is a board. Read AGENTS.md § Task workflow too, and do any step it adds or replaces (a release tag pushed with the work) where it says.
+`lifecycle` is the kit's command: on PATH with the kit's Claude plugin, otherwise `bin/lifecycle` in a checkout of the kit. `lifecycle config` gives the integration branch (`branches.integration`), the gate (`gate.commands`) and whether there is a board. Read AGENTS.md § Task workflow too, and do any step it adds or replaces (a check before the push, a push in place of the plain one) where it says.
 
 ## 1. Before anything lands
 

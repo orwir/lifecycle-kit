@@ -17,7 +17,7 @@ def test_a_suite_run_inside_a_git_hook_leaves_that_repository_alone(tmp_path):
             "-q",
             "-p",
             "no:cacheprovider",
-            f"{test}::test_the_kit_notes_an_installed_kit_older_than_its_release",
+            f"{test}::test_the_kit_notes_an_installed_kit_older_than_the_served_release",
         ],
         env=hook_env,
         cwd=tmp_path,

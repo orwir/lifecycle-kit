@@ -4,7 +4,8 @@ What each kit release asks of every repository on the kit beyond its templates,
 newest first, one step per line, each naming the file it changes. `lifecycle doctor`
 prints the steps a repository owes, oldest release first, and the upgrade skill makes
 them. The release's `Repositories:` entries in [CHANGELOG.md](CHANGELOG.md)
-say in one claim each what its steps do.
+say in one claim each what its steps do. A task's steps wait under `## Unreleased`
+at the top until a release dates them.
 
 ## [0.17.0] — 2026-11-23
 

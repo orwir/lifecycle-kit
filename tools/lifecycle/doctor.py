@@ -24,6 +24,7 @@ NOTE = "note"
 UPGRADE = "upgrade"
 ADOPT = "adopt"
 UPDATE_KIT = "update-kit"
+REBASE = "rebase"
 CHANGES_SHOWN = 8
 UPGRADE_SKILL = "the upgrade skill (Claude: `/lifecycle:upgrade`)"
 IN_THE_TREE = "a task whose edits are in the tree lands before the upgrade"
@@ -40,7 +41,7 @@ UPGRADE_STEP = "Upgrade"
 class Finding:
     level: str
     message: str
-    #: The remedy: UPGRADE, ADOPT or UPDATE_KIT, or None when nothing needs doing.
+    #: The remedy: UPGRADE, ADOPT, UPDATE_KIT or REBASE, or None when nothing needs doing.
     #: Whether it stops a round is ``level``'s to say, never the fix's; the review skill
     #: lets an UPGRADE wait while a task's edits are in the tree.
     fix: str | None = None
@@ -105,12 +106,22 @@ def _shown(changes: list[str], required: list[str]) -> tuple[str, ...]:
     return (*required, *changes[:room], *more)
 
 
+#: The branch the marketplace serves: the kit's default branch, which only a release moves.
+SERVED = "origin/HEAD"
+
+
 def _kit(config: Config, installed: str) -> list[Finding]:
     """The kit's own repository is the method's home, so it needs no lock. Its rounds
-    run on the installed plugin, though: older than the release on the integration branch,
-    they run skills that release replaced. The release is read at the flow's base, so a
-    task's own bump in the tree is not mistaken for it."""
-    released = _at(config, flow_base(config), ".claude-plugin/plugin.json")
+    run on the installed plugin, though, and its tasks on the integration branch."""
+    return [*_served(config, installed), *_behind(config)]
+
+
+def _served(config: Config, installed: str) -> list[Finding]:
+    """Older than the release the marketplace serves, the rounds run skills that release
+    replaced. Tasks land on the integration branch and a release fast-forwards the default
+    branch, so the manifest there is the release: a bump still on the integration branch,
+    or a tag a refused push left behind, is not one."""
+    released = _git(config, "show", f"{SERVED}:.claude-plugin/plugin.json")
     try:
         version = str(json.loads(released)["version"]) if released else None
         behind = bool(version) and _release(installed) < _release(version)
@@ -121,12 +132,44 @@ def _kit(config: Config, installed: str) -> list[Finding]:
     return [
         Finding(
             NOTE,
-            f"the kit's {config.integration} is at {version} and the installed kit is "
+            f"the kit's latest release is {version} and the installed kit is "
             f"{installed}: the rounds run on {installed}'s skills until it is updated "
             f"({UPDATE_COMMAND})",
             UPDATE_KIT,
         )
     ]
+
+
+#: A branch cut from the last release's tag to ship without what has landed since.
+HOTFIX = "hotfix/"
+
+
+def _behind(config: Config) -> list[Finding]:
+    """A session's worktree is cut from the default branch, the last release, so until it
+    takes what has landed since, a task would read code without it. A branch with a
+    commit of its own, or a tree holding edits, is a task under way, which started on
+    the integration branch and whose push rebases; a hotfix branch stays off it."""
+    landed = f"origin/{config.integration}"
+    missing = _count(config, f"HEAD..{landed}")
+    if not missing or _count(config, f"{landed}..HEAD") != 0:
+        return []
+    branch = (_git(config, "rev-parse", "--abbrev-ref", "HEAD") or "").strip()
+    if branch.startswith(HOTFIX) or _git(config, "status", "--porcelain") != "":
+        return []
+    return [
+        Finding(
+            NOTE,
+            f"this branch is {missing} commit(s) behind {landed}, where the kit's tasks land: "
+            f"before a task reads the code, `git fetch origin` and `git rebase {landed}`, "
+            "then read AGENTS.md again",
+            REBASE,
+        )
+    ]
+
+
+def _count(config: Config, revisions: str) -> int | None:
+    counted = _git(config, "rev-list", "--count", revisions)
+    return int(counted) if counted and counted.strip().isdigit() else None
 
 
 def check(config: Config, installed: str | None = None) -> list[Finding]:
@@ -183,21 +226,3 @@ def _git(config: Config, *args: str) -> str | None:
         check=False,
     )
     return result.stdout if result.returncode == 0 else None
-
-
-def flow_base(config: Config) -> str:
-    """The commit a task's work is measured from: HEAD on the integration branch, the
-    merge-base with it on any other branch, so a WIP commit on a branch still counts."""
-    branch = (_git(config, "rev-parse", "--abbrev-ref", "HEAD") or "").strip()
-    if branch == config.integration:
-        return "HEAD"
-    for integration in (config.integration, f"origin/{config.integration}"):
-        base = _git(config, "merge-base", integration, "HEAD")
-        if base:
-            return base.strip()
-    return "HEAD"
-
-
-def _at(config: Config, base: str, rel: str) -> str | None:
-    shown = _git(config, "show", f"{base}:{rel}")
-    return shown.replace("\r\n", "\n") if shown is not None else None

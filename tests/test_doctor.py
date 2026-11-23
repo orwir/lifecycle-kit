@@ -2,6 +2,7 @@ import subprocess
 
 from conftest import copy_era
 from lifecycle import changelog, doctor, guides, kit_repository
+from lifecycle.config import load
 from lifecycle.guides import upgrade
 
 
@@ -143,10 +144,29 @@ def test_both_heading_shapes_are_read_and_another_lends_its_entries_to_none(monk
 
 
 def test_every_release_heading_in_the_kit_changelog_and_upgrading_is_read():
+    """Every heading but the section a task's entries wait in, which no repository reads."""
     for name in ("CHANGELOG.md", "UPGRADING.md"):
         lines = (doctor.KIT_ROOT / name).read_text(encoding="utf-8").splitlines()
         headings = [line for line in lines if line.startswith("## ")]
-        assert headings and all(changelog.release_of(line) for line in headings)
+        released = [line for line in headings if line != changelog.UNRELEASED]
+        assert released and all(changelog.release_of(line) for line in released)
+
+
+def test_an_unreleased_section_reaches_no_repository(repo, monkeypatch, tmp_path):
+    upgrade(repo, adopt=True)
+    (tmp_path / "CHANGELOG.md").write_text(
+        f"{changelog.UNRELEASED}\n\n### Added\n- Repositories: waits\n- not yet\n\n"
+        "## [1.3.0] — 2026-11-22\n\n### Added\n- Repositories: shipped\n- shipped\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "UPGRADING.md").write_text(
+        f"{changelog.UNRELEASED}\n\n- waits in `x.toml`\n\n"
+        "## [1.3.0] — 2026-11-22\n\n- shipped in `y.toml`\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(doctor, "KIT_ROOT", tmp_path)
+    (finding,) = doctor.check(repo, installed="9.0.0")
+    assert finding.details == ("Upgrade 1.3.0: shipped in `y.toml`", "Added: shipped")
 
 
 def test_a_missing_upgrading_or_a_stray_heading_in_it_lists_no_steps(monkeypatch, tmp_path):
@@ -238,23 +258,105 @@ def test_a_repo_not_on_the_kit_is_shown_every_step_it_will_owe(repo, monkeypatch
     assert (finding.fix, finding.details) == (doctor.ADOPT, owed)
 
 
-def test_the_kit_notes_an_installed_kit_older_than_its_release(kit_checkout, monkeypatch):
+def kit_clone(config, monkeypatch, integration="main"):
+    """``config``'s kit checkout as a clone: one commit, on ``integration``, which is also
+    the release ``origin/HEAD`` serves; the config reloaded with that integration branch."""
     for key in ("GIT_AUTHOR_NAME", "GIT_COMMITTER_NAME"):
         monkeypatch.setenv(key, "t")
     for key in ("GIT_AUTHOR_EMAIL", "GIT_COMMITTER_EMAIL"):
         monkeypatch.setenv(key, "t@t")
-    git(kit_checkout.root, "init", "-q", "-b", "main")
-    git(kit_checkout.root, "add", "-A")
-    git(kit_checkout.root, "commit", "-q", "-m", "v9.9.9")
-    (finding,) = doctor.check(kit_checkout, installed="9.9.8")
+    root = config.root
+    (root / ".lifecycle.toml").write_text(
+        f'[branches]\nintegration = "{integration}"\n', encoding="utf-8"
+    )
+    git(root, "init", "-q", "-b", "main")
+    git(root, "add", "-A")
+    git(root, "commit", "-q", "-m", "release 9.9.9")
+    git(root, "update-ref", "refs/remotes/origin/main", "HEAD")
+    git(root, "update-ref", f"refs/remotes/origin/{integration}", "HEAD")
+    git(root, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
+    return load(root)
+
+
+def land(config, branch, message="a task"):
+    """One more commit on ``origin/<branch>``, made off the side so HEAD stays put."""
+    root = config.root
+    tree = subprocess.run(
+        ["git", "-C", str(root), "write-tree"], check=True, capture_output=True, text=True
+    ).stdout.strip()
+    parent = f"refs/remotes/origin/{branch}"
+    commit = subprocess.run(
+        ["git", "-C", str(root), "commit-tree", tree, "-p", parent, "-m", message],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    git(root, "update-ref", parent, commit)
+
+
+def test_the_kit_notes_an_installed_kit_older_than_the_served_release(kit_checkout, monkeypatch):
+    kit = kit_clone(kit_checkout, monkeypatch)
+    (finding,) = doctor.check(kit, installed="9.9.8")
     assert (finding.level, finding.fix) == (doctor.NOTE, doctor.UPDATE_KIT)
-    assert "main is at 9.9.9" in finding.message and "9.9.8" in finding.message
+    assert "latest release is 9.9.9" in finding.message and "9.9.8" in finding.message
     assert "the rounds run on 9.9.8's skills until it is updated" in finding.message
-    assert "before the next round" not in finding.message
-    assert doctor.check(kit_checkout, installed="9.9.9") == []
-    manifest = kit_checkout.root / ".claude-plugin" / "plugin.json"
+    assert doctor.check(kit, installed="9.9.9") == []
+
+
+def test_an_unshipped_bump_or_a_local_tag_is_not_the_served_release(kit_checkout, monkeypatch):
+    kit = kit_clone(kit_checkout, monkeypatch, integration="next")
+    manifest = kit.root / ".claude-plugin" / "plugin.json"
     manifest.write_text('{"name": "lifecycle", "version": "10.0.0"}\n', encoding="utf-8")
-    assert doctor.check(kit_checkout, installed="9.9.9") == []
+    git(kit.root, "commit", "-q", "-am", "chore(release): v10.0.0")
+    git(kit.root, "update-ref", "refs/remotes/origin/next", "HEAD")
+    git(kit.root, "tag", "v10.0.0")
+    assert doctor.check(kit, installed="9.9.9") == []
+
+
+def test_the_kit_notes_nothing_with_no_origin_head(kit_checkout, monkeypatch):
+    kit = kit_clone(kit_checkout, monkeypatch)
+    git(kit.root, "symbolic-ref", "--delete", "refs/remotes/origin/HEAD")
+    assert doctor.check(kit, installed="9.9.8") == []
+
+
+def test_the_kit_notes_a_fresh_branch_behind_its_integration_branch(kit_checkout, monkeypatch):
+    kit = kit_clone(kit_checkout, monkeypatch, integration="next")
+    assert doctor.check(kit, installed="9.9.9") == []
+    land(kit, "next")
+    land(kit, "next")
+    (finding,) = doctor.check(kit, installed="9.9.9")
+    assert (finding.level, finding.fix) == (doctor.NOTE, doctor.REBASE)
+    assert "2 commit(s) behind origin/next" in finding.message
+    assert "`git rebase origin/next`" in finding.message and "AGENTS.md again" in finding.message
+
+
+def test_a_branch_with_a_commit_of_its_own_is_not_noted(kit_checkout, monkeypatch):
+    kit = kit_clone(kit_checkout, monkeypatch, integration="next")
+    land(kit, "next")
+    (kit.root / "work.txt").write_text("a task under way\n", encoding="utf-8")
+    git(kit.root, "add", "work.txt")
+    git(kit.root, "commit", "-q", "-m", "wip")
+    assert doctor.check(kit, installed="9.9.9") == []
+
+
+def test_a_tree_holding_a_tasks_edits_is_not_noted(kit_checkout, monkeypatch):
+    """A task's edits stay uncommitted until Complete, and git refuses a rebase over them:
+    the task started on the integration branch, and its push rebases."""
+    kit = kit_clone(kit_checkout, monkeypatch, integration="next")
+    land(kit, "next")
+    (kit.root / "method" / "task_review.md").write_text("# edited\n", encoding="utf-8")
+    assert doctor.check(kit, installed="9.9.9") == []
+    git(kit.root, "checkout", "--", "method/task_review.md")
+    (kit.root / "new.md").write_text("a new file\n", encoding="utf-8")
+    assert doctor.check(kit, installed="9.9.9") == []
+
+
+def test_a_hotfix_branch_is_not_sent_to_the_integration_branch(kit_checkout, monkeypatch):
+    """A hotfix is cut from the last release to ship without what has landed since."""
+    kit = kit_clone(kit_checkout, monkeypatch, integration="next")
+    land(kit, "next")
+    git(kit.root, "switch", "-q", "-c", "hotfix/urgent")
+    assert doctor.check(kit, installed="9.9.9") == []
 
 
 def test_each_change_line_opens_with_its_group(repo, monkeypatch, tmp_path):

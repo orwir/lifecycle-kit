@@ -3,7 +3,8 @@
 Each entry is one claim of at most ``CAP`` characters before its ``(#N)``, and a release
 groups its entries once each under Added, Changed, Fixed and Removed, below a
 ``## [<version>] — <date>`` heading (``method/project_kickstart.md`` § CHANGELOG style).
-``UPGRADING.md`` takes the same headings, so one reader walks both files.
+``UPGRADING.md`` takes the same headings, so one reader walks both files. A task's entries
+wait under ``## Unreleased`` at the top until a release dates them: no reader takes them.
 
 A lone dash or a semicolon is how a second claim gets welded on, while a pair of dashes
 encloses an aside, so an odd count of spaced dashes is the signal.
@@ -19,6 +20,8 @@ from . import release
 
 CAP = 120
 GROUPS = ("Added", "Changed", "Fixed", "Removed")
+#: The section a task's entries wait in, first in the file, until a release dates it.
+UNRELEASED = "## Unreleased"
 
 #: The release heading, and the bare ``## v<version>`` older releases were written with.
 HEADING = re.compile(

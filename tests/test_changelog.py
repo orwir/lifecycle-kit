@@ -1,7 +1,8 @@
 """The kit's CHANGELOG held to the style its header states, and UPGRADING.md beside it.
 
-Every release is read, not only the newest: the kit has no ``[Unreleased]`` section, since
-each task's diff is its release, and doctor shows released entries to every repository.
+Every release is read, not only the newest, since doctor shows released entries to every
+repository; so is the ``## Unreleased`` section a task's entries wait in, since a release
+dates it as it stands.
 """
 
 from __future__ import annotations
@@ -31,10 +32,39 @@ def releases(path) -> dict[str, list[str]]:
     return found
 
 
+def dated(path) -> list[str]:
+    """``path``'s headings with the unreleased section left out."""
+    return [h for h in releases(path) if h != changelog.UNRELEASED]
+
+
 def test_every_release_heading_is_dated():
-    old = [h for h in releases(CHANGELOG) if not re.match(r"^## \[[\d.]+\] — \d{4}-", h)]
+    old = [h for h in dated(CHANGELOG) if not re.match(r"^## \[[\d.]+\] — \d{4}-", h)]
 
     assert old == []
+
+
+def unreleased_misplaced(text: str) -> bool:
+    """Whether ``## Unreleased`` sits anywhere but first among the headings, or twice."""
+    headings = [line for line in text.splitlines() if line.startswith("## ")]
+    count = headings.count(changelog.UNRELEASED)
+    return count > 1 or (count == 1 and headings[0] != changelog.UNRELEASED)
+
+
+@pytest.mark.parametrize("path", [CHANGELOG, UPGRADING], ids=["CHANGELOG", "UPGRADING"])
+def test_unreleased_sits_first_and_once_or_nowhere(path):
+    """A release renames the section as it stands, so one anywhere but first would ship
+    entries in a release while still saying they wait."""
+    assert not unreleased_misplaced(path.read_text(encoding="utf-8"))
+
+
+def test_a_second_or_a_stranded_unreleased_is_named():
+    release = "## [1.0.0] — 2026-11-23\n"
+    unreleased = f"{changelog.UNRELEASED}\n"
+
+    assert not unreleased_misplaced(unreleased + release)
+    assert not unreleased_misplaced(release)
+    assert unreleased_misplaced(unreleased + release + unreleased)
+    assert unreleased_misplaced(release + unreleased)
 
 
 def test_every_release_is_one_claim_per_entry_within_the_cap():
@@ -85,7 +115,7 @@ def test_an_entry_outside_every_group_is_named():
 
 def test_the_newest_release_is_the_plugins_version():
     manifest = json.loads((KIT_ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
-    newest = next(iter(releases(CHANGELOG)))
+    newest = dated(CHANGELOG)[0]
 
     assert changelog.release_of(newest) == manifest["version"]
 

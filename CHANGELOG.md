@@ -4,9 +4,14 @@ What each kit release changed, newest first.
 
 Format: [Semantic Versioning](https://semver.org/)
 
-Style: one claim per entry, at most 120 characters before the `(#N)`, what a repository on the kit or its maintainer meets (a guide, a template, a skill, a `lifecycle` subcommand, a setting). A semicolon or dash welding a second claim means two entries, not a longer one. Link the issue (`(#N)`, an issue of `orwir/lifecycle-kit`) when the change has one: details live there, not here. A release groups its entries under Added / Changed / Fixed / Removed, each once, below `## [<version>] — <date>`, the day its tag was made. An entry that starts `Repositories:` names a change every repository makes beyond its templates, and its steps are in [UPGRADING.md](UPGRADING.md). `tests/test_changelog.py` holds every release to this style, and [method/project_kickstart.md § CHANGELOG style](method/project_kickstart.md) is the long form.
+Style: one claim per entry, at most 120 characters before the `(#N)`, what a repository on the kit or its maintainer meets (a guide, a template, a skill, a `lifecycle` subcommand, a setting). A semicolon or dash welding a second claim means two entries, not a longer one. Link the issue (`(#N)`, an issue of `orwir/lifecycle-kit`) when the change has one: details live there, not here. A release groups its entries under Added / Changed / Fixed / Removed, each once, below `## [<version>] — <date>`, the day its release commit was made; a task's entries wait under `## Unreleased` at the top until a release dates them. An entry that starts `Repositories:` names a change every repository makes beyond its templates, and its steps are in [UPGRADING.md](UPGRADING.md). `tests/test_changelog.py` holds every release to this style, and [method/project_kickstart.md § CHANGELOG style](method/project_kickstart.md) is the long form.
 
 ---
+
+## [0.17.1] — 2026-11-23
+
+### Changed
+- A kit release ships every task landed on `next` since the last one, not one release per task (#54)
 
 ## [0.17.0] — 2026-11-23
 

@@ -3,7 +3,8 @@
 # so it has no lock and never upgrades.
 
 [branches]
-integration = "main"
+# Tasks land on next; a release fast-forwards main, which the marketplace serves (AGENTS.md).
+integration = "next"
 
 [board]
 owner = "orwir"
