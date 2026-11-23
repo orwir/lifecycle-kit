@@ -1,6 +1,7 @@
 import subprocess
 
-from conftest import copy_era
+import pytest
+from conftest import commit, copy_era
 from lifecycle import changelog, doctor, guides, kit_repository
 from lifecycle.config import load
 from lifecycle.guides import upgrade
@@ -384,3 +385,57 @@ def test_a_repositories_entry_under_a_group_is_left_out(monkeypatch, tmp_path):
     )
     monkeypatch.setattr(doctor, "KIT_ROOT", tmp_path)
     assert doctor.changes_since("1.2.0", "1.3.0") == ["Changed: a brief"]
+
+
+KIT_FILES = {
+    "method/task_review.md": "# Task review, canonical\n",
+    ".claude-plugin/plugin.json": '{"name": "lifecycle", "version": "9.9.9"}\n',
+}
+
+
+def tidy_notes(root):
+    return [f for f in doctor.check(load(root), installed="9.9.9") if f.fix == doctor.TIDY]
+
+
+@pytest.mark.parametrize("files", [KIT_FILES, None], ids=["kit", "repository"])
+def test_a_primary_checkout_behind_origin_is_noted_from_a_linked_worktree(clone_of, files):
+    """A push from a worktree moves the remote-tracking branch every checkout shares,
+    and leaves the primary checkout's own branch behind it."""
+    clone = clone_of(files)
+    tree = clone.task("task-1")
+    assert tidy_notes(tree) == []
+    clone.land(tree)
+    (finding,) = tidy_notes(tree)
+    assert finding.level == doctor.NOTE
+    assert finding.message.startswith(
+        f"the primary checkout ({clone.primary.as_posix()}) has next 1 commit(s) behind "
+        "origin/next: `lifecycle tidy` fast-forwards it;"
+    )
+    assert "a session there reads its older AGENTS.md" in finding.message
+
+
+def test_a_repositorys_primary_checkout_notes_itself(clone_of):
+    clone = clone_of()
+    clone.land(clone.task("task-1"))
+    (finding,) = tidy_notes(clone.primary)
+    assert "1 commit(s) behind origin/next" in finding.message
+
+
+def test_the_kits_primary_checkout_gets_one_note_beside_its_rebase_note(clone_of):
+    clone = clone_of(KIT_FILES)
+    clone.land(clone.task("task-1"))
+    fixes = [f.fix for f in doctor.check(load(clone.primary), installed="9.9.9")]
+    assert fixes == [doctor.REBASE]
+
+
+@pytest.mark.parametrize("state", ["level", "diverged", "no-origin"])
+def test_a_primary_checkout_that_cannot_fast_forward_is_not_noted(clone_of, state):
+    clone = clone_of()
+    tree = clone.task("task-1")
+    if state != "level":
+        clone.land(tree)
+    if state == "diverged":
+        commit(clone.primary, "own")
+    if state == "no-origin":
+        git(clone.primary, "update-ref", "-d", "refs/remotes/origin/next")
+    assert tidy_notes(tree) == [] and tidy_notes(clone.primary) == []

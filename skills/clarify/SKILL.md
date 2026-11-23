@@ -16,6 +16,7 @@ You are the developer and you run the whole round here, before any code. The mai
    - a finding whose fix is `upgrade`, with no task's edits in the tree: run the upgrade skill now, alone; it lands by its own *Complete*, and this round starts after it;
    - the same, with an accepted plan's edits in the tree: the upgrade waits until this task lands;
    - a `block` whose fix is `adopt` or `update-kit`, or a failure of the command: stop and tell the maintainer what it printed;
+   - a `note` whose fix is `tidy`: run `lifecycle tidy`, which fast-forwards the primary checkout's integration branch to origin's, and never its `--remove`, which is the maintainer's word; a refusal it prints (exit 1) is no failure of the command; where this session is in the primary checkout, read AGENTS.md again;
    - anything else: carry on.
 4. `lifecycle config` prints the settings. Below, `<method>` is `method/` in the folder `lifecycle where` prints, and *§* a section of `<method>/task_review.md`.
 5. Read `<method>/task_review.md`: the plan round, the plan packet, the plan return, the Clarify brief, the brief rules and the developer rules are there; the plan's sections are the repository's issue templates (`.github/ISSUE_TEMPLATE/`). Read `AGENTS.md` § Task workflow too, and do any step it adds to this round (a drawing, an evidence source) where it says.

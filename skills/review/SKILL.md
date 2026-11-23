@@ -14,6 +14,7 @@ You are the developer and you run the whole round here. The maintainer reads onl
 2. `lifecycle doctor --json`:
    - a finding whose fix is `upgrade` waits: the task's edits are in the tree, and the round needs nothing a port brings; the session start carries it to the next task;
    - a `block` whose fix is `adopt` or `update-kit`, or a failure of the command: stop and tell the maintainer what it printed;
+   - a `note` whose fix is `tidy`: run `lifecycle tidy`, which fast-forwards the primary checkout's integration branch to origin's, and never its `--remove`, which is the maintainer's word; a refusal it prints (exit 1) is no failure of the command; where this session is in the primary checkout, read AGENTS.md again, and the gate counts the fast-forward as an edit (§ 1 step 8);
    - anything else: carry on.
 3. `lifecycle config` prints the settings; the lenses are its `review.lenses`. Below, `<method>` is `method/` in the folder `lifecycle where` prints, and *§* a section of `<method>/task_review.md`.
 4. **The gate** is `gate.commands`, in order; with none, the lint and test commands AGENTS.md § Commands gives; with neither, the gate is `not run`, and the brief says so.

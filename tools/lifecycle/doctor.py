@@ -12,10 +12,12 @@ from __future__ import annotations
 import json
 import subprocess
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from . import KIT_ROOT, is_kit, kit_repository, kit_version
 from . import changelog as _changelog
 from . import release as _release
+from . import tidy as _tidy
 from .config import Config
 from .guides import followed, owed_templates, read_lock
 
@@ -25,6 +27,7 @@ UPGRADE = "upgrade"
 ADOPT = "adopt"
 UPDATE_KIT = "update-kit"
 REBASE = "rebase"
+TIDY = "tidy"
 CHANGES_SHOWN = 8
 UPGRADE_SKILL = "the upgrade skill (Claude: `/lifecycle:upgrade`)"
 IN_THE_TREE = "a task whose edits are in the tree lands before the upgrade"
@@ -41,7 +44,7 @@ UPGRADE_STEP = "Upgrade"
 class Finding:
     level: str
     message: str
-    #: The remedy: UPGRADE, ADOPT, UPDATE_KIT or REBASE, or None when nothing needs doing.
+    #: The remedy: UPGRADE, ADOPT, UPDATE_KIT, REBASE or TIDY, or None when nothing needs doing.
     #: Whether it stops a round is ``level``'s to say, never the fix's; the review skill
     #: lets an UPGRADE wait while a task's edits are in the tree.
     fix: str | None = None
@@ -172,10 +175,45 @@ def _count(config: Config, revisions: str) -> int | None:
     return int(counted) if counted and counted.strip().isdigit() else None
 
 
+def _primary(config: Config, found: list[Finding]) -> list[Finding]:
+    """A task that lands from a linked worktree moves ``origin``'s integration branch, which
+    every checkout of the clone reads, and leaves the primary checkout's behind it: a
+    session there reads its older AGENTS.md, and a worktree whose hooks point there runs its
+    older hooks. Where this checkout is the primary one and the rebase note already sends it
+    forward, one note is enough."""
+    lag = _tidy.lag(config.root, config.integration)
+    if lag.state != "behind":
+        return []
+    rebase = any(finding.fix == REBASE for finding in found)
+    if rebase and lag.path is not None and _same(lag.path, config.root):
+        return []
+    return [
+        Finding(
+            NOTE,
+            f"the primary checkout ({lag.path.as_posix()}) has {config.integration} "
+            f"{lag.behind} commit(s) behind origin/{config.integration}: `lifecycle tidy` "
+            "fast-forwards it; until then a session there reads its older AGENTS.md, and "
+            "worktrees whose hooks point there run its older hooks",
+            TIDY,
+        )
+    ]
+
+
+def _same(one: Path, other: Path) -> bool:
+    try:
+        return one.samefile(other)
+    except OSError:
+        return False
+
+
 def check(config: Config, installed: str | None = None) -> list[Finding]:
     installed = installed or kit_version()
-    if is_kit(config.root):
-        return _kit(config, installed)
+    found = _kit(config, installed) if is_kit(config.root) else _repository(config, installed)
+    return [*found, *_primary(config, found)]
+
+
+def _repository(config: Config, installed: str) -> list[Finding]:
+    """A repository on the kit: what its lock owes the installed release."""
     lock = read_lock(config.root)
     if lock is None:
         return [

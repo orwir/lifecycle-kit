@@ -13,9 +13,12 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 ### Added
 - `lifecycle ci` waits on the CI a push started, or a pull request's checks, with an exit code per outcome (#59)
 - `lifecycle base` prints the commit a task's work is measured from, read from the integration branch here or on origin (#55)
+- `lifecycle tidy` fast-forwards the primary checkout and removes landed worktrees with their branches on `--remove` (#50)
 
 ### Changed
 - The complete skill holds a task open while the CI its push started is red (#59)
+- The complete skill fast-forwards the primary checkout after a task lands from a linked worktree (#50)
+- `lifecycle doctor` notes a primary checkout behind its remote, which the clarify and review skills fast-forward (#50)
 - A task files a follow-up only for a seen instance, a job of its own and a likely change (#64)
 - A trigger nothing has met is a `Watch:` line in the plan and the commit, not an issue (#64)
 - A comprehensive review's Phase 0 checks the `Watch:` lines tasks have landed (#64)

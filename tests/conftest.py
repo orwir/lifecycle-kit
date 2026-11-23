@@ -72,3 +72,75 @@ def copy_era(config, kit="1.1.0"):
         digests[name] = guides.digest(path)
     lock = {"kit": kit, "guides": digests}
     (config.root / guides.LOCK).write_text(json.dumps(lock), encoding="utf-8")
+
+
+def git(cwd, *args):
+    return subprocess.run(
+        ["git", "-C", str(cwd), *args], check=True, capture_output=True, text=True
+    ).stdout.strip()
+
+
+def commit(cwd, name, text=None):
+    (Path(cwd) / f"{name}.txt").write_text(text or name, encoding="utf-8")
+    git(cwd, "add", "-A")
+    git(cwd, "commit", "-q", "-m", name)
+    return git(cwd, "rev-parse", "HEAD")
+
+
+class Clone:
+    """A bare ``origin`` on ``next``, a primary checkout of it, and its linked worktrees."""
+
+    def __init__(self, tmp_path, files=None):
+        self.tmp = tmp_path
+        seed = tmp_path / "seed"
+        seed.mkdir()
+        git(seed, "init", "-q", "-b", "next")
+        files = {".lifecycle.toml": '[branches]\nintegration = "next"\n', **(files or {})}
+        for name, text in files.items():
+            (seed / name).parent.mkdir(parents=True, exist_ok=True)
+            (seed / name).write_text(text, encoding="utf-8")
+        commit(seed, "shared")
+        self.origin = tmp_path / "origin.git"
+        git(tmp_path, "clone", "-q", "--bare", str(seed), str(self.origin))
+        self.primary = tmp_path / "primary"
+        git(tmp_path, "clone", "-q", str(self.origin), str(self.primary))
+
+    def worktree(self, name, *extra):
+        path = self.tmp / name
+        git(self.primary, "worktree", "add", "-q", *extra, str(path), "origin/next")
+        return path
+
+    def task(self, name):
+        """A linked worktree on a branch of its own, cut from origin's next."""
+        return self.worktree(name, "-b", name)
+
+    def land(self, tree, name=None):
+        """A commit made in ``tree`` and pushed to origin's next, as complete pushes."""
+        made = commit(tree, name or tree.name)
+        git(tree, "push", "-q", "origin", "HEAD:next")
+        return made
+
+    def elsewhere(self, name):
+        """A commit on origin's next made in another clone: a merge on GitHub."""
+        other = self.tmp / f"other-{name}"
+        if not other.exists():
+            git(self.tmp, "clone", "-q", str(self.origin), str(other))
+        git(other, "pull", "-q", "--ff-only")
+        commit(other, name)
+        git(other, "push", "-q", "origin", "HEAD:next")
+
+
+@pytest.fixture
+def clone_of(tmp_path, monkeypatch):
+    """Makes a clone on ``next`` with a bare origin, its seed holding ``files`` beside the
+    settings; a test makes its linked worktrees."""
+    for key in ("GIT_AUTHOR_NAME", "GIT_COMMITTER_NAME"):
+        monkeypatch.setenv(key, "t")
+    for key in ("GIT_AUTHOR_EMAIL", "GIT_COMMITTER_EMAIL"):
+        monkeypatch.setenv(key, "t@t")
+    return lambda files=None: Clone(tmp_path, files)
+
+
+@pytest.fixture
+def clone(clone_of):
+    return clone_of()

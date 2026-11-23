@@ -24,6 +24,7 @@ from . import (
     kit_repository,
     kit_version,
     ship,
+    tidy,
 )
 from .config import Config, ConfigError, load
 
@@ -158,6 +159,14 @@ def _base(args: argparse.Namespace) -> int:
     config = _config()
     print(base.base(config.root, config.integration))
     return 0
+
+
+def _tidy(args: argparse.Namespace) -> int:
+    config = _config()
+    report = tidy.tidy(config.root, config.integration, remove=args.remove)
+    for line in report.lines:
+        print(line)
+    return 1 if report.refused else 0
 
 
 def _gap(args: argparse.Namespace) -> int:
@@ -322,6 +331,17 @@ def parser() -> argparse.ArgumentParser:
         "whether git can commit, gh's login",
     )
     mode.add_argument("--github", metavar="NAME", help="the private repository's name")
+    p = sub.add_parser(
+        "tidy",
+        help="fast-forward the primary checkout's integration branch to origin's, and list "
+        "the linked worktrees whose own work has landed; offline",
+    )
+    p.add_argument(
+        "--remove",
+        action="store_true",
+        help="remove those worktrees, their git-ignored files with them, and delete their "
+        "branches: run on the maintainer's word, since a session may still have one open",
+    )
     p = sub.add_parser("hook", help="an agent hook: the event as JSON on stdin")
     p.add_argument("event", choices=("pre-bash", "session-start"))
     return root
@@ -360,6 +380,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "release": _release,
             "ci": _ci,
             "base": _base,
+            "tidy": _tidy,
             "gap": _gap,
             "home": _home,
             "hook": _hook,

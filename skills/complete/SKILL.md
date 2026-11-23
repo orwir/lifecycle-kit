@@ -39,7 +39,7 @@ A gap this task found in a kit guide was filed by `lifecycle gap` when it was fo
 
 Where the shell's interpreter is not the project's, put the project's environment first on `PATH` for the commit and the push: its hooks run its own tools (AGENTS.md § Commands).
 
-- **On the integration branch, or a worktree branch whose work lands on it directly:** `git push origin HEAD:<integration>`, or the push AGENTS.md § Task workflow gives in its place. The pre-push hook runs the gate. A push refused because the branch moved: `git fetch origin`, rebase onto `origin/<integration>`, push again; a conflict stops for the maintainer. Then the push's CI, below, on `<integration>`.
+- **On the integration branch, or a worktree branch whose work lands on it directly:** `git push origin HEAD:<integration>`, or the push AGENTS.md § Task workflow gives in its place. The pre-push hook runs the gate. A push refused because the branch moved: `git fetch origin`, rebase onto `origin/<integration>`, push again; a conflict stops for the maintainer. Then *The primary checkout follows*, and the push's CI, below, on `<integration>`.
 - **On a `hotfix/<name>` branch:** `git push -u origin <branch>`, then the push's CI, below, on the branch, and nothing more: no PR and no merge. Write § 5's comment, naming the branch and the CI's last line, and skip the rest of §§ 5 to 7: the release reads that CI again and ships the branch, its merge into the integration branch closes the issue by its `Closes #<issue>`, and the release skill moves the card and deletes the branch.
 - **On a feature branch:**
   1. `git push -u origin <branch>`.
@@ -48,7 +48,9 @@ Where the shell's interpreter is not the project's, put the project's environmen
      - 0, `passed`, or `no PR CI` where no workflow runs on its pull requests: step 4;
      - 1 with `failed` (a check failed or was cancelled), or 3, `missing` (no check appeared): stop for the maintainer, the PR left open;
      - 1 with a `lifecycle:` line (a read that failed: unread, not red), 4, `running`, or a last line of `ci: waiting on …` or none at all (the shell cut the wait off): the PR stays open; read its checks again by the same command, and merge nothing on a result nobody read.
-  4. `gh pr merge <PR> --squash --delete-branch`. A refused merge (a conflict, a required review) stops for the maintainer, the PR left open.
+  4. `gh pr merge <PR> --squash --delete-branch`. A refused merge (a conflict, a required review) stops for the maintainer, the PR left open. Then *The primary checkout follows*, below.
+
+**The primary checkout follows.** Once the work is on the integration branch (the direct push accepted, or the PR merged and then `git fetch origin`, since the merge happened on GitHub), `lifecycle tidy` fast-forwards the primary checkout's integration branch to origin's where git allows it, and lists the linked worktrees whose own work has landed. Its first line and its last go in the report; a refusal it prints (exit 1) is that line, and the batch goes on, the landing standing. It removes nothing: `lifecycle tidy --remove` runs only on the maintainer's word, since another session may still have a landed worktree open.
 
 **The push's CI:** `lifecycle ci <the pushed commit> --ref <branch>` waits on the CI that push started, for as long as it runs: run it where a long command may run, in the background where you can. Its last line says how it ended, and its exit code matches:
 
@@ -76,8 +78,8 @@ Where the settings name a board, `lifecycle board <issue> Done` puts the card in
 ## 7. Branches
 
 - A merged feature branch: `--delete-branch` deleted it on GitHub and here, after switching to the integration branch and pulling it. `git fetch --prune` drops its remote-tracking ref. Where gh warned that it could not fast-forward, the integration branch has diverged from its remote: stop, and report `git status -sb`.
-- A worktree's own branch stays while its worktree exists, and goes with it: in a linked worktree, gh leaves the local branch.
+- A linked worktree's own branch stays while its worktree exists, and goes with it, by `lifecycle tidy --remove` on the maintainer's word (§ 4): in a linked worktree, gh leaves the local branch too. A squash merge leaves the branch's commits off the integration branch, so tidy keeps that worktree, naming why: it goes by `git worktree remove <path>` and `git branch -D <branch>`, on the maintainer's word.
 
 ## 8. Report
 
-One line per step with its coordinates: the named `Watch:` lines and the kit gaps filed, each where it landed, and any left unfiled with why, the commit, each line a hook printed saying a check did not run, where it was pushed, the PR, `lifecycle ci`'s last line on the push or the PR's checks, the issue's state, the board column. Anything skipped says why.
+One line per step with its coordinates: the named `Watch:` lines and the kit gaps filed, each where it landed, and any left unfiled with why, the commit, each line a hook printed saying a check did not run, where it was pushed, the PR, `lifecycle tidy`'s first and last lines, `lifecycle ci`'s last line on the push or the PR's checks, the issue's state, the board column. Anything skipped says why.
