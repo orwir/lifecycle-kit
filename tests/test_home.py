@@ -1,5 +1,6 @@
 import json
 import subprocess
+from pathlib import Path
 
 import pytest
 from lifecycle import cli, doctor, guides, home
@@ -104,7 +105,7 @@ def test_claude_settings_are_committed_and_local_settings_and_os_files_are_not(t
     for name in home.OS_FILES:
         (folder / name).write_text("", encoding="utf-8")
     made = home.setup(folder)
-    assert made.committed == sorted([*EXPECTED, ".claude/settings.json"])
+    assert made.committed == sorted([*EXPECTED, ".claude/settings.json"]) and made.ignored == []
     tracked = sh(folder, "ls-files").splitlines()
     assert ".claude/settings.json" in tracked
     assert ".claude/settings.local.json" not in tracked
@@ -128,6 +129,151 @@ def test_a_home_is_left_as_it_is(tmp_path):
     again = home.setup(folder)
     assert not again.made and again.committed == []
     assert sh(folder, "rev-parse", "HEAD") == head
+
+
+def _line(source, pattern):
+    return source.read_text(encoding="utf-8").splitlines().index(pattern) + 1
+
+
+def _excluded_globally(tmp_path, gitconfig, folder, pattern):
+    """``pattern`` in a global ``core.excludesFile``; returns the rule as setup names it."""
+    excludes = tmp_path / "excludes"
+    with excludes.open("a", encoding="utf-8") as file:
+        file.write(f"{pattern}\n")
+    with gitconfig.open("a", encoding="utf-8") as config:
+        config.write(f"[core]\n\texcludesFile = {excludes.as_posix()}\n")
+    where = f"{excludes}:{_line(excludes, pattern)}"
+    return f"`{pattern}` at {where}, a rule for every repository on this computer"
+
+
+def _excluded_in_the_repository(tmp_path, gitconfig, folder, pattern):
+    """``pattern`` in the ``.git/info/exclude`` of an empty repository in ``folder``; returns
+    the rule as setup names it."""
+    if not (folder / ".git").is_dir():
+        sh(folder, "init", "-q")
+    exclude = folder.resolve() / ".git" / "info" / "exclude"
+    with exclude.open("a", encoding="utf-8") as file:
+        file.write(f"{pattern}\n")
+    return f"`{pattern}` at {exclude}:{_line(exclude, pattern)}, a rule for this folder alone"
+
+
+def _excluded_by_the_template(tmp_path, gitconfig, folder, pattern):
+    """``pattern`` in the ``info/exclude`` of git's template for new repositories, which
+    setup's own ``git init`` copies; returns the rule as setup names it."""
+    exclude = tmp_path / "template" / "info" / "exclude"
+    exclude.parent.mkdir(parents=True, exist_ok=True)
+    with exclude.open("a", encoding="utf-8") as file:
+        file.write(f"{pattern}\n")
+    with gitconfig.open("a", encoding="utf-8") as config:
+        config.write(f"[init]\n\ttemplateDir = {exclude.parent.parent.as_posix()}\n")
+    where = f"line {_line(exclude, pattern)} of info/exclude in git's template for new repositories"
+    return f"`{pattern}` at {where}, a rule it gives every new repository"
+
+
+def with_settings(folder):
+    (folder / ".claude").mkdir(parents=True)
+    for name in ("settings.json", "settings.local.json"):
+        (folder / ".claude" / name).write_text("{}\n", encoding="utf-8")
+
+
+@pytest.mark.parametrize("exclude", [_excluded_globally, _excluded_in_the_repository])
+def test_ignored_agent_settings_are_left_out_with_a_warning(tmp_path, isolated, capsys, exclude):
+    folder = tmp_path / "ideas"
+    with_settings(folder)
+    rule = exclude(tmp_path, isolated, folder, ".claude/")
+    assert cli.main(["home", str(folder)]) == 0
+    out = capsys.readouterr().out
+    assert f"warning: .claude/settings.json is not committed: git ignores it by {rule}." in out
+    assert f"`git -C {folder} add .claude/settings.json` and a commit put it there" in out
+    assert "settings.local.json" not in out
+    assert sorted(sh(folder, "ls-files").splitlines()) == EXPECTED
+    ignored = sh(folder, "check-ignore", ".claude/settings.json", ".claude/settings.local.json")
+    assert ignored.splitlines() == [".claude/settings.json", ".claude/settings.local.json"]
+    assert sh(folder, "status", "--porcelain") == ""
+
+
+@pytest.mark.parametrize(
+    ("exclusions", "elsewhere"),
+    [
+        ([(_excluded_globally, "AGENTS.md", ["AGENTS.md"])], False),
+        ([(_excluded_globally, "active/", ["active/.gitkeep"])], False),
+        (
+            [(_excluded_in_the_repository, "*.md", ["AGENTS.md", "archived.md", "graduated.md"])],
+            True,
+        ),
+        ([(_excluded_by_the_template, "AGENTS.md", ["AGENTS.md"])], False),
+        (
+            [
+                (_excluded_in_the_repository, "AGENTS.md", ["AGENTS.md"]),
+                (_excluded_globally, "active/", ["active/.gitkeep"]),
+            ],
+            False,
+        ),
+    ],
+    ids=["global", "global folder", "the folder's own", "git's template", "own and global"],
+)
+def test_an_ignored_file_the_home_must_keep_stops_setup_keeping_nothing(
+    tmp_path, isolated, exclusions, elsewhere
+):
+    folder = tmp_path / "ideas"
+    with_settings(folder)
+    rules = [
+        (exclude(tmp_path, isolated, folder, pattern), paths)
+        for exclude, pattern, paths in exclusions
+    ]
+    repository = (folder / ".git").is_dir()
+    before = listing(folder)
+    with pytest.raises(home.HomeError) as stopped:
+        home.setup(folder)
+    error = str(stopped.value)
+    one = sum(len(paths) for _, paths in rules) == 1
+    assert error.startswith(f"git ignores {'a file' if one else 'files'} an ideas home must keep: ")
+    for rule, paths in rules:
+        assert f"{', '.join(paths)}, by {rule}" in error
+    assert ("in another folder" in error) is elsewhere
+    assert (
+        f"Nothing was kept: once that is dealt with, run `lifecycle home {folder}` again" in error
+    )
+    assert listing(folder) == before
+    if repository:
+        assert sh(folder, "symbolic-ref", "--short", "HEAD") == "master"
+        assert sh(folder, "ls-files") == ""
+    else:
+        assert not (folder / ".git").exists()
+
+
+def test_a_failed_ignore_check_keeps_nothing_and_says_why(tmp_path, monkeypatch):
+    real = home.run
+
+    def run(*args, cwd, timeout=home.CALL_SECONDS, stdin=None):
+        if args[:2] == ("git", "check-ignore"):
+            return subprocess.CompletedProcess(list(args), 128, "", "fatal: index file corrupt\n")
+        return real(*args, cwd=cwd, timeout=timeout, stdin=stdin)
+
+    monkeypatch.setattr(home, "run", run)
+    folder = tmp_path / "ideas"
+    with pytest.raises(home.HomeError) as failed:
+        home.setup(folder)
+    assert "git check-ignore failed: fatal: index file corrupt. Nothing was kept" in str(
+        failed.value
+    )
+    assert not folder.exists()
+
+
+def test_a_rule_that_takes_a_file_back_leaves_it_to_commit(tmp_path, isolated, capsys):
+    folder = tmp_path / "ideas"
+    for pattern in ("*.md", "!AGENTS.md", "!archived.md", "!graduated.md"):
+        _excluded_globally(tmp_path, isolated, folder, pattern)
+    assert cli.main(["home", str(folder)]) == 0
+    assert "warning" not in capsys.readouterr().out
+    assert sorted(sh(folder, "ls-files").splitlines()) == EXPECTED
+
+
+def test_the_capture_skill_asks_for_another_folder_on_setups_own_refusal():
+    """The skill tells a refusal of the folder from every other failure by the line the
+    command prints."""
+    skill = Path(__file__).resolve().parents[1] / "skills" / "capture" / "SKILL.md"
+    assert f"`lifecycle: {home.REFUSED}:`" in skill.read_text(encoding="utf-8")
 
 
 def _a_file(folder):
@@ -495,13 +641,20 @@ def test_a_failed_add_claims_nothing_staged(tmp_path):
     assert listing(folder) == [".claude", ".claude/settings.json"]
 
 
-def test_what_a_failed_add_did_stage_is_unstaged(tmp_path):
+def test_what_a_failed_add_did_stage_is_unstaged(tmp_path, monkeypatch):
     folder = tmp_path / "ideas"
     (folder / ".claude").mkdir(parents=True)
     (folder / ".claude" / "settings.json").write_text("{}\n", encoding="utf-8")
     sh(folder, "init", "-q")
-    with (folder / ".git" / "info" / "exclude").open("a", encoding="utf-8") as exclude:
-        exclude.write(".claude/\n")
+    real = home.git
+
+    def git(folder, *args, timeout=home.CALL_SECONDS):
+        result = real(folder, *args, timeout=timeout)
+        if args[:1] == ("add",):  # stages it all, then fails
+            return subprocess.CompletedProcess(["git", *args], 1, "", "error: refused\n")
+        return result
+
+    monkeypatch.setattr(home, "git", git)
     with pytest.raises(home.HomeError) as failed:
         home.setup(folder)
     assert "git add failed" in str(failed.value)
@@ -588,3 +741,27 @@ def test_a_push_refused_for_credentials_names_gh_auth_setup_git(monkeypatch, loc
         home.backup(local_home, "ideas")
     assert "run `gh auth setup-git`" in str(failed.value)
     assert f"`lifecycle home {local_home} --github ideas` again" in str(failed.value)
+
+
+def test_a_failed_push_carries_gits_whole_reason_but_its_hints(monkeypatch, local_home):
+    sh(local_home, "remote", "add", "origin", "https://github.com/ada/ideas.git")
+    real = home.git
+    rejected = (
+        "To https://github.com/ada/ideas.git\n"
+        " ! [rejected]        main -> main (fetch first)\n"
+        "error: failed to push some refs to 'https://github.com/ada/ideas.git'\n"
+        "hint: Updates were rejected because the remote contains work that you do not\n"
+        "hint: have locally.\n"
+    )
+
+    def git(folder, *args, timeout=home.CALL_SECONDS):
+        if args[:1] == ("push",):
+            return subprocess.CompletedProcess(["git", *args], 1, "", rejected)
+        return real(folder, *args, timeout=timeout)
+
+    monkeypatch.setattr(home, "git", git)
+    with pytest.raises(home.HomeError) as failed:
+        home.backup(local_home, "ideas")
+    error = str(failed.value)
+    assert "! [rejected]        main -> main (fetch first) error: failed to push some refs" in error
+    assert "hint" not in error and "have locally" not in error

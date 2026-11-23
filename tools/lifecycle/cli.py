@@ -185,6 +185,8 @@ def _home(args: argparse.Namespace) -> int:
     made = home.setup(folder)
     if made.made:
         print(f"set up the ideas home in {made.folder}, committed: {', '.join(made.committed)}")
+        for item in made.ignored:
+            print(f"warning: {home.warning(made.folder, item)}")
     elif not args.github:
         print(f"{made.folder} is an ideas home already: nothing written")
     if args.github:

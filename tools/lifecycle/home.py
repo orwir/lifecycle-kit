@@ -30,6 +30,8 @@ NAME = "ideas"
 #: What an OS writes into a folder it shows: a folder holding only these is empty.
 OS_FILES = {".DS_Store", "desktop.ini", "Thumbs.db"}
 SETTINGS = ".claude/settings.json"
+#: What every refusal of a folder, or of git's identity, starts with.
+REFUSED = "no home set up"
 #: The mark that ``main`` reached ``origin``: set by a push that succeeded, read offline.
 PUSHED = "refs/remotes/origin/main"
 #: A read that gives no answer in this long fails. The creation and the push have none.
@@ -63,12 +65,25 @@ class HomeError(Exception):
     pass
 
 
+@dataclass(frozen=True)
+class Ignored:
+    """A file git ignores, and the rule that does: its pattern, and the file and line git read
+    it from."""
+
+    path: str
+    source: Path
+    line: str
+    pattern: str
+
+
 @dataclass
 class Setup:
     folder: Path
     #: False where the folder was a home already and nothing was written.
     made: bool
     committed: list[str] = field(default_factory=list)
+    #: What git ignores and the home can do without, left out of the commit.
+    ignored: list[Ignored] = field(default_factory=list)
 
 
 @dataclass
@@ -82,12 +97,15 @@ def user_folder() -> Path:
     return Path.home()
 
 
-def run(*args: str, cwd: Path, timeout: float | None = CALL_SECONDS) -> subprocess.CompletedProcess:
+def run(
+    *args: str, cwd: Path, timeout: float | None = CALL_SECONDS, stdin: str | None = None
+) -> subprocess.CompletedProcess:
     """A command's result; a missing program or no answer in time is a ``HomeError``."""
     env = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
     try:
         return subprocess.run(
             list(args),
+            input=stdin,
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -121,8 +139,13 @@ def nearest(folder: Path) -> Path:
     return Path.cwd()
 
 
-def _first_line(text: str) -> str:
-    return next((line.strip() for line in text.splitlines() if line.strip()), "no reason given")
+def _reason(text: str) -> str:
+    """A command's message on one line, all of it but git's hints, which speak to a git user
+    in git commands: git puts the reason past the first line in more than one message."""
+    lines = (line.strip() for line in text.splitlines())
+    return " ".join(line for line in lines if line and not line.startswith("hint:")) or (
+        "no reason given"
+    )
 
 
 def is_home(folder: Path) -> bool:
@@ -214,7 +237,7 @@ def gh_login(cwd: Path) -> tuple[str | None, str | None]:
         stderr = result.stderr.strip()
         if "auth login" in stderr or "not logged" in stderr:
             return None, "gh is not signed in: `gh auth login`"
-        return None, f"gh cannot read the signed-in account: {_first_line(stderr)}"
+        return None, f"gh cannot read the signed-in account: {_reason(stderr)}"
     return result.stdout.strip() or None, None
 
 
@@ -284,14 +307,16 @@ def log_headers() -> list[str]:
 def setup(folder: Path) -> Setup:
     """Make ``folder`` a home: a git repository on ``main`` with the gauntlet's layout, the
     settings, the template as ``AGENTS.md`` and the lock at the installed release, in one
-    commit of exactly those files and ``.claude/settings.json`` where it is there. Refuses,
-    writing nothing, a folder that cannot become one or a git that cannot commit."""
+    commit of exactly those files and ``.claude/settings.json`` where it is there and git
+    does not ignore it. Refuses, writing nothing, a folder that cannot become one or a git
+    that cannot commit; stops, keeping nothing, where git ignores a file the home must keep.
+    An ignore is the person's own choice, so none is overridden."""
     folder = folder.resolve()
     if is_home(folder):
         return Setup(folder, made=False)
     why = refusal(folder) or identity(folder)
     if why:
-        raise HomeError(f"no home set up: {why}")
+        raise HomeError(f"{REFUSED}: {why}")
     headers = log_headers()
     template = guides.text(guides.METHOD / TEMPLATE)
     existed, repository = folder.is_dir(), (folder / ".git").is_dir()
@@ -299,13 +324,18 @@ def setup(folder: Path) -> Setup:
     for (name, title, line), header in zip(LOGS, headers, strict=True):
         files[name] = f"# {title}\n\n{line}\n\n{header}\n"
     written = [*files, guides.LOCK]
-    committed = sorted([*written, *([SETTINGS] if (folder / SETTINGS).is_file() else [])])
+    settings = [SETTINGS] if (folder / SETTINGS).is_file() else []
     message = f"Set up the ideas home on lifecycle kit {guides.kit_version()}"
     added: list[str] = []  # what a git add was asked for, which may stage some and fail
     folder.mkdir(parents=True, exist_ok=True)
     try:
         if not repository:
             _ok(git(folder, "init", "-q"), "git init")
+        ignored = _ignored(folder, [*written, *settings])
+        needed = [rule for rule in ignored if rule.path != SETTINGS]
+        if needed:
+            raise HomeError(_must_keep(folder, needed, made=not repository))
+        committed = sorted([*written, *(settings if not ignored else [])])
         _ok(git(folder, "symbolic-ref", "HEAD", "refs/heads/main"), "git symbolic-ref")
         for name, body in files.items():
             path = folder / name
@@ -326,7 +356,70 @@ def setup(folder: Path) -> Setup:
         raise HomeError(
             f"{error}. {kept} once that is dealt with, run `lifecycle home {folder}` again"
         ) from error
-    return Setup(folder, made=True, committed=committed)
+    return Setup(folder, made=True, committed=committed, ignored=ignored)
+
+
+def _ignored(folder: Path, paths: list[str]) -> list[Ignored]:
+    """Each of ``paths`` git ignores in the repository ``folder``, with its rule; one a ``!``
+    rule takes back is not ignored. git reads ignore rules only inside a repository, and
+    separates its fields by NUL only for paths on its input."""
+    names = "".join(f"{path}\0" for path in paths)
+    result = run("git", "check-ignore", "-v", "-z", "--stdin", cwd=folder, stdin=names)
+    if result.returncode not in (0, 1):  # 1: none is ignored
+        raise HomeError(f"git check-ignore failed: {_reason(result.stderr or result.stdout)}")
+    fields = result.stdout.split("\0")
+    return [
+        Ignored(path, folder / source, line, pattern)
+        for source, line, pattern, path in (fields[i : i + 4] for i in range(0, len(fields) - 3, 4))
+        if not pattern.startswith("!")
+    ]
+
+
+def describe(item: Ignored, folder: Path, made: bool = False) -> tuple[str, bool]:
+    """The rule that ignores ``item`` in words — its pattern, where it is and how far it
+    reaches — and whether it is ``folder``'s alone, which another folder is free of. ``made``:
+    setup made the repository, so a rule in its ``.git`` came from git's template for new
+    repositories, and goes with the repository when a stop takes it back."""
+    if made and item.source.is_relative_to(folder / ".git"):
+        where = f"line {item.line} of info/exclude in git's template for new repositories"
+        return f"`{item.pattern}` at {where}, a rule it gives every new repository", False
+    rule = f"`{item.pattern}` at {item.source}:{item.line}, a rule for"
+    if item.source.is_relative_to(folder):
+        return f"{rule} this folder alone", True
+    return f"{rule} every repository on this computer", False
+
+
+def warning(folder: Path, item: Ignored) -> str:
+    """What a file setup left out, as git ignores it, means for the home, and how it gets in."""
+    rule, _ = describe(item, folder)
+    return (
+        f"{item.path} is not committed: git ignores it by {rule}. The kit is on here; a copy of "
+        "the home elsewhere has it off until the file is committed: once that rule no longer "
+        f"ignores it, `git -C {folder} add {item.path}` and a commit put it there"
+    )
+
+
+def _must_keep(folder: Path, ignored: list[Ignored], made: bool) -> str:
+    """Why a home cannot be set up where git ignores files it must keep: each rule once, with
+    what it ignores, and the ways out, another folder only where every rule is this one's."""
+    rules: dict[str, list[str]] = {}
+    alone = True
+    for item in ignored:
+        rule, own = describe(item, folder, made)
+        rules.setdefault(rule, []).append(item.path)
+        alone = alone and own
+    shown = "; ".join(f"{', '.join(paths)}, by {rule}" for rule, paths in rules.items())
+    one = len(ignored) == 1
+    ways = (
+        f"change {'that rule' if len(rules) == 1 else 'each rule'} so it no longer ignores "
+        f"{'it' if one else 'them'}"
+    )
+    ways = (
+        f"ways out: {ways}, or set the home up in another folder" if alone else f"way out: {ways}"
+    )
+    return (
+        f"git ignores {'a file' if one else 'files'} an ideas home must keep: {shown}. The {ways}"
+    )
 
 
 def _undo(
@@ -345,7 +438,7 @@ def _undo(
                 why = str(error)
             else:
                 if result.returncode != 0:
-                    why = _first_line(result.stderr or result.stdout)
+                    why = _reason(result.stderr or result.stdout)
         if why:
             left.append(f"the staging of {', '.join(staged)} in {folder / '.git'} ({why})")
     for name in written:
@@ -385,7 +478,7 @@ def _staged(folder: Path, paths: list[str]) -> list[str]:
 
 def _ok(result: subprocess.CompletedProcess, what: str) -> None:
     if result.returncode != 0:
-        raise HomeError(f"{what} failed: {_first_line(result.stderr or result.stdout)}")
+        raise HomeError(f"{what} failed: {_reason(result.stderr or result.stdout)}")
 
 
 def origin(folder: Path) -> str | None:
@@ -411,7 +504,7 @@ def create_private(name: str, cwd: Path) -> str:
     result = gh("repo", "create", name, "--private", cwd=cwd, timeout=None)
     printed = result.stdout.strip().splitlines() if result.returncode == 0 else []
     if not printed:
-        reason = _first_line(result.stderr or result.stdout)
+        reason = _reason(result.stderr or result.stdout)
         raise HomeError(
             f"no repository created: {reason}. With another name, or later, run "
             f"`lifecycle home {cwd} --github <name>` again"
@@ -423,7 +516,7 @@ def push(folder: Path, name: str) -> None:
     result = git(folder, "push", "-u", "origin", "main", timeout=None)
     if result.returncode == 0:
         return
-    reason = _first_line(result.stderr)
+    reason = _reason(result.stderr)
     again = f"`lifecycle home {folder} --github {name}` again"
     if any(mark in result.stderr for mark in _NO_CREDENTIALS):
         raise HomeError(
