@@ -6,7 +6,7 @@ When the user asks for a comprehensive codebase review (multi-phase walk through
 
 Run this template when accumulated drift is felt but hard to name — typically after a major release, quarterly, or at the close of a heavy build phase. Don't run it for:
 
-- Hot-path bug fixes — too slow; do the fix first, file follow-ups for adjacent drift.
+- Hot-path bug fixes — too slow; do the fix first, and the drift beside it goes by `task_review.md` § Developer rules.
 - Sub-week projects — the payback isn't there.
 - Active feature work on the same surface — the codebase is moving; reviews need a stable target.
 - Pre-launch hardening — that's a security review (Phase 5 alone), not a 13-phase walk.

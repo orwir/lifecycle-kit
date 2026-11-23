@@ -50,6 +50,7 @@ Every kind's Phase 0 reads, before anything changes:
 - **The last review of its own kind:** its per-phase yield (*Close-out*), to choose where to read deep; and its parent issue's open children and unticked leftovers, which this review absorbs — taking each into its own parent, filing it, or dropping it with a reason — before closing the old parent.
 - **The latest review of each other kind:** its parent's open children and leftovers, read so this review neither repeats nor contradicts them.
 - **The register rows** of the latest review of each kind: its Open rows and its Accepted-risk rows whose trigger has not fired, copied into this plan's register with their origin. A fired trigger reopens its row, and an answer recorded on that review's parent issue since its close-out takes the place of the frozen row's status.
+- **The `Watch:` lines** tasks have landed (`git log --grep "Watch:"`), each a trigger nothing had met when it was written (`task_review.md` § Developer rules): each one this review's surface meets is checked as an Accepted-risk row's trigger is. One that has fired is a finding of this review; one that has not waits for the next; one a later issue or commit settled is passed over.
 - **The project's contract docs**, plus whatever the kind's own ground-rules read names.
 
 A review document from before this machinery has no parent issue: its open `[ ]` and `[DEFERRED]` items count as its parent's leftovers, and its yield is read from its findings tables.

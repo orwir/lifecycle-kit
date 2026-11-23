@@ -10,6 +10,11 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ## Unreleased
 
+### Changed
+- A task files a follow-up only for a seen instance, a job of its own and a likely change (#64)
+- A trigger nothing has met is a `Watch:` line in the plan and the commit, not an issue (#64)
+- A comprehensive review's Phase 0 checks the `Watch:` lines tasks have landed (#64)
+
 ### Fixed
 - `lifecycle home` takes back all a failed or timed-out setup wrote or staged, on Linux and macOS too (#58)
 - An upgrade leaves accepted ADRs, released changelog sections and frozen records as written, whatever a step lists (#42)

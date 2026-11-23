@@ -17,18 +17,20 @@ This is the *Complete* phase of AGENTS.md § Task workflow. It runs only on the 
 
 ## 1. Before anything lands
 
-1. **The hand-back's answers,** by `task_review.md` § The work round, step 5: each answer to the hand-back's D-rows given with this go-ahead or before it; each D-row left unanswered, which takes its recommendation, written as taken at the go-ahead; each choice taken alone the maintainer vetoed. The gate runs again after them. A pick bigger than the size the brief stated, or any veto, stops the batch: render the brief again by the handback skill and wait for a new go-ahead.
+1. **The hand-back's answers,** by `task_review.md` § The work round, step 5: each answer to the hand-back's D-rows given with this go-ahead or before it; each D-row left unanswered, which takes its recommendation, written as taken at the go-ahead; each choice taken alone the maintainer vetoed. The gate runs again after them. A pick bigger than the size the brief stated, or any veto, stops the batch: render the brief again by the handback skill and wait for a new go-ahead. A `Watch:` line the maintainer named is no veto: § 2 files it.
 2. **The gate** — `gate.commands`, else AGENTS.md § Commands' lint and tests — passed in this session after the last edit; if not, run it now. A red gate stops the batch. A repository with no gate says so in the report.
 3. `git status --short` lists only this task's files. Anything else is someone's in-progress work: leave it out and name it in the report.
 
-## 2. Kit gaps
+## 2. Kit gaps and named `Watch:` lines
+
+Each `Watch:` line the maintainer named in the hand-back is filed now, the way an issue past the bar is filed (`task_review.md` § Developer rules): a gap in a kit guide by `lifecycle gap`, any other as a capture labelled as AGENTS.md says, with `lifecycle board <new> Backlog` where the settings name a board; its reference, marked named, takes the line's place in the plan.
 
 A gap this task found in a kit guide was filed by `lifecycle gap` when it was found (`task_review.md` § Developer rules), and the hand-back's *Taken alone* names it. Each gap not filed — a `Not filed:` entry in the plan, or in an untracked task's hand-back — is filed now, by `lifecycle gap --title <its title> --body-file <its body>`, the body in a file outside the tree (`task_review.md` § Developer rules), and its reference replaces the plan's entry; one `lifecycle gap` still cannot file stays where it is, and the report gives its title and why. Nothing of the kit's lands from this repository.
 
 ## 3. Commit
 
 1. Stage the task's files by name; never `git add -A`.
-2. One Conventional Commit (AGENTS.md § Branching and commits): the body says why, names every decision taken alone with its reason (the plan's `Taken:` lines, the hand-off's and the hand-back's), every departure, each answer to the hand-back and each spend with its amount, and ends `Closes #<issue>` on a tracked task. A fix for an exploitable finding in released code keeps its location and detail out of every public record `task_review.md` § Return packet lists, until its fix ships.
+2. One Conventional Commit (AGENTS.md § Branching and commits): the body says why, names every decision taken alone with its reason (the plan's `Taken:` lines, the hand-off's and the hand-back's), every departure, every `Watch:` line still standing, each answer to the hand-back and each spend with its amount, and ends `Closes #<issue>` on a tracked task. A fix for an exploitable finding in released code keeps its location and detail out of every public record `task_review.md` § Return packet lists, until its fix ships.
 3. The message goes in a file in a scratch folder outside the tree, passed with `-F`.
 4. A failing hook is fixed at its cause and the commit made again; never `--no-verify`, never amend a pushed commit.
 
@@ -65,4 +67,4 @@ Where the settings name a board, `lifecycle board <issue> Done` puts the card in
 
 ## 8. Report
 
-One line per step with its coordinates: the kit gaps filed, each where it landed, and any left unfiled with why, the commit, where it was pushed, the PR, the issue's state, the board column. Anything skipped says why.
+One line per step with its coordinates: the named `Watch:` lines and the kit gaps filed, each where it landed, and any left unfiled with why, the commit, where it was pushed, the PR, the issue's state, the board column. Anything skipped says why.

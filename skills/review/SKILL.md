@@ -47,7 +47,7 @@ You are the developer and you run the whole round here. The maintainer reads onl
    4. `git worktree remove --force <worktree>`.
 7. **Read first:** the docs, ADR sections or guides the diff is held to beyond AGENTS.md, or `none`.
 8. **The gate.** If it did not run in this session after the last edit, run it now; a red gate is fixed before the packet, since the round runs on a green one (§ When it runs). Report the numbers; what still could not run goes under `NOT RUN`, with its reason.
-9. **Decisions taken alone:** the plan's `Taken:` lines and every option picked without the maintainer since, every hypothesis left untested and where it is marked, every spend and where it was asked, every gap in a kit guide filed by `lifecycle gap`, as it named it, and every `Not filed:` entry in the plan. `none` is a claim the reviewer checks.
+9. **Decisions taken alone:** the plan's `Taken:` lines and every option picked without the maintainer since, every hypothesis left untested and where it is marked, every spend and where it was asked, every issue filed (a gap in a kit guide as `lifecycle gap` named it), every `Watch:` line and every `Not filed:` entry in the plan. `none` is a claim the reviewer checks.
 10. **Where to look:** the two or three hunks you are least sure of, the invariant each relies on and the test that enforces it, or `stated only`.
 11. **Docs:** the files touched per AGENTS.md's change → doc mapping and the CHANGELOG line quoted, or why there is none; then what AGENTS.md's added steps produced, or `none`.
 
@@ -74,8 +74,8 @@ By § The work round, step 3, and § Return packet's table:
 - every `Decision pending` and every *For the maintainer* question you cannot settle goes by its door (§ Terms): a two-way one is made in the tree, at the reviewer's recommendation or at your own pick with the reviewer's option named, and written as a `Taken:` line (§ Developer rules); a one-way one, every finding you dispute, on evidence or on scope (§ Terms), and a `split` go to the brief as D-rows;
 - a fix that leaves the accepted plan is a departure, by § Developer rules;
 - an exploitable finding is fixed here or goes by the private route (§ Return packet) — where the repository names no private channel, to the brief as a D-row — never into an issue;
-- any other deferred finding is filed first, labelled as the repository's `AGENTS.md` says, and, where the settings name a board, `lifecycle board <new> Backlog`; the brief's row carries `<new>`'s number, title and link;
-- a `Real bug` buys its reviewer a second pass: after the fixes, send the same reviewer the reply per finding id — `fixed <how>` / `disputed: the evidence does not hold — <what the locations show>` / `disputed: <why it is not yours to act on>` / `deferred #<new>` / `reported privately` — and act on its second return the same way, never buying a third (§ Terms, *Pass*); in Claude Code, `SendMessage` to the subagent; for a pasted session, a second file the maintainer pastes into the same session;
+- a follow-up a return asks for goes by the bar (§ Developer rules): one that passes is filed first, labelled as the repository's `AGENTS.md` says, and, where the settings name a board, `lifecycle board <new> Backlog`, the brief's row carrying `<new>`'s number, title and link; one that does not goes as § Developer rules sends it;
+- a `Real bug` buys its reviewer a second pass: after the fixes, send the same reviewer the reply per finding id — `fixed <how>` / `disputed: the evidence does not hold — <what the locations show>` / `disputed: <why it is not yours to act on>` / `deferred #<new>` / `watch: <trigger>` / `reported privately` — and act on its second return the same way, never buying a third (§ Terms, *Pass*); in Claude Code, `SendMessage` to the subagent; for a pasted session, a second file the maintainer pastes into the same session;
 - re-run the gate after the last edit; a red gate is fixed before the hand-back.
 
 ## 4. Hand back

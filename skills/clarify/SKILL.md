@@ -54,6 +54,7 @@ By § The plan round, step 4:
 - fold every `Real bug` and `Drift` that holds into the plan, which stays `proposed`; an exploitable one goes in with no location or detail;
 - every `Decision pending`, and every *For the maintainer* question you cannot settle, goes by its door (§ Terms): a one-way one becomes a D-row with its recommended option; a two-way one is taken, at the reviewer's recommendation or at your own pick with the reviewer's option named, and written as a `Taken:` line (§ Developer rules); a question with no option goes the same way, your answer as its recommendation;
 - a finding you dispute becomes a D-row naming its kind (§ Brief rules): the reviewer's position as A, yours as B;
+- a follow-up the return asks for goes by the bar (§ Developer rules): one that passes is filed, a gap in a kit guide by `lifecycle gap` and any other as a capture labelled as the repository's `AGENTS.md` says, with `lifecycle board <new> Backlog` where the settings name a board, and the brief carries it; one that does not goes as § Developer rules sends it;
 - a `split`: file the part split off as a capture, the template's sections above the plan, labelled as the repository's `AGENTS.md` says, and, where the settings name a board, `lifecycle board <new> Backlog`; narrow this plan to what it keeps, and name `<new>` on the brief's *Reviewed* line;
 - write the plan back as in § 1 step 4, with the round's mark in the same write;
 - one plan round per plan: what stays disputed goes to the maintainer, never to a second pass.
@@ -63,12 +64,12 @@ By § The plan round, step 4:
 Render it by § Clarify brief's template and § Brief rules:
 
 1. The first line links the issue, from `gh issue view <N> --json url -q .url`, and names the task in a few plain words; the goal is the issue's *Goal* in one plain sentence.
-2. *Taken alone*, by § Brief rules: the plan's `Taken:` lines that might draw the maintainer's attention, and every follow-up filed, its title and link by `gh issue view <M> --json title,url`. A gap in a kit guide is named as `lifecycle gap` printed it, its title and link read with `--repo` on the repository it landed in, and each `Not filed:` entry in the plan is carried with its title and why (§ Developer rules).
+2. *Taken alone*, by § Brief rules: the plan's `Taken:` lines that might draw the maintainer's attention, and every follow-up filed, its title and link by `gh issue view <M> --json title,url`. A gap in a kit guide is named as `lifecycle gap` printed it, its title and link read with `--repo` on the repository it landed in, each `Not filed:` entry in the plan is carried with its title and why, and each `Watch:` line with what and its trigger (§ Developer rules).
 3. *Reviewed* is read off the round's mark.
 
 ## 6. On "go"
 
-1. Write each answer into the plan: the pick and its reason in place of the recommendation, and whatever it changes in the scenarios or the boxes. A D-row left unanswered takes its recommendation, written as taken at "go". A vetoed choice taken alone: its `Taken:` line gives way to the maintainer's pick, and the plan is made that way.
+1. Write each answer into the plan: the pick and its reason in place of the recommendation, and whatever it changes in the scenarios or the boxes. A D-row left unanswered takes its recommendation, written as taken at "go". A vetoed choice taken alone: its `Taken:` line gives way to the maintainer's pick, and the plan is made that way. A `Watch:` line the maintainer names is filed now, the way an issue past the bar is filed (§ 4), and its reference, marked named, takes the line's place; the reply at "go" names each issue filed, with its link, and each line left unfiled, with why.
 2. Set `**Status:** accepted <YYYY-MM-DD>`, write the body back as in § 1 step 4, and only then write code.
 3. A correction to the drawing before "go" is a redraw and a brief rendered again, not a new round.
 4. A skipped round with nothing to answer awaits no "go" (§ The plan round): set the plan accepted and go on, unless it carries a drawing.
