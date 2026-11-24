@@ -16,9 +16,12 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 - `lifecycle board setup` lists each card left in Backlog whose issue's plan has a status, with its move (#67)
 - `lifecycle board setup` makes a Board view whose columns are the Status options where a board has none (#68)
 - `lifecycle board setup` names renaming a board's "View 1" table view to Table in the web UI (#68)
+- `lifecycle board` moves a card to Ready, on the maintainer's triage call (#70)
+- `lifecycle board` places several cards in a column in the order given, at its top or after `--after <M>` (#70)
 
 ### Changed
 - A vulnerability in the kit goes by the kit's security policy wherever it is found, never by `lifecycle gap` (#65)
+- The AGENTS template's board line names the Ready moves in the order given, on the maintainer's triage call (#70)
 
 ### Fixed
 - The complete skill lands a PR from a linked worktree whose integration branch another checkout holds (#69)

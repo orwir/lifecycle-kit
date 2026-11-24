@@ -184,25 +184,175 @@ def test_a_missing_column_is_named():
         board.option(FIELDS, "Ready")
 
 
-def test_move_ends_at_the_top_of_the_column_brought_back_from_the_archive(monkeypatch):
-    calls = []
-    replies = {
-        "issue": "https://github.com/o/r/issues/4\n",
-        "item-add": json.dumps({"id": "ITEM"}),
-        "view": json.dumps({"id": "PROJ"}),
-        "field-list": json.dumps({"fields": FIELDS}),
+def board_card(id_, status, project="P", archived=False):
+    """One of an issue's cards as its `projectItems` list it."""
+    value = {"name": status} if status else None
+    return {
+        "id": id_,
+        "isArchived": archived,
+        "project": {"id": project},
+        "fieldValueByName": value,
     }
 
-    def gh(*args):
-        calls.append(args)
-        key = args[0] if args[0] == "issue" else args[1] if args[0] == "project" else ""
-        return replies.get(key, "")
 
-    monkeypatch.setattr(board, "gh", gh)
-    assert board.move(4, "Done", "o", 9) == "ITEM"
-    assert calls[-1][:2] == ("api", "graphql") and "i=ITEM" in calls[-1]
-    assert "unarchiveProjectV2Item" in calls[-1][3]
-    assert calls[-2][-2:] == ("--single-select-option-id", "D")
+class MoveGh:
+    """`gh` as a move calls it, on board P whose Status options are the four."""
+
+    def __init__(self, cards=None, missing=(), fail=None, options=FOUR):
+        """``cards`` maps an issue's number to its cards; ``missing`` names no issue."""
+        self.cards, self.missing, self.fail, self.options = cards or {}, set(missing), fail, options
+        self.calls = []
+
+    def __call__(self, *args, stdin=None):
+        sent = json.loads(stdin) if stdin else None
+        self.calls.append((args, sent))
+        query = (sent or {}).get("query", "")
+        if self.fail and (self.fail in args or self.fail in query):
+            raise board.BoardError(f"gh {' '.join(args[:2])} failed: boom")
+        if args[:2] == ("issue", "view"):
+            if int(args[2]) in self.missing:
+                raise board.BoardError("gh issue view failed: no issue")
+            return issue(int(args[2])) + "\n"
+        if args[:2] == ("project", "item-add"):
+            return json.dumps({"id": "ITEM-" + args[args.index("--url") + 1].rsplit("/", 1)[1]})
+        if args[:2] == ("project", "view"):
+            return json.dumps({"id": "P"})
+        if args[:2] == ("project", "field-list"):
+            return json.dumps({"fields": [{"name": "Status", "id": "F", "options": self.options}]})
+        if "resource(url:" in query:
+            number = int(sent["variables"]["u"].rsplit("/", 1)[1])
+            nodes = self.cards.get(number, [])
+            return json.dumps({"data": {"resource": {"projectItems": {"nodes": nodes}}}})
+        return json.dumps({"data": {}})
+
+    def writes(self):
+        """Every call that changes the board: a card added, a Status set, a place."""
+        return [
+            args
+            for args, sent in self.calls
+            if args[:2] in (("project", "item-add"), ("project", "item-edit"))
+            or (sent and sent["query"].startswith("mutation"))
+        ]
+
+    def places(self):
+        """Each card placed, with the card it was placed after (None for the top)."""
+        return [
+            (sent["variables"]["i"], sent["variables"]["a"])
+            for _, sent in self.calls
+            if sent and "updateProjectV2ItemPosition" in sent["query"]
+        ]
+
+
+def run_move(monkeypatch, fake, issues, column, after=None):
+    monkeypatch.setattr(board, "gh", fake)
+    lines = []
+    return board.move(issues, column, "o", 9, after, lines.append), lines
+
+
+def test_one_card_goes_to_the_top_brought_back_from_the_archive(monkeypatch):
+    fake = MoveGh()
+    items, lines = run_move(monkeypatch, fake, [4], "Done")
+    assert items == ["ITEM-4"] and fake.places() == [("ITEM-4", None)]
+    (edit,) = [args for args, _ in fake.calls if args[:2] == ("project", "item-edit")]
+    assert edit[-2:] == ("--single-select-option-id", "d")
+    (placed,) = [sent for _, sent in fake.calls if sent]
+    assert "unarchiveProjectV2Item" in placed["query"]
+    assert lines == ["#4: Done, top of the column (ITEM-4)"]
+
+
+def test_cards_take_ready_in_the_order_given_from_its_top(monkeypatch):
+    fake = MoveGh()
+    items, lines = run_move(monkeypatch, fake, [12, 7, 9], "Ready")
+    assert items == ["ITEM-12", "ITEM-7", "ITEM-9"]
+    edits = [args for args, _ in fake.calls if args[:2] == ("project", "item-edit")]
+    assert [args[-1] for args in edits] == ["r", "r", "r"]
+    assert fake.places() == [("ITEM-12", None), ("ITEM-7", "ITEM-12"), ("ITEM-9", "ITEM-7")]
+    assert lines == [
+        "#12: Ready, top of the column (ITEM-12)",
+        "#7: Ready, after #12 (ITEM-7)",
+        "#9: Ready, after #7 (ITEM-9)",
+    ]
+
+
+def test_after_places_the_first_card_right_after_the_one_named(monkeypatch):
+    # #4 has a card on another board too, listed first: only this board's counts.
+    fake = MoveGh(cards={4: [board_card("Q4", "Backlog", project="Q"), board_card("C4", "Ready")]})
+    _, lines = run_move(monkeypatch, fake, [12, 7], "Ready", after=4)
+    assert fake.places() == [("ITEM-12", "C4"), ("ITEM-7", "ITEM-12")]
+    assert lines == ["#12: Ready, after #4 (ITEM-12)", "#7: Ready, after #12 (ITEM-7)"]
+
+
+@pytest.mark.parametrize(
+    ("cards", "says"),
+    [
+        ([board_card("C4", "Backlog")], "--after 4: its card is in Backlog, not Ready"),
+        ([board_card("C4", None)], "--after 4: its card is in no column, not Ready"),
+        (
+            [board_card("C4", "Ready", archived=True)],
+            "--after 4: its card is archived, not in Ready",
+        ),
+        ([board_card("Q4", "Ready", project="Q")], "--after 4: #4 has no card on the board"),
+        ([], "--after 4: #4 has no card on the board"),
+    ],
+    ids=["another column", "no column", "archived", "another board only", "no card"],
+)
+def test_a_card_to_follow_outside_the_column_writes_nothing(monkeypatch, cards, says):
+    fake = MoveGh(cards={4: cards})
+    with pytest.raises(board.BoardError) as refused:
+        run_move(monkeypatch, fake, [12, 7], "Ready", after=4)
+    assert str(refused.value) == says and fake.writes() == []
+
+
+def test_a_number_naming_no_issue_writes_nothing(monkeypatch):
+    fake = MoveGh(missing={8})
+    with pytest.raises(board.BoardError) as refused:
+        run_move(monkeypatch, fake, [12, 8, 9], "Ready")
+    assert str(refused.value) == "reading #8: gh issue view failed: no issue"
+    assert fake.writes() == []
+
+
+def test_a_board_with_no_such_column_writes_nothing(monkeypatch):
+    fake = MoveGh(options=[choice("b", "Backlog"), choice("d", "Done")])
+    with pytest.raises(board.BoardError, match="no 'Ready' option"):
+        run_move(monkeypatch, fake, [12], "Ready")
+    assert fake.writes() == []
+
+
+#: What a failed move ends with: the run that finishes the order.
+AGAIN = "; the cards before it are placed, and the same command again makes the whole order"
+
+
+@pytest.mark.parametrize(
+    ("fail", "says"),
+    [
+        (issue(7), f"moving #7 to Ready: gh project item-add failed: boom{AGAIN}"),
+        ("ITEM-7", f"moving #7 to Ready: gh project item-edit failed: boom{AGAIN}"),
+    ],
+)
+def test_a_failure_partway_keeps_the_cards_before_it_and_a_run_again_makes_the_order(
+    monkeypatch, fail, says
+):
+    fake = MoveGh(fail=fail)
+    lines = []
+    monkeypatch.setattr(board, "gh", fake)
+    with pytest.raises(board.BoardError) as failed:
+        board.move([12, 7, 9], "Ready", "o", 9, None, lines.append)
+    assert str(failed.value) == says
+    assert fake.places() == [("ITEM-12", None)] and lines == [
+        "#12: Ready, top of the column (ITEM-12)"
+    ]
+    fake.fail, fake.calls = None, []
+    run_move(monkeypatch, fake, [12, 7, 9], "Ready")
+    assert fake.places() == [("ITEM-12", None), ("ITEM-7", "ITEM-12"), ("ITEM-9", "ITEM-7")]
+
+
+def test_a_failed_place_names_its_card_and_step(monkeypatch):
+    fake = MoveGh(fail="updateProjectV2ItemPosition")
+    with pytest.raises(board.BoardError) as failed:
+        run_move(monkeypatch, fake, [12], "Ready")
+    assert str(failed.value) == (
+        f"moving #12 to Ready: placing the card: gh api graphql failed: boom{AGAIN}"
+    )
 
 
 def test_a_fresh_board_keeps_every_id_and_takes_the_four_in_order(monkeypatch):

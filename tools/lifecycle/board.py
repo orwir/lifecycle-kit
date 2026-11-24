@@ -1,11 +1,17 @@
-"""The project board: a card put in a column, at its top; a board set up in one pass.
+"""The project board: cards put in a column in the order given; a board set up in one pass.
 
 Projects v2 has no created-date sort, so a column's order is the raw position the
-API last set: every move ends by putting the card at the top. The card is added
-first when the issue is not on the board yet, so the same command files a new
-issue into Backlog, and brought back where it was archived. Ready is left out on
-purpose: moving a card there is the maintainer's triage call, and its order is the
-plan.
+API last set: a move places its first card at the column's top, or right after the
+card it names, and each next card after the one before it. A card is added first
+when its issue is not on the board yet, so the same command files a new issue into
+Backlog, and brought back where it was archived. Ready takes a move like any column,
+but moving a card there, and its place, are the maintainer's triage call, since
+Ready's order is the plan: an assistant moves one there on that call alone.
+
+A move reads everything before its first write, so a number that names no issue, or
+a card to follow that sits outside the column, writes nothing. A write that fails
+partway is not rolled back: each sets a value or a place, so a run again with the
+same arguments makes the same order.
 
 Setup writes the Status options in one call that replaces the whole list: an option
 sent without its id is a new option, and every card that held the old one loses its
@@ -31,14 +37,15 @@ from __future__ import annotations
 import json
 import re
 import subprocess
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 
 from .gap import LABEL
 
 FIELD = "Status"
-COLUMNS = ("Backlog", "In Progress", "Done")
 STATUSES = ("Backlog", "Ready", "In Progress", "Done")
+#: The columns a move takes: every Status option setup writes.
+COLUMNS = STATUSES
 COLORS = {"Backlog": "GRAY", "Ready": "BLUE", "In Progress": "YELLOW", "Done": "GREEN"}
 #: A fresh board's first option, which setup renames to Backlog, keeping its id.
 FRESH = "Todo"
@@ -58,10 +65,15 @@ _STATUS = re.compile(r"\*\*Status:\*\*\s*(?:proposed|accepted)\b(?!\s*\|)")
 _PLANNED = "its plan has a status"
 
 _UNARCHIVE = "unarchiveProjectV2Item(input:{projectId:$p,itemId:$i}){clientMutationId}"
-_TO_TOP = (
-    f"mutation($p:ID!,$i:ID!){{{_UNARCHIVE} "
-    "updateProjectV2ItemPosition(input:{projectId:$p,itemId:$i,afterId:null}){clientMutationId}}"
+# A null afterId puts the card at the top.
+_PLACE = (
+    f"mutation($p:ID!,$i:ID!,$a:ID){{{_UNARCHIVE} "
+    "updateProjectV2ItemPosition(input:{projectId:$p,itemId:$i,afterId:$a}){clientMutationId}}"
 )
+# An issue's cards on every board, archived ones included, which the argument's default lists.
+_CARDS = """query($u:URI!){resource(url:$u){... on Issue{projectItems(first:100){nodes{
+id isArchived project{id}
+fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}}}}}}}"""
 _PROJECT = """query($o:String!,$n:Int!){repositoryOwner(login:$o){__typename
 ... on ProjectV2Owner{projectV2(number:$n){id url public
 field(name:"Status"){... on ProjectV2SingleSelectField{id databaseId
@@ -133,20 +145,69 @@ def option(fields: list[dict], column: str) -> tuple[str, str]:
     raise BoardError(f"the board has no {FIELD} field")
 
 
-def move(issue: int, column: str, owner: str, number: int) -> str:
-    """Put ``issue`` in ``column`` at the top, adding it to the board if needed; the item id."""
+def _url(issue: int) -> str:
+    try:
+        return gh("issue", "view", str(issue), "--json", "url", "-q", ".url").strip()
+    except BoardError as error:
+        raise BoardError(f"reading #{issue}: {error}") from error
+
+
+def _card(issue: int, column: str, project_id: str) -> str:
+    """The id of ``issue``'s card on the board, refused unless it sits in ``column``."""
+    data = graphql(f"reading #{issue}'s card", _CARDS, u=_url(issue))
+    cards = ((data.get("resource") or {}).get("projectItems") or {}).get("nodes", [])
+    for card in cards:
+        if card["project"]["id"] != project_id:
+            continue
+        where = (card.get("fieldValueByName") or {}).get("name")
+        if card["isArchived"]:
+            raise BoardError(f"--after {issue}: its card is archived, not in {column}")
+        if where != column:
+            raise BoardError(
+                f"--after {issue}: its card is in {where or 'no column'}, not {column}"
+            )
+        return card["id"]
+    raise BoardError(f"--after {issue}: #{issue} has no card on the board")
+
+
+def move(
+    issues: Sequence[int],
+    column: str,
+    owner: str,
+    number: int,
+    after: int | None = None,
+    report: Callable[[str], None] = print,
+) -> list[str]:
+    """Put ``issues`` in ``column`` in their order, at its top or after ``after``'s card.
+
+    Each card is added to the board if needed and reported once placed; the item ids.
+    """
     board = ("--owner", owner, "--format", "json")
-    url = gh("issue", "view", str(issue), "--json", "url", "-q", ".url").strip()
-    item = json.loads(gh("project", "item-add", str(number), "--url", url, *board))["id"]
+    urls = [_url(issue) for issue in issues]
     project_id = json.loads(gh("project", "view", str(number), *board))["id"]
     fields = json.loads(gh("project", "field-list", str(number), *board))["fields"]
     field_id, option_id = option(fields, column)
-    gh(
-        "project", "item-edit", "--id", item, "--project-id", project_id,
-        "--field-id", field_id, "--single-select-option-id", option_id,
-    )  # fmt: skip
-    gh("api", "graphql", "-f", f"query={_TO_TOP}", "-f", f"p={project_id}", "-f", f"i={item}")
-    return item
+    previous = None if after is None else _card(after, column, project_id)
+    place, items = "top of the column" if after is None else f"after #{after}", []
+    for issue, url in zip(issues, urls, strict=True):
+        try:
+            item = json.loads(gh("project", "item-add", str(number), "--url", url, *board))["id"]
+            gh(
+                "project", "item-edit", "--id", item, "--project-id", project_id,
+                "--field-id", field_id, "--single-select-option-id", option_id,
+            )  # fmt: skip
+            graphql("placing the card", _PLACE, p=project_id, i=item, a=previous)
+        except BoardError as error:
+            # A run for the cards left alone would put them above the ones placed: the same
+            # command again is what finishes the order.
+            raise BoardError(
+                f"moving #{issue} to {column}: {error}; the cards before it are placed, "
+                "and the same command again makes the whole order"
+            ) from error
+        report(f"#{issue}: {column}, {place} ({item})")
+        previous, place = item, f"after #{issue}"
+        items.append(item)
+    return items
 
 
 def planned(body: str | None) -> bool:

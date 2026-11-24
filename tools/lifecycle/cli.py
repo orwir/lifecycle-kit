@@ -83,13 +83,19 @@ def _upgrade(args: argparse.Namespace) -> int:
 
 
 def _board(args: argparse.Namespace) -> int:
-    if args.issue == "setup":
+    if args.setup:
         return _board_setup(args)
     config = _config()
     if not config.board_owner:
         raise ConfigError(".lifecycle.toml has no [board]: this repository tracks no board")
-    item = board.move(args.issue, args.column, config.board_owner, config.board_number)
-    print(f"#{args.issue}: {args.column}, top of the column ({item})")
+    board.move(
+        args.issues,
+        args.column,
+        config.board_owner,
+        config.board_number,
+        args.after,
+        lambda line: print(line, flush=True),
+    )
     return 0
 
 
@@ -252,24 +258,45 @@ def _hook(args: argparse.Namespace) -> int:
     return 0
 
 
-def _issue(value: str) -> int | str:
-    if value == "setup":
-        return value
-    try:
-        return int(value)
-    except ValueError:
-        raise argparse.ArgumentTypeError(f"{value!r} is not an issue number or setup") from None
+def _columns() -> str:
+    """The columns a move takes, a name with a space quoted as the shell needs it."""
+    return ", ".join(f'"{name}"' if " " in name else name for name in board.COLUMNS)
 
 
 def _check_board(args: argparse.Namespace) -> None:
-    """The pairings argparse cannot state, refused with ``lifecycle board``'s own usage."""
-    setup = args.issue == "setup"
-    if setup and args.column:
-        args.board_parser.error("setup takes no column")
-    if not setup and not args.column:
-        args.board_parser.error(f"#{args.issue} needs a column: {', '.join(board.COLUMNS)}")
-    if not setup and args.number is not None:
-        args.board_parser.error("--number is setup's: a move uses the board .lifecycle.toml names")
+    """Split ``targets`` into setup, or the issues and their column; refuse what argparse cannot.
+
+    Every refusal is ``lifecycle board``'s own usage error, before anything is read.
+    """
+    fail, targets = args.board_parser.error, args.targets
+    columns = _columns()
+    args.setup, args.issues, args.column = targets[0] == "setup", [], None
+    if args.setup:
+        if len(targets) > 1:
+            fail("setup takes no column")
+        if args.after is not None:
+            fail("--after is a move's: setup places no card")
+        return
+    if targets[-1] in board.COLUMNS:
+        args.column, targets = targets[-1], targets[:-1]
+    elif len(targets) > 1 and not targets[-1].isdigit():
+        fail(f"{targets[-1]!r} is not a column: {columns}")
+    for value in targets:
+        try:
+            args.issues.append(int(value))
+        except ValueError:
+            fail(f"{value!r} is not an issue number or setup")
+    if not args.issues:
+        fail(f"{args.column} needs the issues' numbers before it")
+    if args.column is None:
+        fail(f"#{args.issues[-1]} needs a column after it: {columns}")
+    twice = sorted({issue for issue in args.issues if args.issues.count(issue) > 1})
+    if twice:
+        fail(f"#{twice[0]} is listed twice: each card takes one place")
+    if args.after in args.issues:
+        fail(f"--after {args.after} is a card this move places: name one already in the column")
+    if args.number is not None:
+        fail("--number is setup's: a move uses the board .lifecycle.toml names")
 
 
 def _check_ci(args: argparse.Namespace) -> None:
@@ -299,14 +326,32 @@ def parser() -> argparse.ArgumentParser:
         "like the kit's (--dry-run lists both)",
     )
     p.add_argument("--dry-run", action="store_true")
+    summary = (
+        "put issues' cards in a board column in the order given, at its top or after "
+        "--after's card (Ready only on the maintainer's triage call); setup creates a board "
+        "or fixes one in place"
+    )
     p = sub.add_parser(
         "board",
-        help="put an issue's card in a board column, at the top; setup creates a board or "
-        "fixes one in place",
+        help=summary,
+        description=summary[0].upper() + summary[1:] + ".",
+        usage="%(prog)s N... COLUMN [--after M]\n       %(prog)s setup [--number NUMBER]",
     )
     p.set_defaults(board_parser=p)
-    p.add_argument("issue", type=_issue, help="the issue's number, or setup")
-    p.add_argument("column", nargs="?", choices=board.COLUMNS)
+    p.add_argument(
+        "targets",
+        nargs="+",
+        metavar="N",
+        help=f"the issues' numbers, in the order their cards take, then the column "
+        f"({_columns()}); or setup alone",
+    )
+    p.add_argument(
+        "--after",
+        type=int,
+        metavar="M",
+        help="a move: the first card right after #M's, which must be in the column "
+        "(default: the column's top)",
+    )
     p.add_argument(
         "--number",
         type=int,

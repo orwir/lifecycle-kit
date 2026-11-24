@@ -332,24 +332,71 @@ def test_board_setup_names_the_rename_of_a_fresh_table_view(monkeypatch, capsys,
     )
 
 
-def test_board_moves_a_card_by_its_number(monkeypatch, capsys, repo):
+def fake_move(monkeypatch, capsys, repo):
+    """`board.move` recording its call, and the output printed by the time each card is."""
     from lifecycle import board
 
     (repo.root / ".lifecycle.toml").write_text(
         '[branches]\nintegration = "main"\n\n[board]\nowner = "o"\nnumber = 9\n', encoding="utf-8"
     )
-    moved = []
-    monkeypatch.setattr(board, "move", lambda *args: moved.append(args) or "ITEM")
-    code, out, _ = run(monkeypatch, capsys, ["board", "4", "In Progress"], cwd=repo.root)
-    assert code == 0 and moved == [(4, "In Progress", "o", 9)] and "#4: In Progress" in out
+    moved, printed = [], []
+
+    def move(issues, column, owner, number, after, report):
+        moved.append((list(issues), column, owner, number, after))
+        for issue in issues:
+            report(f"#{issue}: {column}, placed (ITEM-{issue})")
+            printed.append(capsys.readouterr().out)
+        return [f"ITEM-{issue}" for issue in issues]
+
+    monkeypatch.setattr(board, "move", move)
+    return moved, printed
+
+
+def test_board_moves_a_card_by_its_number(monkeypatch, capsys, repo):
+    moved, printed = fake_move(monkeypatch, capsys, repo)
+    code, _, _ = run(monkeypatch, capsys, ["board", "4", "In Progress"], cwd=repo.root)
+    assert code == 0 and moved == [([4], "In Progress", "o", 9, None)]
+    assert printed == ["#4: In Progress, placed (ITEM-4)\n"]
+
+
+def test_board_moves_cards_in_order_each_line_printed_as_its_card_is_placed(
+    monkeypatch, capsys, repo
+):
+    moved, printed = fake_move(monkeypatch, capsys, repo)
+    argv = ["board", "12", "7", "9", "Ready", "--after", "4"]
+    code, _, _ = run(monkeypatch, capsys, argv, cwd=repo.root)
+    assert code == 0 and moved == [([12, 7, 9], "Ready", "o", 9, 4)]
+    assert printed == [f"#{n}: Ready, placed (ITEM-{n})\n" for n in (12, 7, 9)]
+
+
+def test_board_help_gives_both_shapes_and_ready_s_rule(capsys):
+    with pytest.raises(SystemExit):
+        cli.main(["board", "-h"])
+    out = " ".join(capsys.readouterr().out.split())
+    assert out.startswith(
+        "usage: lifecycle board N... COLUMN [--after M] lifecycle board setup [--number NUMBER]"
+    )
+    assert "(Ready only on the maintainer's triage call)" in out
+    assert '(Backlog, Ready, "In Progress", Done)' in out
 
 
 @pytest.mark.parametrize(
     ("argv", "says"),
     [
         (["board", "setup", "Done"], "takes no column"),
-        (["board", "4"], "needs a column"),
+        (["board", "setup", "--after", "4"], "--after is a move's"),
+        (["board", "4"], "#4 needs a column"),
+        (["board", "12", "7"], "#7 needs a column"),
+        (["board", "Ready"], "Ready needs the issues' numbers"),
+        (["board", "4", "Redy"], "'Redy' is not a column"),
+        (
+            ["board", "12", "In", "Progress"],
+            "'Progress' is not a column: Backlog, Ready, \"In Progress\", Done",
+        ),
         (["board", "four", "Done"], "not an issue number or setup"),
+        (["board", "12", "x", "Ready"], "'x' is not an issue number"),
+        (["board", "12", "7", "12", "Ready"], "#12 is listed twice"),
+        (["board", "12", "7", "Ready", "--after", "7"], "--after 7 is a card this move places"),
         (["board", "4", "Done", "--number", "3"], "--number is setup's"),
     ],
 )
