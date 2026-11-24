@@ -15,6 +15,7 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ### Fixed
 - The complete skill lands a PR from a linked worktree whose integration branch another checkout holds (#69)
+- `project_kickstart.md`'s rollback moves the registry's default tag, so a later recreate keeps the previous image (#71)
 
 ## [0.18.0] — 2026-11-23
 
