@@ -8,7 +8,7 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
-## Unreleased
+## [0.19.0] — 2026-11-24
 
 ### Added
 - `lifecycle merge` squash-merges a pull request and deletes its branch only where nothing on it is lost (#69)
