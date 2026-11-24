@@ -37,14 +37,28 @@ def issue(number, repo="o/r"):
     return f"https://github.com/{repo}/issues/{number}"
 
 
-def open_issue(number, *labels):
-    """An open issue as `gh issue list --json id,url,number,labels` gives it."""
+def open_issue(number, *labels, body=""):
+    """An open issue as `gh issue list --json id,url,number,labels,body` gives it."""
     return {
         "id": f"I{number}",
         "url": issue(number),
         "number": number,
         "labels": [{"name": label} for label in labels],
+        "body": body,
     }
+
+
+def plan(status):
+    """An issue body whose plan's Status line reads ``status``."""
+    return (
+        f"## Goal\n\nA goal.\n\n## Plan\n\nAdded at Clarify.\n\n**Status:** {status}\n\n"
+        "### Behaviour\n"
+    )
+
+
+PLANNED = plan("accepted 2026-11-24")
+# A capture made from a template in the web UI: the plan's heading, intro and slot.
+CAPTURED = plan("proposed | accepted YYYY-MM-DD")
 
 
 def card(id_, number, status=None, kind="Issue", repo="o/r", archived=False):
@@ -264,6 +278,84 @@ def test_each_card_takes_the_column_its_issue_state_gives(monkeypatch):
     assert (done.written, done.left) == (5, 3)
 
 
+@pytest.mark.parametrize(
+    "body",
+    [
+        PLANNED,
+        plan("proposed"),
+        plan("proposed, plan round 2026-11-24: 3 required, 3 folded"),
+        plan("accepted 2026-11-24 (plan round skipped: no shape; nothing to answer)"),
+        PLANNED.replace("\n", "\r\n"),
+        PLANNED.replace("\n", "\r\r\n"),
+    ],
+)
+def test_a_plan_with_a_status_is_read_whatever_follows_it_and_whatever_the_line_ends(body):
+    assert board.planned(body)
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        None,
+        "",
+        CAPTURED,
+        CAPTURED.replace("\n", "\r\n"),
+        "## Goal\n\nA goal.\n\n## Plan\n\nAdded at Clarify.\n",
+        "## Context\n\n**Status:** accepted 2026-11-24\n\n## Plan\n\nAdded at Clarify.\n",
+        "## Plan\n\nAdded at Clarify.\n\n## Notes\n\n**Status:** accepted 2026-11-24\n",
+        "## Plan when picked up\n\n**Status:** accepted 2026-11-24\n",
+    ],
+)
+def test_no_plan_a_template_s_slot_or_a_status_outside_the_plan_is_no_plan(body):
+    assert not board.planned(body)
+
+
+@pytest.mark.parametrize("name", ["issue_template_task.md", "issue_template_bug.md"])
+def test_a_capture_made_from_either_template_is_no_plan(name):
+    text = (METHOD / name).read_text(encoding="utf-8")
+    assert "\n## Plan\n" in text and "\n**Status:** " in text
+    assert not board.planned(text) and not board.planned(text.replace("\n", "\r\n"))
+
+
+def test_an_issue_past_clarify_takes_in_progress_wherever_setup_writes_its_card(monkeypatch):
+    items = [card("A", 1), card("B", 2)]  # no Status: 1 planned, 2 closed
+    issues = [
+        open_issue(1, body=PLANNED),
+        open_issue(3, body=PLANNED.replace("\n", "\r\n")),  # no card yet
+        open_issue(4, body=CAPTURED),  # no card yet
+        open_issue(8, body=PLANNED),  # reopened: its card was archived in Done
+    ]
+    fake = FakeGh(FOUR, items=items, issues=issues, archived={8: "Done"})
+    done, lines = run_setup(monkeypatch, fake)
+    sets = [(sent["variables"]["i"], sent["variables"]["v"]) for sent in fake.mutations("Value(")]
+    assert sets == [("ADDED-3", "p"), ("ADDED-4", "b"), ("ADDED-8", "p"), ("A", "p"), ("B", "d")]
+    assert lines == [
+        "cards to write: 5",
+        "#3: In Progress, added (its plan has a status)",
+        "#4: Backlog, added",
+        "#8: In Progress, brought back from the archive (its plan has a status)",
+        "#1: In Progress (its plan has a status)",
+        "#2: Done",
+    ]
+    assert done.written == 5
+
+
+def test_a_card_held_in_backlog_under_a_plan_is_collected_and_left_there(monkeypatch):
+    items = [card("A", 1, "Backlog"), card("C", 3, "Ready"), card("D", 4, "Backlog")]
+    issues = [
+        open_issue(1, body=PLANNED),
+        open_issue(3, body=PLANNED),
+        open_issue(4, body=CAPTURED),
+        open_issue(5, body=PLANNED),  # its card was archived from Backlog
+    ]
+    fake = FakeGh(FOUR, items=items, issues=issues, archived={5: "Backlog"})
+    done, lines = run_setup(monkeypatch, fake)
+    assert fake.mutations("Value(") == []
+    # The header counts the lines below it: a card left in Backlog is collected, not written.
+    assert lines == ["cards to write: 1", "#5: Backlog, brought back from the archive"]
+    assert (done.written, done.parked) == (1, [1, 5])
+
+
 def test_the_board_and_the_issues_are_each_read_once_whatever_their_size(monkeypatch):
     items = [card(f"I{n}", n, "Done") for n in range(1, 885)]
     issues = [open_issue(n) for n in range(781, 885)]
@@ -273,6 +365,7 @@ def test_the_board_and_the_issues_are_each_read_once_whatever_their_size(monkeyp
     assert [sent["variables"]["after"] for sent in pages] == [None, *map(str, range(100, 900, 100))]
     (listed,) = fake.commands("issue", "list")
     assert listed[listed.index("--limit") + 1] == board.LIMIT and len(fake.calls) == 11
+    assert "body" in listed[listed.index("--json") + 1].split(",")
 
 
 def test_each_workflow_is_turned_on_or_confirmed_with_its_value(monkeypatch):

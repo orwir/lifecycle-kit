@@ -12,11 +12,18 @@ sent without its id is a new option, and every card that held the old one loses 
 Status, which also empties each built-in workflow that set it. So every existing
 option goes back with its id. No API creates or turns on a workflow, or reads its
 value, so setup names the ones to make or confirm in the web UI.
+
+Setup gives an open issue's card the column its plan says: In Progress once the plan
+has a status, since the clarify skill moves the card there before it writes one, and
+Backlog otherwise. A card that already holds a Status was someone's call and keeps it,
+save one archived in Done whose issue is open again, which takes that issue's column;
+one left in Backlog under a plan with a status is collected for the maintainer to move.
 """
 
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -38,6 +45,9 @@ WORKFLOWS = (
 )
 #: Past a project's cap of 50,000 items, so no list of open issues is cut short.
 LIMIT = "50001"
+#: A plan's status, whatever follows it; the templates' slot, `proposed | accepted …`, is none.
+_STATUS = re.compile(r"\*\*Status:\*\*\s*(?:proposed|accepted)\b(?!\s*\|)")
+_PLANNED = "its plan has a status"
 
 _UNARCHIVE = "unarchiveProjectV2Item(input:{projectId:$p,itemId:$i}){clientMutationId}"
 _TO_TOP = (
@@ -128,6 +138,21 @@ def move(issue: int, column: str, owner: str, number: int) -> str:
     return item
 
 
+def planned(body: str | None) -> bool:
+    """Whether an issue's ``body`` holds a plan with a status: the issue is past Clarify.
+
+    Only a `**Status:**` line in the `## Plan` section counts, so a capture made from a
+    template, which carries the heading and its slot, is no plan.
+    """
+    inside = False
+    for line in (body or "").splitlines():
+        if line.startswith("## "):
+            inside = line.rstrip() == "## Plan"
+        elif inside and _STATUS.match(line):
+            return True
+    return False
+
+
 def _sent(choice: dict, name: str | None = None) -> dict:
     return {
         "id": choice["id"],
@@ -174,6 +199,8 @@ class Setup:
     left: int = 0
     workflows: list[str] = field(default_factory=list)
     public: bool = True
+    #: Issues whose card setup left in Backlog though their plan has a status.
+    parked: list[int] = field(default_factory=list)
 
 
 def setup(
@@ -274,26 +301,37 @@ def _hold(repo: dict, owner: str, number: int, report: Callable[[str], None]) ->
     issues = json.loads(
         gh(
             "issue", "list", "--repo", repo["nameWithOwner"], "--state", "open",
-            "--limit", LIMIT, "--json", "id,url,number,labels",
+            "--limit", LIMIT, "--json", "id,url,number,labels,body",
         )
     )  # fmt: skip
     gapped = {i["url"] for i in issues if any(label["name"] == LABEL for label in i["labels"])}
     open_urls = {i["url"] for i in issues if i["url"] not in gapped}
+    under_way = {i["url"] for i in issues if i["url"] in open_urls and planned(i.get("body"))}
     on_board = {item["url"] for item in items}
 
+    def column(url: str) -> str:
+        """The column an issue with no Status takes; In Progress says why on its line."""
+        if url not in open_urls:
+            return "Done"
+        return "In Progress" if url in under_way else "Backlog"
+
+    def why(target: str) -> str:
+        return f" ({_PLANNED})" if target == "In Progress" else ""
+
     # An open issue with no card listed is added: a card archived after its close comes
-    # back in Backlog, a card archived from another column comes back where it was.
+    # back in the column its plan gives, a card archived from another column where it was.
     missing = [i for i in issues if i["url"] in open_urls and i["url"] not in on_board]
     unset: list[tuple[str, str, int]] = []  # (column, card, issue) for a card with no Status
     for item in items:
         ours = item["type"] == "Issue" and item["repository"] == repo["nameWithOwner"]
         if item["status"]:
+            if item["status"] == "Backlog" and item["url"] in under_way:
+                done.parked.append(item["number"])
             continue
         if not ours or item["url"] in gapped:
             done.left += 1
         else:
-            column = "Backlog" if item["url"] in open_urls else "Done"
-            unset.append((column, item["id"], item["number"]))
+            unset.append((column(item["url"]), item["id"], item["number"]))
 
     if missing or unset:
         report(f"cards to write: {len(missing) + len(unset)}")
@@ -303,18 +341,20 @@ def _hold(repo: dict, owner: str, number: int, report: Callable[[str], None]) ->
         had = (added.get("fieldValueByName") or {}).get("name")
         done.written += 1
         if had and had != "Done":
+            if had == "Backlog" and issue["url"] in under_way:
+                done.parked.append(issue["number"])
             report(f"#{issue['number']}: {had}, brought back from the archive")
             continue
-        step = f"putting #{issue['number']} in Backlog"
-        graphql(step, _SET, p=project["id"], i=added["id"], f=status["id"], v=ids["Backlog"])
-        report(
-            f"#{issue['number']}: Backlog, {'brought back from the archive' if had else 'added'}"
-        )
-    for column, card, issue_number in unset:
-        step = f"putting #{issue_number} in {column}"
-        graphql(step, _SET, p=project["id"], i=card, f=status["id"], v=ids[column])
+        target = column(issue["url"])
+        step = f"putting #{issue['number']} in {target}"
+        graphql(step, _SET, p=project["id"], i=added["id"], f=status["id"], v=ids[target])
+        verb = "brought back from the archive" if had else "added"
+        report(f"#{issue['number']}: {target}, {verb}{why(target)}")
+    for target, card, issue_number in unset:
+        step = f"putting #{issue_number} in {target}"
+        graphql(step, _SET, p=project["id"], i=card, f=status["id"], v=ids[target])
         done.written += 1
-        report(f"#{issue_number}: {column}")
+        report(f"#{issue_number}: {target}{why(target)}")
 
     enabled = {node["name"]: node["enabled"] for node in project["workflows"]["nodes"]}
     for name, value in WORKFLOWS:

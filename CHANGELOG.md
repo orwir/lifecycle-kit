@@ -13,6 +13,7 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 ### Added
 - `lifecycle merge` squash-merges a pull request and deletes its branch only where nothing on it is lost (#69)
 - A security policy sends a vulnerability in the kit to GitHub's private vulnerability reporting (#65)
+- `lifecycle board setup` lists each card left in Backlog whose issue's plan has a status, with its move (#67)
 
 ### Changed
 - A vulnerability in the kit goes by the kit's security policy wherever it is found, never by `lifecycle gap` (#65)
@@ -20,6 +21,7 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 ### Fixed
 - The complete skill lands a PR from a linked worktree whose integration branch another checkout holds (#69)
 - `project_kickstart.md`'s rollback moves the registry's default tag, so a later recreate keeps the previous image (#71)
+- `lifecycle board setup` files an open issue whose plan has a status in In Progress, not Backlog (#67)
 
 ## [0.18.0] — 2026-11-23
 

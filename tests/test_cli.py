@@ -244,7 +244,7 @@ SETUP_REPO = {
 }
 
 
-def fake_setup(monkeypatch, public=False):
+def fake_setup(monkeypatch, public=False, parked=()):
     from lifecycle import board
 
     seen = {}
@@ -255,6 +255,7 @@ def fake_setup(monkeypatch, public=False):
         report("cards to write: 1")
         done = board.Setup(owner or "o", number or 7, "https://github.com/users/o/projects/7")
         done.workflows, done.public = ['turn on "Item closed" with Status: Done'], public
+        done.parked = list(parked)
         return done
 
     monkeypatch.setattr(board, "setup", setup)
@@ -285,6 +286,37 @@ def test_board_setup_fixes_the_board_the_settings_name(monkeypatch, capsys, repo
     seen = fake_setup(monkeypatch)
     code, out, _ = run(monkeypatch, capsys, ["board", "setup"], cwd=repo.root)
     assert code == 0 and seen == {"owner": "team", "number": 9} and "[board]" not in out
+
+
+PARKED = "left in Backlog though its plan has a status: 2 card(s); the maintainer's call to move"
+
+
+def test_board_setup_lists_the_cards_it_left_in_backlog_under_a_plan(monkeypatch, capsys, repo):
+    (repo.root / ".lifecycle.toml").write_text(
+        '[branches]\nintegration = "main"\n\n[board]\nowner = "team"\nnumber = 9\n',
+        encoding="utf-8",
+    )
+    fake_setup(monkeypatch, parked=[12, 3])
+    code, out, _ = run(monkeypatch, capsys, ["board", "setup"], cwd=repo.root)
+    assert code == 0 and f"{PARKED} each one under way:\n" in out
+    assert '  lifecycle board 3 "In Progress"\n  lifecycle board 12 "In Progress"\n' in out
+
+
+def test_the_moves_for_another_board_wait_for_its_board_lines(monkeypatch, capsys, repo):
+    (repo.root / ".lifecycle.toml").write_text(
+        '[branches]\nintegration = "main"\n\n[board]\nowner = "team"\nnumber = 9\n',
+        encoding="utf-8",
+    )
+    fake_setup(monkeypatch, parked=[12, 3])
+    code, out, _ = run(monkeypatch, capsys, ["board", "setup", "--number", "4"], cwd=repo.root)
+    tail = f"{PARKED} each one under way, once .lifecycle.toml names this board:\n"
+    assert code == 0 and out.index("number = 4") < out.index(tail)
+
+
+def test_board_setup_with_nothing_left_in_backlog_lists_nothing(monkeypatch, capsys, tmp_path):
+    fake_setup(monkeypatch)
+    code, out, _ = run(monkeypatch, capsys, ["board", "setup"], cwd=tmp_path)
+    assert code == 0 and "left in Backlog" not in out
 
 
 def test_board_moves_a_card_by_its_number(monkeypatch, capsys, repo):

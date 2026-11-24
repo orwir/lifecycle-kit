@@ -106,9 +106,19 @@ def _board_setup(args: argparse.Namespace) -> int:
             f"left with no Status: {done.left} card(s) the board tracks no column for "
             f"(a pull request, a draft, a {gap.LABEL} issue, another repository's)"
         )
-    if not named or (config and config.board_number != done.number):
+    elsewhere = not named or bool(config and config.board_number != done.number)
+    if elsewhere:
         print("in .lifecycle.toml:")
         print(f'  [board]\n  owner = "{done.owner}"\n  number = {done.number}')
+    if done.parked:
+        # A move goes to the board .lifecycle.toml names, which may not be this one yet.
+        once = ", once .lifecycle.toml names this board" if elsewhere else ""
+        print(
+            f"left in Backlog though its plan has a status: {len(done.parked)} card(s); "
+            f"the maintainer's call to move each one under way{once}:"
+        )
+        for number in sorted(done.parked):
+            print(f'  lifecycle board {number} "In Progress"')
     print(f"in the web UI, {done.url}/workflows (no API turns a workflow on or reads its value):")
     for line in done.workflows:
         print(f"  {line}")
