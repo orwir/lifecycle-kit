@@ -405,16 +405,18 @@ def parser() -> argparse.ArgumentParser:
         "whether git can commit, gh's login",
     )
     mode.add_argument("--github", metavar="NAME", help="the private repository's name")
-    p = sub.add_parser(
-        "tidy",
-        help="fast-forward the primary checkout's integration branch to origin's, and list "
-        "the linked worktrees whose own work has landed; offline",
+    summary = (
+        "fast-forward the primary checkout's integration branch to origin's, and list "
+        "the linked worktrees whose own work has landed, detached ones included, and the "
+        "landed branches no checkout holds; offline"
     )
+    p = sub.add_parser("tidy", help=summary, description=summary[0].upper() + summary[1:] + ".")
     p.add_argument(
         "--remove",
         action="store_true",
-        help="remove those worktrees, their git-ignored files with them, and delete their "
-        "branches: run on the maintainer's word, since a session may still have one open",
+        help="remove the landed worktrees, their git-ignored files with them, each with its "
+        "branch where it has one, and delete the landed branches no checkout holds: run on "
+        "the maintainer's word, since a session may still have a worktree open",
     )
     p = sub.add_parser("hook", help="an agent hook: the event as JSON on stdin")
     p.add_argument("event", choices=("pre-bash", "session-start"))

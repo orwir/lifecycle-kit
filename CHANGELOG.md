@@ -18,15 +18,18 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 - `lifecycle board setup` names renaming a board's "View 1" table view to Table in the web UI (#68)
 - `lifecycle board` moves a card to Ready, on the maintainer's triage call (#70)
 - `lifecycle board` places several cards in a column in the order given, at its top or after `--after <M>` (#70)
+- `lifecycle tidy` lists the landed branches no checkout holds, and `--remove` deletes them (#73)
 
 ### Changed
 - A vulnerability in the kit goes by the kit's security policy wherever it is found, never by `lifecycle gap` (#65)
 - The AGENTS template's board line names the Ready moves in the order given, on the maintainer's triage call (#70)
+- `lifecycle tidy` keeps a worktree with a rebase, merge, cherry-pick, revert or bisect under way (#73)
 
 ### Fixed
 - The complete skill lands a PR from a linked worktree whose integration branch another checkout holds (#69)
 - `project_kickstart.md`'s rollback moves the registry's default tag, so a later recreate keeps the previous image (#71)
 - `lifecycle board setup` files an open issue whose plan has a status in In Progress, not Backlog (#67)
+- `lifecycle tidy --remove` removes a landed worktree left on a detached HEAD, as archiving a session leaves one (#73)
 
 ## [0.18.0] — 2026-11-23
 

@@ -153,12 +153,12 @@ def test_remove_takes_a_landed_worktree_and_its_branch(clone):
     assert f"landed {tree.as_posix()}, branch task-1" in listing.lines
     assert listing.lines[-1] == (
         "1 other landed worktree(s): on the maintainer's word, `lifecycle tidy --remove` "
-        "removes them and their branches"
+        "removes them"
     )
     assert tree.exists(), "listing removes nothing"
     report = tidy.tidy(clone.primary, "next", remove=True)
     assert f"{tree.as_posix()}: removed, its branch task-1 deleted" in report.lines
-    assert report.lines[-1] == "1 of 1 other landed worktree(s) removed with their branches"
+    assert report.lines[-1] == "1 of 1 other landed worktree(s) removed"
     assert not report.refused
     assert not tree.exists()
     assert "task-1" not in branches(clone.primary)
@@ -249,7 +249,7 @@ def test_a_worktree_with_work_of_its_own_or_none_stays_named_with_why(clone, mak
     make(clone, tree)
     report = tidy.tidy(clone.primary, "next", remove=True)
     assert f"kept {tree.as_posix()}: {why}" in report.lines
-    assert report.lines[-1] == "0 of 0 other landed worktree(s) removed with their branches"
+    assert report.lines[-1] == "no other landed worktree or branch to remove"
     assert tree.exists() and "task" in branches(clone.primary)
 
 
@@ -278,11 +278,432 @@ def test_the_integration_branch_checked_out_in_a_linked_worktree_stays(clone):
     assert tree.exists() and "next" in branches(clone.primary)
 
 
-def test_a_detached_worktree_stays(clone):
+def park(tree):
+    """Detach ``tree`` as an assistant's archive parks it for reuse: an empty reflog entry,
+    naming no branch."""
+    at = head(tree)
+    git(tree, "update-ref", "--no-deref", "HEAD", at, at)
+
+
+def admin(tree):
+    return Path(git(tree, "rev-parse", "--absolute-git-dir"))
+
+
+DETACHED = "a detached HEAD with no branch to delete"
+
+
+def test_an_archived_worktree_goes_and_the_branch_it_left_with_it(clone):
+    tree = clone.task("task-1")
+    clone.land(tree)
+    park(tree)
+    listing = tidy.tidy(clone.primary, "next")
+    assert f"landed {tree.as_posix()}, a detached HEAD" in listing.lines
+    assert "landed branch task-1, checked out nowhere" in listing.lines
+    assert listing.lines[-1] == (
+        "1 other landed worktree(s) and 1 landed branch(es) checked out nowhere: on the "
+        "maintainer's word, `lifecycle tidy --remove` removes them"
+    )
+    assert tree.exists() and "task-1" in branches(clone.primary), "listing removes nothing"
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert f"{tree.as_posix()}: removed, {DETACHED}" in report.lines
+    assert "branch task-1: deleted, checked out nowhere" in report.lines
+    assert report.lines[-1] == (
+        "1 of 1 other landed worktree(s) removed, 1 of 1 landed branch(es) checked out "
+        "nowhere deleted"
+    )
+    assert not report.refused
+    assert not tree.exists() and "task-1" not in branches(clone.primary)
+
+
+def test_a_scratch_worktree_left_clean_at_a_landed_commit_goes(clone):
     tree = clone.worktree("scratch", "--detach")
     report = tidy.tidy(clone.primary, "next", remove=True)
-    assert f"kept {tree.as_posix()}: a detached HEAD" in report.lines
+    assert f"{tree.as_posix()}: removed, {DETACHED}" in report.lines
+    assert report.lines[-1] == "1 of 1 other landed worktree(s) removed"
+    assert not tree.exists()
+
+
+def _scratch_edited(tree):
+    (tree / "new.txt").write_text("new", encoding="utf-8")
+
+
+def _scratch_elsewhere(tree):
+    """HEAD moved to a commit made elsewhere: nothing made on it, but not landed."""
+    made = git(tree, "commit-tree", "HEAD^{tree}", "-p", "HEAD", "-m", "elsewhere")
+    git(tree, "checkout", "-q", "--detach", made)
+
+
+def _scratch_left_behind(tree):
+    """A commit made on the detached HEAD, then HEAD moved back: only its reflog has it."""
+    commit(tree, "left")
+    git(tree, "checkout", "-q", "--detach", "origin/next")
+
+
+DETACHED_KEPT = [
+    (_scratch_edited, "edits or untracked files"),
+    (_scratch_elsewhere, "its HEAD not on next"),
+    (_scratch_left_behind, f"a commit of its own not on next ({AWAY})"),
+]
+
+
+@pytest.mark.parametrize(
+    ("make", "why"), DETACHED_KEPT, ids=[make.__name__[9:] for make, _ in DETACHED_KEPT]
+)
+def test_a_detached_worktree_with_work_of_its_own_stays_named_with_why(clone, make, why):
+    tree = clone.worktree("scratch", "--detach")
+    make(tree)
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert f"kept {tree.as_posix()}: {why}" in report.lines
+    assert report.lines[-1] == "no other landed worktree or branch to remove"
     assert tree.exists()
+
+
+#: What git leaves in a checkout's git folder for each operation under way.
+UNDER_WAY = [
+    ("rebase-merge", "a rebase"),
+    ("rebase-apply", "a rebase or `git am`"),
+    ("MERGE_HEAD", "a merge"),
+    ("CHERRY_PICK_HEAD", "a cherry-pick"),
+    ("REVERT_HEAD", "a revert"),
+    ("BISECT_LOG", "a bisect"),
+]
+
+
+@pytest.mark.parametrize(("state", "what"), UNDER_WAY, ids=[state for state, _ in UNDER_WAY])
+def test_an_operation_under_way_keeps_a_clean_landed_worktree(clone, state, what):
+    tree = clone.worktree("scratch", "--detach")
+    at = admin(tree) / state
+    if state.startswith("rebase-"):
+        at.mkdir()
+    else:
+        at.write_text(head(tree), encoding="utf-8")
+    assert git(tree, "status", "--porcelain") == ""
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert f"kept {tree.as_posix()}: {what} in progress" in report.lines
+    assert tree.exists()
+
+
+def _stopped_rebase(cwd):
+    """A rebase stopped by a failing step after replaying a landed commit as it was: the
+    checkout lists as detached and clean, its HEAD on the integration branch."""
+    subprocess.run(
+        ["git", "-C", str(cwd), "rebase", "--exec", "exit 1", "origin/next~1"],
+        capture_output=True,
+        check=False,
+    )
+    assert (admin(cwd) / "rebase-merge").exists(), "the rebase stopped"
+
+
+def test_a_worktree_mid_rebase_stays_and_so_does_the_branch_it_rewrites(clone):
+    tree = clone.task("task-1")
+    clone.land(tree)
+    _stopped_rebase(tree)
+    assert tidy.worktrees(clone.primary)[-1].branch is None, "git lists it as detached"
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert f"kept {tree.as_posix()}: a rebase in progress" in report.lines
+    assert not any("branch task-1" in line for line in report.lines)
+    assert not report.refused
+    assert tree.exists() and "task-1" in branches(clone.primary)
+
+
+def test_a_bisect_left_in_a_worktree_on_its_branch_keeps_it(clone):
+    tree = clone.task("task-1")
+    clone.land(tree)
+    git(tree, "bisect", "start")
+    git(tree, "bisect", "bad")
+    git(tree, "bisect", "good", "HEAD~1")
+    assert tidy.worktrees(clone.primary)[-1].branch == "task-1", "the bisect ended on it"
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert f"kept {tree.as_posix()}: a bisect in progress" in report.lines
+    assert tree.exists() and "task-1" in branches(clone.primary)
+
+
+def test_a_branch_the_primary_checkout_is_rebasing_stays(clone):
+    tree = clone.task("task-1")
+    clone.land(tree)
+    git(clone.primary, "fetch", "-q", "origin")
+    git(clone.primary, "switch", "-q", "-c", "own", "origin/next")
+    _stopped_rebase(clone.primary)
+    report = tidy.tidy(tree, "next", remove=True)
+    assert not any("branch own" in line for line in report.lines)
+    assert not report.refused
+    assert "own" in branches(clone.primary)
+
+
+def test_a_detached_worktree_whose_git_folder_is_not_found_stays(clone, monkeypatch):
+    tree = clone.worktree("scratch", "--detach")
+    monkeypatch.setattr(tidy, "_admin", lambda root, tree: None)
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert (
+        f"kept {tree.as_posix()}: a detached HEAD whose git folder in the clone was not found"
+        in report.lines
+    )
+    assert tree.exists()
+
+
+def _unreadable(real, ref):
+    """``tidy._run`` with the read of ``ref``'s reflog failing."""
+
+    def run(root, *args):
+        if args[:2] == ("reflog", "show") and any(arg.endswith(ref) for arg in args):
+            return subprocess.CompletedProcess(args, 128, "", "fatal: cannot read")
+        return real(root, *args)
+
+    return run
+
+
+def test_a_detached_worktree_whose_reflog_cannot_be_read_stays(clone, monkeypatch):
+    tree = clone.worktree("scratch", "--detach")
+    monkeypatch.setattr(tidy, "_run", _unreadable(tidy._run, "/HEAD"))
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert f"kept {tree.as_posix()}: a detached HEAD whose reflog could not be read" in (
+        report.lines
+    )
+    assert tree.exists()
+
+
+def test_tidy_run_in_a_detached_worktree_keeps_it(clone):
+    tree = clone.worktree("scratch", "--detach")
+    report = tidy.tidy(tree, "next", remove=True)
+    assert f"kept {tree.as_posix()}: the checkout this runs in" in report.lines
+    assert tree.exists()
+
+
+@pytest.mark.parametrize("extra", [(), ("--relative-paths",)], ids=["absolute", "relative"])
+def test_a_detached_worktree_whose_folder_is_gone_goes_by_its_entry(clone, extra):
+    tree = clone.worktree("scratch", "--detach", *extra)
+    shutil.rmtree(tree)
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert f"{tree.as_posix()}: folder gone, its entry removed, {DETACHED}" in report.lines
+    assert tree not in listed(clone.primary)
+
+
+def test_a_gone_detached_worktree_with_a_commit_left_behind_stays(clone):
+    tree = clone.worktree("scratch", "--detach")
+    _scratch_left_behind(tree)
+    shutil.rmtree(tree)
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert f"kept {tree.as_posix()}: a commit of its own not on next ({AWAY})" in report.lines
+    assert tree in listed(clone.primary)
+
+
+@pytest.mark.parametrize(
+    ("meanwhile", "why"),
+    [
+        (
+            lambda tree: git(tree, "switch", "-q", "-c", "fresh"),
+            "no commit of its own (a fresh session's)",
+        ),
+        (lambda tree: commit(tree, "late"), f"a commit of its own not on next ({AWAY})"),
+    ],
+    ids=["given-to-a-session", "a-commit-made"],
+)
+def test_a_detached_worktree_changed_before_its_removal_stays(clone, monkeypatch, meanwhile, why):
+    tree = clone.worktree("scratch", "--detach")
+
+    def probe(path):
+        if path == tree:
+            meanwhile(tree)
+        return False
+
+    monkeypatch.setattr(tidy, "probe", probe)
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert f"kept {tree.as_posix()}: {why}" in report.lines
+    assert report.lines[-1] == "0 of 1 other landed worktree(s) removed"
+    assert not report.refused
+    assert tree.exists()
+
+
+def test_a_landed_branch_no_checkout_holds_goes_whatever_left_it(clone):
+    """A worktree removed by hand leaves its branch; one nothing was made on goes once its
+    head has landed, as no session works on it."""
+    tree = clone.task("task-1")
+    clone.land(tree)
+    git(clone.primary, "worktree", "remove", str(tree))
+    git(clone.primary, "fetch", "-q", "origin")
+    git(clone.primary, "branch", "idle", "origin/next")
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert "branch task-1: deleted, checked out nowhere" in report.lines
+    assert "branch idle: deleted, checked out nowhere" in report.lines
+    assert report.lines[-1] == "2 of 2 landed branch(es) checked out nowhere deleted"
+    assert not {"task-1", "idle"} & set(branches(clone.primary))
+
+
+def test_a_branch_no_checkout_holds_with_work_not_landed_stays(clone):
+    tree = clone.task("task-1")
+    commit(tree, "never-pushed")
+    git(clone.primary, "worktree", "remove", str(tree))
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert f"kept branch task-1: a commit of its own not on next ({AWAY})" in report.lines
+    assert report.lines[-1] == "no other landed worktree or branch to remove"
+    assert "task-1" in branches(clone.primary)
+
+
+def test_a_branch_whose_reflog_cannot_be_read_stays(clone, monkeypatch):
+    git(clone.primary, "fetch", "-q", "origin")
+    git(clone.primary, "branch", "idle", "origin/next")
+    monkeypatch.setattr(tidy, "_run", _unreadable(tidy._run, "refs/heads/idle"))
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert "kept branch idle: its reflog could not be read" in report.lines
+    assert "idle" in branches(clone.primary)
+
+
+def test_the_integration_and_default_branches_are_never_swept(clone):
+    git(clone.origin, "branch", "main", "next")
+    git(clone.primary, "fetch", "-q", "origin")
+    git(clone.primary, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
+    git(clone.primary, "branch", "main", "origin/main")
+    git(clone.primary, "switch", "-q", "-c", "mine")
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert not any("branch next" in line or "branch main" in line for line in report.lines)
+    assert {"next", "main"} <= set(branches(clone.primary))
+
+
+def test_a_bisect_that_detached_a_worktree_holds_its_branch(clone):
+    tree = clone.task("task-1")
+    for step in range(3):
+        clone.land(tree, f"step-{step}")
+    git(tree, "bisect", "start")
+    git(tree, "bisect", "bad")
+    git(tree, "bisect", "good", "HEAD~3")
+    assert tidy.worktrees(clone.primary)[-1].branch is None, "the bisect detached it"
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert f"kept {tree.as_posix()}: a bisect in progress" in report.lines
+    assert not any("branch task-1" in line for line in report.lines)
+    assert not report.refused
+    assert "task-1" in branches(clone.primary)
+
+
+def test_a_rebase_by_patches_holds_the_branch_it_names(clone):
+    tree = clone.task("task-1")
+    clone.land(tree)
+    park(tree)
+    state = admin(tree) / "rebase-apply"
+    state.mkdir()
+    (state / "head-name").write_text("refs/heads/task-1\n", encoding="utf-8")
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert f"kept {tree.as_posix()}: a rebase or `git am` in progress" in report.lines
+    assert not any("branch task-1" in line for line in report.lines)
+    assert "task-1" in branches(clone.primary)
+
+
+def test_a_branch_made_during_the_run_is_not_judged(clone, monkeypatch):
+    """The branches are read before the checkouts: one a session makes and checks out in
+    between is in neither, so nothing judges it held by none."""
+    git(clone.primary, "fetch", "-q", "origin")
+    real = tidy._branches
+
+    def read(root):
+        names = real(root)
+        git(clone.primary, "branch", "late", "origin/next")
+        return names
+
+    monkeypatch.setattr(tidy, "_branches", read)
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert not any("branch late" in line for line in report.lines)
+    assert "late" in branches(clone.primary)
+
+
+def test_a_branch_checked_out_since_the_listing_stays(clone, monkeypatch):
+    git(clone.primary, "fetch", "-q", "origin")
+    git(clone.primary, "branch", "idle", "origin/next")
+    took = clone.tmp / "took"
+    real, judged = tidy._loose, []
+
+    def loose(root, branch, integration):
+        judged.append(branch)
+        if len(judged) == 2:
+            git(clone.primary, "worktree", "add", "-q", str(took), "idle")
+        return real(root, branch, integration)
+
+    monkeypatch.setattr(tidy, "_loose", loose)
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert "kept branch idle: checked out since the listing" in report.lines
+    assert not report.refused
+    assert "idle" in branches(clone.primary)
+
+
+def test_a_branch_that_fails_its_check_again_before_its_deletion_stays(clone, monkeypatch):
+    git(clone.primary, "fetch", "-q", "origin")
+    git(clone.primary, "branch", "idle", "origin/next")
+    checks = iter([None, "its head not on next"])
+    monkeypatch.setattr(tidy, "_loose", lambda *args: next(checks))
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert "kept branch idle: its head not on next" in report.lines
+    assert not report.refused
+    assert "idle" in branches(clone.primary)
+
+
+def test_a_refused_deletion_of_a_branch_no_checkout_holds_is_said(clone, monkeypatch):
+    git(clone.primary, "fetch", "-q", "origin")
+    git(clone.primary, "branch", "idle", "origin/next")
+    real = tidy._run
+
+    def run(root, *args):
+        if args[:2] == ("branch", "-D"):
+            return subprocess.CompletedProcess(args, 1, "", "error: cannot delete branch")
+        return real(root, *args)
+
+    monkeypatch.setattr(tidy, "_run", run)
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert report.refused
+    assert "branch idle: its deletion was refused: error: cannot delete branch" in report.lines
+    assert "idle" in branches(clone.primary)
+
+
+def test_a_worktree_whose_branch_reflog_cannot_be_read_stays(clone, monkeypatch):
+    tree = clone.task("task-1")
+    clone.land(tree)
+    monkeypatch.setattr(tidy, "_run", _unreadable(tidy._run, "refs/heads/task-1"))
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert f"kept {tree.as_posix()}: the reflog of its branch task-1 could not be read" in (
+        report.lines
+    )
+    assert tree.exists()
+
+
+def test_a_detached_worktree_gone_from_gits_list_before_its_removal_is_said(clone, monkeypatch):
+    tree = clone.worktree("scratch", "--detach")
+
+    def probe(path):
+        if path == tree:
+            git(clone.primary, "worktree", "remove", str(tree))
+        return False
+
+    monkeypatch.setattr(tidy, "probe", probe)
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert f"{tree.as_posix()}: gone from git's list before its removal, nothing done" in (
+        report.lines
+    )
+    assert report.lines[-1] == "0 of 1 other landed worktree(s) removed"
+    assert not report.refused
+
+
+def test_a_refused_removal_of_a_detached_worktree_keeps_it(clone, monkeypatch):
+    tree = clone.worktree("scratch", "--detach")
+    monkeypatch.setattr(tidy, "_run", _failing_remove(tidy._run, partway=False))
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert report.refused
+    assert any(
+        line.startswith(f"{tree.as_posix()}: removal refused, kept: error: failed")
+        for line in report.lines
+    )
+    assert tree in listed(clone.primary)
+
+
+def test_a_detached_removal_that_fails_partway_names_the_folder(clone, monkeypatch):
+    tree = clone.worktree("scratch", "--detach")
+    monkeypatch.setattr(tidy, "_run", _failing_remove(tidy._run, partway=True))
+    report = tidy.tidy(clone.primary, "next", remove=True)
+    assert report.refused
+    assert any(
+        line.startswith(f"{tree.as_posix()}: removal failed partway (error: failed to delete")
+        and line.endswith(
+            f"git dropped the worktree, {DETACHED}; the folder is left behind for you"
+        )
+        for line in report.lines
+    )
+    assert tree not in listed(clone.primary) and tree.exists()
 
 
 def test_the_checkout_tidy_runs_in_stays_though_it_landed(clone):
@@ -319,7 +740,7 @@ def test_a_worktree_in_use_stays_whole(clone, monkeypatch):
     monkeypatch.setattr(tidy, "probe", lambda path: path == tree)
     report = tidy.tidy(clone.primary, "next", remove=True)
     assert f"kept {tree.as_posix()}: in use" in report.lines
-    assert report.lines[-1] == "0 of 1 other landed worktree(s) removed with their branches"
+    assert report.lines[-1] == "0 of 1 other landed worktree(s) removed"
     assert not report.refused
     assert tree.exists() and "task-1" in branches(clone.primary)
 
@@ -473,7 +894,7 @@ def test_the_command_lists_and_exits_zero_with_nothing_refused(clone, capsys, mo
     assert cli.main(["tidy"]) == 0
     out = capsys.readouterr().out.splitlines()
     assert "fast-forwarded next by 1 commit(s)" in out[0]
-    assert out[-1] == "no other landed worktree to remove"
+    assert out[-1] == "no other landed worktree or branch to remove"
 
 
 def _section(text, number):
