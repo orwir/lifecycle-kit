@@ -200,6 +200,8 @@ The maintainer picks; the reviewer implements. Every letter-shaped item has a re
 
 An exploitable security finding never enters the working document, an issue or a close-out comment. It goes through the project's private disclosure channel — the one its security policy names — and the document records it as `[REPORTED PRIVATELY]`, with no location or detail, until the fix ships. A review document in a public repository is a public record, and so is every issue it files.
 
+An exploitable finding in the kit itself — anything in the *Scope* of the kit's own policy, [SECURITY.md](../.github/SECURITY.md) — goes by that policy, whichever project's review or task meets it, never by `lifecycle gap`: a gap's issue is public, and the vulnerability is in every repository on the kit.
+
 ## Close-out
 
 The last phase of every kind. Each kind adds its own steps before these (a re-walk, a final scan):

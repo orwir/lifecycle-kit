@@ -14,7 +14,7 @@ Read `task_review.md` in the kit's `method/`, in the folder `lifecycle where` pr
    - the lenses that read the tree, each marked `(no guard)` or `(pasted)` as it was launched, and whether any made a second pass;
    - `round skipped` for an untracked micro-task.
 2. **What changed** is the tree after the round's fixes, not the hand-off's summary; *You see* links each drawing the task closed.
-3. **Decisions pending,** numbered D1, D2, …: every one-way door left open (§ Terms) — a return's `Decision pending`, a *For the maintainer* question you could not settle — every finding you disputed, its kind named (§ Brief rules), every work-round `split` and every exploitable finding left unfixed where the repository names no private channel; none the maintainer already answered at this hand-back. Each option ends with what it takes against the tree.
+3. **Decisions pending,** numbered D1, D2, …: every one-way door left open (§ Terms) — a return's `Decision pending`, a *For the maintainer* question you could not settle — every finding you disputed, its kind named (§ Brief rules), every work-round `split` and every exploitable finding left unfixed where the project it is in names no private channel; none the maintainer already answered at this hand-back. Each option ends with what it takes against the tree.
 4. **Taken alone.** Gather:
    - the plan's `Taken:` lines written since its acceptance, and the hand-off's *Decisions taken alone*, spend aside;
    - every box dropped or added beyond the accepted plan, or beyond the ticket's boxes for an issue with no `## Plan`;

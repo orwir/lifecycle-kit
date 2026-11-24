@@ -12,6 +12,10 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ### Added
 - `lifecycle merge` squash-merges a pull request and deletes its branch only where nothing on it is lost (#69)
+- A security policy sends a vulnerability in the kit to GitHub's private vulnerability reporting (#65)
+
+### Changed
+- A vulnerability in the kit goes by the kit's security policy wherever it is found, never by `lifecycle gap` (#65)
 
 ### Fixed
 - The complete skill lands a PR from a linked worktree whose integration branch another checkout holds (#69)
