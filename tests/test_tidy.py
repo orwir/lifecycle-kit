@@ -484,18 +484,43 @@ def test_complete_runs_tidy_after_both_landings_and_removes_only_on_the_maintain
     skill = (KIT / "skills" / "complete" / "SKILL.md").read_text(encoding="utf-8")
     land = _section(skill, 4)
     follows = re.search(r"^\*\*The primary checkout follows\.\*\*.*$", land, re.M).group(0)
-    assert "the direct push accepted, or the PR merged and then `git fetch origin`" in follows
-    assert follows.index("`git fetch origin`") < follows.index("`lifecycle tidy`")
+    assert "the direct push accepted, or the PR merged, which `lifecycle merge` fetched" in follows
+    assert follows.index("`lifecycle merge`") < follows.index("`lifecycle tidy`")
     assert "`lifecycle tidy --remove` runs only on the maintainer's word" in follows
     assert "a refusal it prints (exit 1) is that line, and the batch goes on" in follows
-    merged = land.index("`gh pr merge <PR> --squash --delete-branch`")
+    merged = land.index("`lifecycle merge <PR>`")
     assert merged < land.index(follows) < land.index("**The push's CI:**")
     assert "Then *The primary checkout follows*, and the push's CI" in land
-    assert "Then *The primary checkout follows*, below." in land[merged:]
+    assert "Then *The primary checkout follows*, below" in land[merged:]
     branches = _section(skill, 7)
     assert "`lifecycle tidy --remove` on the maintainer's word" in branches
     assert "A squash merge leaves the branch's commits off the integration branch" in branches
     assert "`lifecycle tidy`'s first and last lines" in skill.split("## 8.")[1]
+
+
+def test_complete_merges_by_the_prs_state_and_leaves_a_linked_worktrees_branch():
+    """gh's --delete-branch exits 1 on a merged PR in a linked worktree: the skill reads the
+    merge from `lifecycle merge`, which leaves that worktree's branch, squash-merged, for
+    git worktree remove and git branch -D, since tidy keeps it."""
+    skill = (KIT / "skills" / "complete" / "SKILL.md").read_text(encoding="utf-8")
+    assert "--delete-branch" not in skill and "gh pr merge" not in skill
+    land = _section(skill, 4)
+    step = land[land.index("4. `lifecycle merge <PR>`") : land.index("**The primary checkout")]
+    assert "never from gh's exit code" in step
+    assert "1 with a line saying the PR is not merged" in step
+    assert "stop for the maintainer, the PR left as it is" in step
+    unread = re.search(r"^ +- 1 with a `lifecycle:` line.*$", step, re.M).group(0)
+    assert "or no line at all (the shell cut it off)" in unread
+    assert "reads the state first and merges only a PR still open" in unread
+    assert "Still unread, the batch stops before § 5" in unread
+    follows = re.search(r"^\*\*The primary checkout follows\.\*\*.*$", land, re.M).group(0)
+    assert "where it printed that its fetch failed, `git fetch origin` first" in follows
+    branches = _section(skill, 7)
+    assert "gh leaves" not in branches and "`--delete-branch`" not in branches
+    squash = branches[branches.index("A squash merge leaves") :]
+    assert "`lifecycle merge` leaves its branch" in squash
+    assert "`git worktree remove <path>` and `git branch -D <branch>`" in squash
+    assert "`lifecycle merge`'s lines" in skill.split("## 8.")[1]
 
 
 @pytest.mark.parametrize("name", ["clarify", "review"])

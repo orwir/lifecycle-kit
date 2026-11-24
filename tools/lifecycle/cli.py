@@ -23,6 +23,7 @@ from . import (
     hook,
     kit_repository,
     kit_version,
+    merge,
     ship,
     tidy,
 )
@@ -152,6 +153,13 @@ def _ci(args: argparse.Namespace) -> int:
         ref = args.ref or config.integration
         code, line = ci.push(config.root, _commit(config, args.commit), ref)
     print(f"ci: {line}", file=sys.stdout if code == ci.PASSED else sys.stderr)
+    return code
+
+
+def _merge(args: argparse.Namespace) -> int:
+    code, lines = merge.merge(_config().root, args.pr)
+    for line in lines:
+        print(line, file=sys.stdout if code == merge.MERGED else sys.stderr)
     return code
 
 
@@ -301,6 +309,12 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("commit", nargs="?", help="the pushed commit")
     p.add_argument("--ref", help="the branch it was pushed to (default: the integration branch)")
     p.add_argument("--pr", type=int, help="a pull request: wait on its checks instead")
+    p = sub.add_parser(
+        "merge",
+        help="squash-merge a pull request, read its state after, and delete its branch on "
+        "GitHub and here where nothing is lost; a linked worktree's branch stays",
+    )
+    p.add_argument("pr", type=int, help="the pull request's number")
     sub.add_parser(
         "base",
         help="the commit a task's work is measured from: where HEAD forked from the integration "
@@ -379,6 +393,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "board": _board,
             "release": _release,
             "ci": _ci,
+            "merge": _merge,
             "base": _base,
             "tidy": _tidy,
             "gap": _gap,
@@ -392,6 +407,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         guides.GuidesError,
         board.BoardError,
         ship.ReleaseError,
+        merge.MergeError,
         gap.GapError,
         home.HomeError,
     ) as error:

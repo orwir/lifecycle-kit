@@ -8,6 +8,14 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## Unreleased
+
+### Added
+- `lifecycle merge` squash-merges a pull request and deletes its branch only where nothing on it is lost (#69)
+
+### Fixed
+- The complete skill lands a PR from a linked worktree whose integration branch another checkout holds (#69)
+
 ## [0.18.0] — 2026-11-23
 
 ### Added
