@@ -18,6 +18,12 @@ has a status, since the clarify skill moves the card there before it writes one,
 Backlog otherwise. A card that already holds a Status was someone's call and keeps it,
 save one archived in Done whose issue is open again, which takes that issue's column;
 one left in Backlog under a plan with a status is collected for the maintainer to move.
+
+`gh project create` leaves a board one table view, "View 1", so the four columns show
+nowhere: setup makes a board-layout view where none takes its columns from Status. Only
+the REST API makes a view, and it states no default column field, while a board may hold
+another single-select field, so setup names Status by its id. No API renames a view, so
+setup names renaming "View 1" to Table for the web UI.
 """
 
 from __future__ import annotations
@@ -43,6 +49,8 @@ WORKFLOWS = (
     ("Auto-add to project", f"is:issue is:open -label:{LABEL}"),
     ("Auto-archive items", "is:closed updated:<@today-14d"),
 )
+#: The board-layout view setup makes; a fresh board's table view, and the name it should take.
+VIEW, FRESH_VIEW, TABLE = "Board", "View 1", "Table"
 #: Past a project's cap of 50,000 items, so no list of open issues is cut short.
 LIMIT = "50001"
 #: A plan's status, whatever follows it; the templates' slot, `proposed | accepted …`, is none.
@@ -54,11 +62,14 @@ _TO_TOP = (
     f"mutation($p:ID!,$i:ID!){{{_UNARCHIVE} "
     "updateProjectV2ItemPosition(input:{projectId:$p,itemId:$i,afterId:null}){clientMutationId}}"
 )
-_PROJECT = """query($o:String!,$n:Int!){repositoryOwner(login:$o){... on ProjectV2Owner{
-projectV2(number:$n){id url public
-field(name:"Status"){... on ProjectV2SingleSelectField{id options{id name color description}}}
+_PROJECT = """query($o:String!,$n:Int!){repositoryOwner(login:$o){__typename
+... on ProjectV2Owner{projectV2(number:$n){id url public
+field(name:"Status"){... on ProjectV2SingleSelectField{id databaseId
+options{id name color description}}}
 repositories(first:100){nodes{nameWithOwner}}
-workflows(first:50){nodes{name enabled}}}}}}"""
+workflows(first:50){nodes{name enabled}}
+views(first:100){nodes{number name layout
+verticalGroupByFields(first:1){nodes{... on ProjectV2FieldCommon{name}}}}}}}}}"""
 # An archived card drops out of this list once its archive settles; one that still shows
 # carries its flag, which `gh project item-list` does not give.
 _ITEMS = """query($o:String!,$n:Int!,$after:String){repositoryOwner(login:$o){
@@ -201,6 +212,10 @@ class Setup:
     public: bool = True
     #: Issues whose card setup left in Backlog though their plan has a status.
     parked: list[int] = field(default_factory=list)
+    #: The link of the board-layout view setup made, where it made one.
+    view: str | None = None
+    #: The link of a "View 1" table view to rename to Table in the web UI.
+    rename: str | None = None
 
 
 def setup(
@@ -238,6 +253,20 @@ def setup(
     return done
 
 
+def make_view(owner: str, number: int, organization: bool, status: int) -> str:
+    """Make a board-layout view whose columns are the field whose id is ``status``; its link."""
+    path = f"{'orgs' if organization else 'users'}/{owner}/projectsV2/{number}/views"
+    body = json.dumps({"name": VIEW, "layout": "board", "vertical_group_by": [status]})
+    # The path goes first, so a failure names it.
+    return json.loads(gh("api", path, "--method", "POST", "--input", "-", stdin=body))["html_url"]
+
+
+def _shows_columns(view: dict) -> bool:
+    """Whether ``view`` is a board whose columns are the Status options."""
+    fields = view["verticalGroupByFields"]["nodes"]
+    return view["layout"] == "BOARD_LAYOUT" and any(node.get("name") == FIELD for node in fields)
+
+
 def _items(owner: str, number: int) -> list[dict]:
     """The board's cards, a page of 100 at a time."""
     found: list[dict] = []
@@ -264,8 +293,8 @@ def _items(owner: str, number: int) -> list[dict]:
 
 
 def _hold(repo: dict, owner: str, number: int, report: Callable[[str], None]) -> Setup:
-    project = graphql("reading the board", _PROJECT, o=owner, n=number)["repositoryOwner"]
-    project = (project or {}).get("projectV2")
+    found = graphql("reading the board", _PROJECT, o=owner, n=number)["repositoryOwner"] or {}
+    project = found.get("projectV2")
     if not project:
         raise BoardError(f"no board {owner}/{number}, or the gh login cannot read it")
     status = project.get("field")
@@ -355,6 +384,22 @@ def _hold(repo: dict, owner: str, number: int, report: Callable[[str], None]) ->
         graphql(step, _SET, p=project["id"], i=card, f=status["id"], v=ids[target])
         done.written += 1
         report(f"#{issue_number}: {target}{why(target)}")
+
+    # Last of the writes, so a failure here leaves the rest done and a run again makes only it.
+    views = project["views"]["nodes"]
+    if not any(_shows_columns(view) for view in views):
+        organization = found.get("__typename") == "Organization"
+        try:
+            done.view = make_view(owner, number, organization, status["databaseId"])
+        except BoardError as error:
+            raise BoardError(
+                f"making the {VIEW} view: {error}; make one by hand at {project['url']}, "
+                f"a board layout whose columns are {FIELD}, then run setup again"
+            ) from error
+        report(f"made the {VIEW} view, its columns the {FIELD} options: {done.view}")
+    fresh = [v for v in views if v["name"] == FRESH_VIEW and v["layout"] == "TABLE_LAYOUT"]
+    if fresh and all(view["name"] != TABLE for view in views):
+        done.rename = f"{project['url']}/views/{fresh[0]['number']}"
 
     enabled = {node["name"]: node["enabled"] for node in project["workflows"]["nodes"]}
     for name, value in WORKFLOWS:

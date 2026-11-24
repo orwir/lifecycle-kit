@@ -14,6 +14,8 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 - `lifecycle merge` squash-merges a pull request and deletes its branch only where nothing on it is lost (#69)
 - A security policy sends a vulnerability in the kit to GitHub's private vulnerability reporting (#65)
 - `lifecycle board setup` lists each card left in Backlog whose issue's plan has a status, with its move (#67)
+- `lifecycle board setup` makes a Board view whose columns are the Status options where a board has none (#68)
+- `lifecycle board setup` names renaming a board's "View 1" table view to Table in the web UI (#68)
 
 ### Changed
 - A vulnerability in the kit goes by the kit's security policy wherever it is found, never by `lifecycle gap` (#65)

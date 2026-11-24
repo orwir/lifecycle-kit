@@ -61,6 +61,19 @@ PLANNED = plan("accepted 2026-11-24")
 CAPTURED = plan("proposed | accepted YYYY-MM-DD")
 
 
+def view(number, name, layout="BOARD_LAYOUT", columns=("Status",)):
+    """A view as the board query returns it; ``columns`` names its column field, if any."""
+    fields = {"nodes": [{"name": column} for column in columns]}
+    return {"number": number, "name": name, "layout": layout, "verticalGroupByFields": fields}
+
+
+# What `gh project create` leaves, and a board whose views are set up.
+FRESH_VIEWS = [view(1, "View 1", "TABLE_LAYOUT", ())]
+SET_UP = [view(1, "Table", "TABLE_LAYOUT", ()), view(2, "Board")]
+#: The Status field's id as the REST API names fields.
+STATUS_ID = 42
+
+
 def card(id_, number, status=None, kind="Issue", repo="o/r", archived=False):
     """A card as the board's items query returns it."""
     content = {
@@ -86,23 +99,31 @@ class FakeGh:
         public=False,
         fail=None,
         archived=None,
+        views=SET_UP,
+        kind="User",
     ):
         """``archived`` maps an issue's number to the Status its archived card holds."""
         self.options, self.items, self.issues = options, list(items), list(issues)
         self.archived = archived or {}
         self.workflows, self.linked, self.public, self.fail = workflows, linked, public, fail
+        self.views, self.kind = list(views), kind
         self.calls = []
 
     def __call__(self, *args, stdin=None):
         sent = json.loads(stdin) if stdin else None
         self.calls.append((args, sent))
-        if self.fail and (self.fail in args or (sent and self.fail in sent["query"])):
+        query = (sent or {}).get("query", "")
+        if self.fail and (self.fail in args or self.fail in query):
             raise board.BoardError(f"gh {' '.join(args[:2])} failed: boom")
         if args[:2] == ("project", "create"):
             return json.dumps({"number": 7, "url": "https://github.com/users/o/projects/7"})
         if args[:2] == ("issue", "list"):
             return json.dumps(self.issues)
-        query = sent["query"]
+        if args[0] == "api" and args[1].endswith("/views"):
+            number = len(self.views) + 1
+            self.views.append(view(number, sent["name"]))
+            url = f"https://github.com/users/o/projects/{args[1].split('/')[3]}/views/{number}"
+            return json.dumps({"number": number, "name": sent["name"], "html_url": url})
         if "addProjectV2ItemById" in query:
             number = int(sent["variables"]["c"].removeprefix("I"))
             had = self.archived.get(number)
@@ -119,13 +140,15 @@ class FakeGh:
         if "repositoryOwner" in query:
             project = {
                 "id": "P",
-                "url": "https://github.com/users/o/projects/9",
+                "url": f"https://github.com/users/o/projects/{sent['variables']['n']}",
                 "public": self.public,
-                "field": {"id": "F", "options": self.options},
+                "field": {"id": "F", "databaseId": STATUS_ID, "options": self.options},
                 "repositories": {"nodes": [{"nameWithOwner": name} for name in self.linked]},
                 "workflows": {"nodes": list(self.workflows)},
+                "views": {"nodes": list(self.views)},
             }
-            return json.dumps({"data": {"repositoryOwner": {"projectV2": project}}})
+            owner = {"__typename": self.kind, "projectV2": project}
+            return json.dumps({"data": {"repositoryOwner": owner}})
         if "updateProjectV2Field(" in query:
             options = [
                 {"id": sent_option.get("id") or "new-" + sent_option["name"], **sent_option}
@@ -136,10 +159,14 @@ class FakeGh:
         return json.dumps({"data": {}})
 
     def mutations(self, needle):
-        return [sent for _, sent in self.calls if sent and needle in sent["query"]]
+        return [sent for _, sent in self.calls if sent and needle in sent.get("query", "")]
 
     def commands(self, *head):
         return [args for args, _ in self.calls if args[: len(head)] == head]
+
+    def made_views(self):
+        """Each REST call that makes a view, with the body it sent."""
+        return [(args, sent) for args, sent in self.calls if args[1].endswith("/views")]
 
 
 def run_setup(monkeypatch, fake, owner="o", number=9):
@@ -232,6 +259,7 @@ def test_a_board_set_up_already_is_written_to_nowhere(monkeypatch):
     mutations = [sent for _, sent in fake.calls if sent and sent["query"].startswith("mutation")]
     assert mutations == [] and not fake.commands("project", "item-add")
     assert (done.written, done.linked, done.options, lines) == (0, False, [], [])
+    assert not fake.made_views() and done.view is None and done.rename is None
 
 
 def test_an_unlinked_repository_is_linked(monkeypatch):
@@ -381,6 +409,90 @@ def test_each_workflow_is_turned_on_or_confirmed_with_its_value(monkeypatch):
         "is:issue is:open -label:kit-gap",
         'turn on "Auto-archive items" with is:closed updated:<@today-14d',
     ]
+
+
+MADE = "made the Board view, its columns the Status options: https://github.com/users/o/projects"
+
+
+def test_a_created_board_gets_a_board_view_on_status_after_its_cards(monkeypatch):
+    fake = FakeGh(FRESH, issues=[open_issue(1)], views=FRESH_VIEWS)
+    done, lines = run_setup(monkeypatch, fake, owner=None, number=None)
+    ((args, sent),) = fake.made_views()
+    assert args == ("api", "users/o/projectsV2/7/views", "--method", "POST", "--input", "-")
+    assert sent == {"name": "Board", "layout": "board", "vertical_group_by": [STATUS_ID]}
+    last_card = max(
+        i for i, (_, s) in enumerate(fake.calls) if s and "Value(" in s.get("query", "")
+    )
+    assert fake.calls.index((args, sent)) > last_card
+    assert lines[-2:] == ["#1: Backlog, added", f"{MADE}/7/views/2"]
+    assert done.view == "https://github.com/users/o/projects/7/views/2"
+
+
+def test_a_fresh_view_1_is_named_to_rename(monkeypatch):
+    done, _ = run_setup(monkeypatch, FakeGh(FOUR, views=FRESH_VIEWS))
+    assert done.rename == "https://github.com/users/o/projects/9/views/1"
+
+
+@pytest.mark.parametrize(
+    "views",
+    [
+        [
+            view(1, "View 1", "TABLE_LAYOUT", ()),
+            view(2, "Table", "TABLE_LAYOUT", ()),
+            view(3, "Board"),
+        ],
+        [view(1, "View 1", columns=("Status",))],  # a board view, though it kept the name
+        SET_UP,
+    ],
+)
+def test_a_board_with_a_table_view_names_no_rename(monkeypatch, views):
+    done, _ = run_setup(monkeypatch, FakeGh(FOUR, views=views))
+    assert done.rename is None
+
+
+def test_a_named_board_with_no_status_board_view_gets_one(monkeypatch):
+    fake = FakeGh(FOUR, views=[view(1, "Table", "TABLE_LAYOUT", ())])
+    done, lines = run_setup(monkeypatch, fake)
+    ((args, _),) = fake.made_views()
+    assert args[1] == "users/o/projectsV2/9/views" and lines == [f"{MADE}/9/views/2"]
+    assert done.rename is None
+
+
+@pytest.mark.parametrize("columns", [("Effort",), ()], ids=["another field", "no column field"])
+def test_a_board_view_on_another_field_or_none_does_not_count(monkeypatch, columns):
+    fake = FakeGh(
+        FOUR, views=[view(1, "Table", "TABLE_LAYOUT", ()), view(2, "Mine", columns=columns)]
+    )
+    done, _ = run_setup(monkeypatch, fake)
+    ((_, sent),) = fake.made_views()
+    assert sent["name"] == "Board" and done.view.endswith("/views/3")
+    # A run again finds the view it made, on Status, and makes none.
+    run_setup(monkeypatch, fake)
+    assert len(fake.made_views()) == 1
+
+
+def test_an_organization_s_board_takes_the_organization_path(monkeypatch):
+    fake = FakeGh(FOUR, views=[], kind="Organization")
+    run_setup(monkeypatch, fake)
+    ((args, _),) = fake.made_views()
+    assert args[1] == "orgs/o/projectsV2/9/views"
+
+
+def test_a_failed_view_names_its_path_and_the_view_by_hand_after_the_cards(monkeypatch):
+    fake = FakeGh(
+        FRESH, issues=[open_issue(1)], views=FRESH_VIEWS, fail="users/o/projectsV2/7/views"
+    )
+    monkeypatch.setattr(board, "gh", fake)
+    lines = []
+    with pytest.raises(board.BoardError) as failed:
+        board.setup(REPO, None, None, lines.append)
+    assert str(failed.value) == (
+        "making the Board view: gh api users/o/projectsV2/7/views failed: boom; "
+        "make one by hand at https://github.com/users/o/projects/7, a board layout whose "
+        "columns are Status, then run setup again "
+        "(board o/7 is created: run lifecycle board setup --number 7 again)"
+    )
+    assert lines[-1] == "#1: Backlog, added"
 
 
 def test_the_kickstart_names_each_workflow_setup_prints_with_its_value():

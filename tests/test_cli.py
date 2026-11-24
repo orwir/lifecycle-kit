@@ -244,7 +244,7 @@ SETUP_REPO = {
 }
 
 
-def fake_setup(monkeypatch, public=False, parked=()):
+def fake_setup(monkeypatch, public=False, parked=(), rename=None):
     from lifecycle import board
 
     seen = {}
@@ -255,7 +255,7 @@ def fake_setup(monkeypatch, public=False, parked=()):
         report("cards to write: 1")
         done = board.Setup(owner or "o", number or 7, "https://github.com/users/o/projects/7")
         done.workflows, done.public = ['turn on "Item closed" with Status: Done'], public
-        done.parked = list(parked)
+        done.parked, done.rename = list(parked), rename
         return done
 
     monkeypatch.setattr(board, "setup", setup)
@@ -316,7 +316,20 @@ def test_the_moves_for_another_board_wait_for_its_board_lines(monkeypatch, capsy
 def test_board_setup_with_nothing_left_in_backlog_lists_nothing(monkeypatch, capsys, tmp_path):
     fake_setup(monkeypatch)
     code, out, _ = run(monkeypatch, capsys, ["board", "setup"], cwd=tmp_path)
-    assert code == 0 and "left in Backlog" not in out
+    assert code == 0 and "left in Backlog" not in out and "rename" not in out
+
+
+def test_board_setup_names_the_rename_of_a_fresh_table_view(monkeypatch, capsys, tmp_path):
+    fake_setup(monkeypatch, rename="https://github.com/users/o/projects/7/views/1")
+    code, out, _ = run(monkeypatch, capsys, ["board", "setup"], cwd=tmp_path)
+    assert (
+        code == 0
+        and (
+            'in the web UI, https://github.com/users/o/projects/7/views/1: rename "View 1" to '
+            '"Table" (no API renames a view)\n'
+        )
+        in out
+    )
 
 
 def test_board_moves_a_card_by_its_number(monkeypatch, capsys, repo):

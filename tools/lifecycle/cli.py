@@ -122,6 +122,11 @@ def _board_setup(args: argparse.Namespace) -> int:
     print(f"in the web UI, {done.url}/workflows (no API turns a workflow on or reads its value):")
     for line in done.workflows:
         print(f"  {line}")
+    if done.rename:
+        print(
+            f'in the web UI, {done.rename}: rename "{board.FRESH_VIEW}" to "{board.TABLE}" '
+            "(no API renames a view)"
+        )
     if repo["visibility"] == "PUBLIC" and not done.public:
         print(
             "once the board is triaged, make it public as the repository is: "

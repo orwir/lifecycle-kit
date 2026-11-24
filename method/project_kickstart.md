@@ -524,7 +524,7 @@ A board earns its cost where the open issues outnumber what the maintainer holds
 
 Use GitHub Projects v2 with a Status field, standardized at four columns: `Backlog → Ready → In Progress → Done`. Backlog = captured, not triaged; Ready = triaged and ordered, the top card next, so its order is the plan; In Progress = actively worked; Done = closed, landed or not planned. Review state lives on the PR itself, not the board — a separate `In Review` column just goes stale. No custom fields by default: a field nobody sets is noise on every card.
 
-`lifecycle board setup` makes a board in one pass, or fixes one in place: it writes the four Status options, keeping each existing option's id, links the repository and adds its open issues, then names each built-in workflow to turn on or to confirm in the web UI, since no API creates or turns on a workflow, or reads its value. An open issue goes in Backlog, or in In Progress once its plan has a status (*Issue templates*), since the status is written after the card moves there: a board set up mid-task shows the work under way. A card that already holds a Status keeps it, save one archived in Done whose issue is open again, which takes that issue's column; one left in Backlog under a plan with a status is listed with the move to make, the maintainer's call. Keep these on:
+`lifecycle board setup` makes a board in one pass, or fixes one in place: it writes the four Status options, keeping each existing option's id, links the repository and adds its open issues, and makes a view named Board whose columns are the four where no board-layout view takes its columns from Status, since a new board holds only a table view, "View 1". It then names each built-in workflow to turn on or to confirm in the web UI, since no API creates or turns on a workflow, or reads its value, and the renaming of "View 1" to Table, since no API renames a view. An open issue goes in Backlog, or in In Progress once its plan has a status (*Issue templates*), since the status is written after the card moves there: a board set up mid-task shows the work under way. A card that already holds a Status keeps it, save one archived in Done whose issue is open again, which takes that issue's column; one left in Backlog under a plan with a status is listed with the move to make, the maintainer's call. Keep these on:
 
 - **Item closed → Done**, so an issue closed outside a task (as not planned, by a hotfix's `Closes #N`) leaves Backlog too.
 - **Item added to project → Backlog**, and **Auto-add to project** with `is:issue is:open -label:kit-gap`, so no card sits in "No Status", which hides it from board views. Auto-add is not retroactive: setup adds the open issues once.
@@ -569,7 +569,7 @@ gh label create "priority/tier-2" --color e99695 --description "Medium priority 
 gh label create "priority/tier-3" --color c2e0c6 --description "Strategic / research"
 
 # Project board, where it earns its cost (*Project board*): creates one, or fixes the one
-# --number names, then prints the [board] lines and the workflows to set in the web UI
+# --number names, with its Board view, then prints the [board] lines and what to set in the web UI
 lifecycle board setup
 ```
 
