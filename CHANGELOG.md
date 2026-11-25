@@ -8,6 +8,21 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
+## Unreleased
+
+### Changed
+- Both briefs end with *For you*, the one place they ask, and their first line says whether anything waits (#77)
+- The briefs leave out a bullet with nothing to say, a green gate's counts and the approach accepted at Clarify (#77)
+- The Clarify brief's goal says what is so today and what will be so after the change (#77)
+- The hand-back says the diff's size in files and lines (#77)
+- The hand-back names what landing does that a revert would not undo, and how to undo it (#77)
+- A brief says the method's terms in plain words (#77)
+- A `Watch:` line names what breaks and how it shows, not a data shape's fields (#77)
+- A D-row for a one-way door offers the simplest option that meets the goal, where one exists (#77)
+
+### Removed
+- The briefs' 400-word cap: a brief holds what the decision needs, its depth following the topic (#77)
+
 ## [0.19.0] — 2026-11-24
 
 ### Added

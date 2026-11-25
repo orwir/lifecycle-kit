@@ -64,9 +64,10 @@ By § The plan round, step 4:
 
 Render it by § Clarify brief's template and § Brief rules:
 
-1. The first line links the issue, from `gh issue view <N> --json url -q .url`, and names the task in a few plain words; the goal is the issue's *Goal* in one plain sentence.
-2. *Taken alone*, by § Brief rules: the plan's `Taken:` lines that might draw the maintainer's attention, and every follow-up filed, its title and link by `gh issue view <M> --json title,url`. A gap in a kit guide is named as `lifecycle gap` printed it, its title and link read with `--repo` on the repository it landed in, each `Not filed:` entry in the plan is carried with its title and why, and each `Watch:` line with what and its trigger (§ Developer rules).
-3. *Reviewed* is read off the round's mark.
+1. The first line links the issue, from `gh issue view <N> --json url -q .url`, names the task in a few plain words, and ends in the status (§ Brief rules): how many D-rows, `ready`, or `going ahead` after a skipped round with nothing to answer and no drawing. The goal is today against after, `Today <…>. After this, <…>.`, from the issue's *Context* and *Goal*; *Under it* ends with the number of files the plan's boxes change.
+2. *Taken alone*, by § Brief rules: the plan's `Taken:` lines that might draw the maintainer's attention, and every follow-up filed, its title and link by `gh issue view <M> --json title,url`. A gap in a kit guide is named as `lifecycle gap` printed it, its title and link read with `--repo` on the repository it landed in, each `Not filed:` entry in the plan is carried with its title and why, and each `Watch:` line with its risk and its trigger (§ Developer rules).
+3. *Reviewed* is read off the round's mark, its `(no guard)` said as `(read-only guard off)`, and a skipped round in the words § Clarify brief gives it.
+4. *For you* is the last block, and nothing follows it. Before it is printed, ask the brief § Brief rules' two questions.
 
 ## 6. On "go"
 

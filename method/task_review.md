@@ -11,7 +11,7 @@ The kit's `clarify` skill runs the plan round, its `review` skill the work round
 - **Lens:** the questions a reviewer asks: `base`, `person-facing` or `model-facing`; a **lens reviewer** is a person- or model-facing one (*Lens reviewers*).
 - **Packet:** the developer's plan packet and hand-off packet, and the reviewer's plan return and return packet. A packet is never shown to the maintainer.
 - **Brief:** what the maintainer reads of a round, the Clarify or the hand-back brief.
-- **D-row:** a question a brief puts to the maintainer, with options and a recommended one.
+- **D-row:** a question a brief puts to the maintainer, with options and a recommended one. A D-row for a one-way door has among its options the simplest that meets the goal, where one exists, doing nothing where that is one; a disputed finding and a work-round `split` keep the options *Brief rules* sets them.
 - **One-way door:** a choice that changes user-visible behaviour, is hard to undo, moves the ticket's scope (adds to or drops from its goal) or spends. Every other choice is a **two-way door**. A follow-up filed for what lies outside the goal is a two-way door once it passes the bar (*Developer rules*); the rule the task changes, met at another site, is no follow-up but the task's own scope, which a D-row widens or leaves. A choice the developer could make is a D-row only when it is a one-way door; a two-way door the developer takes, as a `Taken:` line (*Developer rules*). A choice the ticket, an accepted drawing or a doc already settles is neither. Three D-rows stand whatever the door, since none is a choice the developer makes: a disputed finding, a work-round `split`, and an exploitable finding left unfixed where the project it is in names no private channel. A plan-round `split` the developer accepts is acted on (*The plan round*, step 4) and named in the brief's *Reviewed*; one the developer disputes is a disputed finding.
 - **Required:** a finding the severity table marks so (*Return packet*).
 - **Dispute:** a finding the developer does not act on as its return asks, which becomes a D-row: **on evidence** where its locations do not show what its evidence says they show, or an `inferred` or unmarked one could not be proven (*Developer rules*); **on scope** where it holds but is not the developer's to act on — a decision rather than a defect, a permission only the maintainer grants, outside the diff. A disputed `split` is on scope.
@@ -84,15 +84,13 @@ For the maintainer: <questions the reviewer could not settle; every Decision pen
 What the maintainer reads before any code: the issue holds the plan, and the brief what will happen, what must be answered and what may be vetoed, by *Brief rules*.
 
 ```
-**Plan [#<N>](<issue URL>)** · <the task in a few plain words>
+**Plan [#<N>](<issue URL>)** · <the task in a few plain words> · <<n> decision(s) | ready | going ahead>
 
-<the goal in one plain sentence>
-
-**For you:** <answer D1[–D<n>], then say "go" | nothing to answer; say "go" | nothing to answer and no drawing: going ahead>.
+Today <what is so now>. After this, <what will be so>.
 
 **What we plan**
-- You see: <what a user or operator will see differently | nothing>
-- Under it: <the approach, in a sentence or two>
+- You see: <what a user or operator will see differently>
+- Under it: <the approach, in a sentence or two>; <n> file(s)
 
 **Scenarios to check**
 - WHEN <situation> THEN <outcome>
@@ -106,9 +104,11 @@ What the maintainer reads before any code: the issue holds the plan, and the bri
 - <what> — <why>.
 - Filed [<#M | <kit owner>/<kit repository>#M>](<issue URL>) <title> — <what was found; why not here>.
 - Not filed: <the gap's title> — <why no issue could be filed>.
-- Watch: <what> — <its trigger>; name it to have it filed.
+- Watch: <the risk: what breaks, and how it shows> — <its trigger>; name it to have it filed.
 
-**Reviewed:** <the reviewer[ (no guard) | (pasted)] asked for <r> required change(s): <all are in the plan | each outcome that occurred: <f> in the plan, D… disputed on <evidence | scope>> | the reviewer[ (no guard) | (pasted)] asked for no required change>[; also D… disputed on <evidence | scope>][; split off #<M>] | skipped, no shape
+**Reviewed:** <the reviewer[ (read-only guard off) | (pasted)] asked for <r> required change(s): <all are in the plan | each outcome that occurred: <f> in the plan, D… disputed on <evidence | scope>> | the reviewer[ (read-only guard off) | (pasted)] asked for no required change>[; also D… disputed on <evidence | scope>][; split off #<M>] | skipped: no rule held at several entry points, no persisted, billed, auth or safety state, no wait, retry or failure a user sees, no decision for an ADR
+
+**For you:** <answer D1[–D<n>], then say "go" | nothing to answer; say "go" | nothing to answer after a skipped review, and no drawing: going ahead>.
 ```
 
 ## The work round
@@ -119,7 +119,7 @@ The developer session runs the whole round. The maintainer sees one line when th
 2. **Review.** Each reviewer reads the tree against the packet (*Reviewer rules*) and returns its return packet.
 3. **Act.** The developer checks each finding's evidence (*Developer rules*), then fixes every finding that holds: each required one, and each `Cleanup` and `Minor` inside the diff — one defect two returns report is one finding — and re-runs the gate. Each `Decision pending` and each *For the maintainer* question the developer cannot settle is sorted by its door, as at the plan round: a two-way one is made in the tree and written as a `Taken:` line (*Developer rules*). What the brief must ask becomes a D-row (*Brief rules*). A `Real bug`'s reviewer gets its second pass: a reply per finding id — `fixed <how>` / `disputed: the evidence does not hold — <what the locations show>` / `disputed: <why it is not the developer's to act on>` / `deferred #N` / `watch: <trigger>` / `reported privately` — to the same reviewer, which keeps its context, and its second return is acted on the same way. A `disputed` reply is for the reviewer's information: the dispute goes to the brief. Without a second pass, no reply is written: the brief's *Reviewed* line carries the tally.
 4. **Hand back.** The developer renders the hand-back brief.
-5. **Land.** The maintainer answers the brief's D-rows, may veto a choice taken alone by naming it, and gives *Complete*'s go-ahead, in one message or several. Before anything lands, the developer makes each answer: its pick and reason go under the plan's *Departures* (for an untracked task, into the commit body alone), the tree is made the pick where it is not, and the gate runs again. A pick bigger than the size the brief stated, and any veto, which the brief gives no size, end in the brief rendered again, and *Complete* waits for a new go-ahead. That brief shows a made answer or veto only in *What changed*. Naming a `Watch:` line is no veto: it leaves the tree as it is, and *Complete* files it.
+5. **Land.** The maintainer answers the brief's D-rows, may veto a choice taken alone by naming it, and gives *Complete*'s go-ahead, in one message or several. Before anything lands, the developer makes each answer: its pick and reason go under the plan's *Departures* (for an untracked task, into the commit body alone), the tree is made the pick where it is not, and the gate runs again. A pick bigger than the size its option stated, and any veto, which the brief gives no size, end in the brief rendered again, and *Complete* waits for a new go-ahead. That brief shows a made answer or veto only in *What changed*. Naming a `Watch:` line is no veto: it leaves the tree as it is, and *Complete* files it.
 
 ### Lens reviewers
 
@@ -203,16 +203,16 @@ For the maintainer: <questions the reviewer could not settle; every Decision pen
 What the maintainer reads of the work round: a reader who was at *Clarify* but saw nothing of the round, and answers or vetoes from the brief alone, by *Brief rules*.
 
 ```
-**Hand-back [#<N>](<issue URL>)** · <the task in a few plain words> | **Hand-back** · <the task in a few plain words>
+<**Hand-back [#<N>](<issue URL>)** | **Hand-back**> · <the task in a few plain words> · <<n> decision(s) | ready>
 
 <the goal in one plain sentence>[ <untracked: what was asked and why, in a few sentences>]
 
-**For you:** <answer D1[–D<n>], then say | nothing to answer; say> "lgtm" to land <it | branch <name> | PR [#<M>](<PR URL>)>.[ <the non-routine Complete steps>]
-
 **What changed**
-- You see: <what a user or operator sees differently | nothing>
-- Under it: <what changed beneath that>
-- Removed: <what is gone | nothing>
+- You see: <what a user or operator sees differently>
+- Under it: <as planned | the departures from the accepted plan, each in a few words with why (veto one by naming it) | untracked or with no plan: what changed beneath that>
+- Removed: <what is gone>
+- Size: <n> file(s), +<added> −<deleted> lines
+- Risk: <what landing does that a revert does not undo>; undo: <how>
 
 **D1.** <the question, ending in "?">
 - A: <option>. <consequence>. <in the tree now | <size in lines or files> to make>
@@ -223,39 +223,43 @@ What the maintainer reads of the work round: a reader who was at *Clarify* but s
 - <what> — <why>.
 - Filed [<#M | <kit owner>/<kit repository>#M>](<issue URL>) <title> — <what was found; why not here>.
 - Not filed: <the gap's title> — <why no issue could be filed>.
-- Watch: <what> — <its trigger>; name it to have it filed as the task lands.
+- Watch: <the risk: what breaks, and how it shows> — <its trigger>; name it to have it filed as the task lands.
 
 **Spent:** <amount, on what, where it was asked>
 
-**Verified:** <N passed · coverage X% · lint clean · <<n> tests fail without the change (<where checked>) | no test fails without the change: <why>>> | gate not run: <why>
+**Verified:** gate green · <<n> test(s) fail without the change (<where checked>) | no test fails without the change: <why>> | gate not run: <why>
 
 **Not run:** <what, why>
 
-**Reviewed:** <<the lenses that read the tree, each[ (no guard) | (pasted)]> asked for <r> required fix(es)[ over a second pass]: <all made | each outcome that occurred: <f> made, D… disputed on <evidence | scope>, <p> reported privately (<channel and link>…)> | <the lenses> asked for no required fix>[; also D… disputed on <evidence | scope>][; <q> other finding(s) reported privately (<channel and link>…)] | skipped: untracked micro-task
+**Reviewed:** <<the lenses that read the tree, each[ (read-only guard off) | (pasted)]> asked for <r> required fix(es)[ over a second pass]: <all made | each outcome that occurred: <f> made, D… disputed on <evidence | scope>, <p> reported privately (<channel and link>…)> | <the lenses> asked for no required fix>[; also D… disputed on <evidence | scope>][; <q> other finding(s) reported privately (<channel and link>…)] | skipped: one obvious change, nothing to decide
+
+**For you:** <answer D1[–D<n>], then say | nothing to answer; say> "lgtm" to land <it | branch <name> | PR [#<M>](<PR URL>)>.[ <the non-routine Complete steps>]
 ```
 
 ## Brief rules
 
 Both briefs:
 
-- **Chat markdown, as the template shows:** every lead bold, a list on the line after its lead, other content on the lead's line; a blank line between every two blocks and between D-rows, so no chat folds a lead into the list above it; nothing before the first line or after the last block, and no headings, tables or fenced blocks. A block with nothing in it is left out, and no count of zero is printed, save *Verified*'s tests that fail without the change: there a zero is the news, said in words with its reason.
-- **Readable alone, in plain words:** the first line links the issue and names the task in a few plain words, and the goal follows in one plain sentence; the detail stays in the ticket, and an untracked hand-back gives it in a few sentences after the goal. *For you* says what the maintainer does next. The plan, or what changed, comes before the questions, so the maintainer knows what will happen before answering.
+- **Chat markdown, as the template shows:** every lead bold, a list on the line after its lead, other content on the lead's line; a blank line between every two blocks and between D-rows, so no chat folds a lead into the list above it; nothing before the first line or after the last block, and no headings, tables or fenced blocks. A block with nothing in it is left out, and so is a bullet, and no count of zero is printed, save *Verified*'s tests that fail without the change: there a zero is the news, said in words with its reason.
+- **Readable alone, in plain words:** the first line links the issue, names the task in a few plain words, and ends in the status: how many D-rows the brief asks, `ready` where it asks none, or `going ahead` where a skipped plan round leaves nothing to answer and no drawing to accept (*The plan round*). The goal follows: at *Clarify* as today against after, two plain sentences from the issue's *Context* and *Goal*; at the hand-back in one plain sentence. The detail stays in the ticket, and an untracked hand-back gives it in a few sentences after the goal. The plan, or what changed, comes before the questions, so the maintainer knows what will happen before answering.
+- ***For you* is the last block,** where a reader of a long message lands: it says what the maintainer does next, once, and nothing follows it, no question that asks it again.
+- **Each bullet opens with its fact,** and the whole brief is in plain words: a term of the method the maintainer cannot act on is said as what it means — a plan round skipped for want of a shape, a reviewer launched without its guard.
 - **Every row stands on its own, and names no finding id:** a row says in words what it rests on — "the reviewer asked", "disputed: the reviewer holds A, I hold B". "I" is the developer, "you" the maintainer.
 - **A D-row is answerable from the brief alone:** the question, ending in "?", on its own line; one bullet per option with its consequence; a last bullet with the recommended letter and its reason. The Clarify brief's question names the part of the system it touches, as `AGENTS.md` § Task workflow names them, or none for a docs or process choice. At the hand-back each option ends with what it takes against the tree: in the tree now, or its size to make. Which choices are D-rows is *Terms*' rule, one-way doors and the three that stand whatever the door; a disputed finding's question names its kind, on evidence or on scope (*Terms*), and its options are the reviewer's position as A and the developer's as B, a work-round `split`'s the split as A and the diff landed whole as B.
 - **"go" or "lgtm" with a D-row left open** takes its recommended option, written into the plan as taken at the go-ahead.
-- ***Taken alone*** shows, one sentence each with its reason, the choices taken alone that might draw the maintainer's attention — one a reasonable reviewer could take the other way, one that reaches beyond this task, a hypothesis left untested and where it is marked — and every follow-up filed, by number, title and link, a gap in a kit guide named as `lifecycle gap` printed it, every gap no issue could be filed for, by its title and why, and every `Watch:` line, by what and its trigger, which the maintainer has filed by naming it (*Developer rules*). A minor one stays in the plan's `Taken:` lines, unmentioned in the brief; the maintainer may veto it there by naming it, as any choice the brief shows. An untracked task has no plan to hold them, so its hand-back shows every choice taken alone. Not a row: a description of the implementation, a choice made at *Clarify* (the plan's `Taken:` lines from before its acceptance among them) or answered at the hand-back, a fix inside the plan's scope, a spend (the hand-back's *Spent*).
-- ***Reviewed*** says in plain words what the round asked for and what became of it: the required findings, one defect two returns report counted once, by each outcome that occurred (in the plan or fixed, disputed by its D-number and kind, split off, reported privately); after `also`, every other dispute by its D-number and kind; and every other finding sent by the private route, whatever its label, with its channel and private link. A reviewer subagent launched without the kit's guard is marked `(no guard)`; one read in a pasted session, `(pasted)`.
+- ***Taken alone*** shows, one sentence each with its reason, the choices taken alone that might draw the maintainer's attention — one a reasonable reviewer could take the other way, one that reaches beyond this task, a hypothesis left untested and where it is marked — and every follow-up filed, by number, title and link, a gap in a kit guide named as `lifecycle gap` printed it, every gap no issue could be filed for, by its title and why, and every `Watch:` line, by its risk and its trigger, which the maintainer has filed by naming it (*Developer rules*). A minor one stays in the plan's `Taken:` lines, unmentioned in the brief; the maintainer may veto it there by naming it, as any choice the brief shows. An untracked task has no plan to hold them, so its hand-back shows every choice taken alone. Not a row: a description of the implementation, a choice made at *Clarify* (the plan's `Taken:` lines from before its acceptance among them) or answered at the hand-back, a fix inside the plan's scope, a spend (the hand-back's *Spent*), a departure from the accepted plan (the hand-back's *Under it*).
+- ***Reviewed*** says in plain words what the round asked for and what became of it: the required findings, one defect two returns report counted once, by each outcome that occurred (in the plan or fixed, disputed by its D-number and kind, split off, reported privately); after `also`, every other dispute by its D-number and kind; and every other finding sent by the private route, whatever its label, with its channel and private link. A reviewer subagent launched without the kit's guard is marked `(read-only guard off)`, where the plan round's mark says `(no guard)`; one read in a pasted session, `(pasted)`.
 - **Nothing in a brief that is not in a packet, the plan or the tree, and no new argument.**
-- **About 400 words**, counted as the whitespace-separated words of the brief as printed; past that, the task wants a split.
+- **As long as the decision needs:** no word count caps a brief, and its depth follows the topic. Before it is printed, the developer asks of it: can the maintainer tell from the brief alone what the change is about, and make an informed decision? Does each line carry something that decision needs and the maintainer does not already know? A gap the first finds is filled; a line the second fails goes.
 
-The Clarify brief points at the plan instead of repeating it. Its *Scenarios to check* holds the scenarios a reader might argue with — a failure path, a wait, a default — not all of them. "go" opens implementation, never landing.
+The Clarify brief points at the plan instead of repeating it. *Under it* ends with the number of files the plan's boxes change. Its *Scenarios to check* holds the scenarios a reader might argue with — a failure path, a wait, a default — not all of them. "go" opens implementation, never landing.
 
-The hand-back brief's *Reviewed* names the reviewers that read the tree and says when one made a second pass. *What changed* is the tree after the round's fixes: three bullets with those leads, one or two sentences each. *Spent* names each spend the task made, its amount and where it was asked. *For you* names the maintainer's action, where "lgtm" lands the work when it is not the integration branch, and only the non-routine *Complete* steps.
+The hand-back brief's *Reviewed* names the reviewers that read the tree and says when one made a second pass. *What changed* is the tree after the round's fixes: its leads, one or two sentences each, a bullet with nothing to say left out, then *Size*, the diff from the base, new files counted, and *Risk* only where landing does what a revert does not undo — data, anything published, a deploy or release the landing itself starts, a spend. *Under it* reads `as planned`, or names each departure from the accepted plan in a few words with why — every *Departures* entry, every box dropped or added, and on a drawn surface every entry of the build's ledger (`design_workflow.md` step 4) — which the maintainer vetoes by naming it, as a choice taken alone; an untracked task, or an issue with no plan, says what changed beneath instead, with any box dropped or added beyond the ticket's. *Verified* carries a green gate's news, how many tests fail without the change: the pass count, coverage and lint are the gate's, and stay in the hand-off packet. *Spent* names each spend the task made, its amount and where it was asked. *For you* names the maintainer's action, where "lgtm" lands the work when it is not the integration branch, and only the non-routine *Complete* steps.
 
 ## Developer rules
 
 - **An issue a task files passes the bar,** whatever asks for it — a follow-up for what lies outside the goal, one a return asks for, a gap in a kit guide — on three tests. **Seen:** a real instance, with coordinates — a repository, a run, a finding's `seen` evidence; a guide's text counts only where it contradicts another text or a case the task met shows it wrong, and a case it would get wrong that nothing has met is not seen. **A job of its own:** not the rule the task changes, met at another site, which is the task's scope: a D-row, at *Clarify* or with its size at the hand-back, to widen the plan to it, to leave it a `Watch:` line where nothing has met the rule there, or to file it where something has. **A likely change:** no known answer already settles it with nothing to change, such as a fix the repository already makes; one that does is a `Taken:` line naming the answer. A plan-round `split` is planned work cut in two, not a follow-up.
-- **What has no seen instance is a `Watch:` line, not an issue,** a `Drift-prone` finding always among it: `Watch: <what> — <its trigger>` under the plan's *Decisions* (for an untracked task, in its hand-back) and in the commit body, where `git log --grep` and a comprehensive review's Phase 0 find it (`review_machinery.md` § Phase 0 reads). *Taken alone* carries it, and the maintainer's naming files it, outside the bar: at *Clarify*, before any code; at the hand-back, by *Complete*, with no new brief; its reference, marked named, takes the line's place. A `Watch:` line for a gap in a kit guide stays in the repository's plan and history, for the maintainer to name. An issue filed since the plan's acceptance that fails the bar, one the maintainer named aside, is closed as not planned, with a comment naming what replaces it — its `Watch:` line, the D-row or the known answer — and its record in the plan rewritten to match.
+- **What has no seen instance is a `Watch:` line, not an issue,** a `Drift-prone` finding always among it: `Watch: <the risk: what breaks, and how it shows> — <its trigger>`, the risk in plain words ("Y breaks silently", its cause left to the trigger), never the fields of a data shape, under the plan's *Decisions* (for an untracked task, in its hand-back) and in the commit body, where `git log --grep` and a comprehensive review's Phase 0 find it (`review_machinery.md` § Phase 0 reads). *Taken alone* carries it, and the maintainer's naming files it, outside the bar: at *Clarify*, before any code; at the hand-back, by *Complete*, with no new brief; its reference, marked named, takes the line's place. A `Watch:` line for a gap in a kit guide stays in the repository's plan and history, for the maintainer to name. An issue filed since the plan's acceptance that fails the bar, one the maintainer named aside, is closed as not planned, with a comment naming what replaces it — its `Watch:` line, the D-row or the known answer — and its record in the plan rewritten to match.
 - A gap the task finds in one of the kit's guides, or a pattern reusable across projects, that passes the bar is filed when it is found, by `lifecycle gap`, its body in a file outside the tree: what the guide says, what the task met, and the gap, in the kit's words and naming no issue or surface of the repository. It lands on the kit for one who can write to it, and otherwise in the repository, labelled `kit-gap`, where the kit's maintainer lifts it onto the kit if they can read the repository; there it takes none of the repository's own rules for an issue (its templates, its labels, a card on its board). It is carried in *Taken alone* as a filed follow-up, named as `lifecycle gap` printed it. One whose filing `lifecycle gap` cannot confirm is looked for in that repository's issues before it is filed again. Where no issue can be filed, its title and body go into the plan's *Decisions* as `Not filed: <title> — <why>`, the body below it, and *Taken alone* carries it; a later `lifecycle gap` that files it replaces the entry with its reference, and an untracked task carries it in its hand-back. An exploitable finding in a kit guide is no gap to file: it goes by [review_machinery.md § The private route](review_machinery.md#the-private-route), never by `lifecycle gap`. The guide changes by the kit's own task, never in the repository.
 - Every section of the plan and of a packet is filled or says `none`; a brief leaves an empty block out (*Brief rules*). An empty *Decisions* is a claim too, and the reviewer checks it.
 - `NOT RUN` is honest: a gate that did not run in this session after the last edit runs before the packet or the brief is rendered, and what still could not run is listed with its reason.

@@ -17,7 +17,7 @@ This is the *Complete* phase of AGENTS.md § Task workflow. It runs only on the 
 
 ## 1. Before anything lands
 
-1. **The hand-back's answers,** by `task_review.md` § The work round, step 5: each answer to the hand-back's D-rows given with this go-ahead or before it; each D-row left unanswered, which takes its recommendation, written as taken at the go-ahead; each choice taken alone the maintainer vetoed. The gate runs again after them. A pick bigger than the size the brief stated, or any veto, stops the batch: render the brief again by the handback skill and wait for a new go-ahead. A `Watch:` line the maintainer named is no veto: § 2 files it.
+1. **The hand-back's answers,** by `task_review.md` § The work round, step 5: each answer to the hand-back's D-rows given with this go-ahead or before it; each D-row left unanswered, which takes its recommendation, written as taken at the go-ahead; each choice taken alone the maintainer vetoed. The gate runs again after them. A pick bigger than the size its option stated, or any veto, stops the batch: render the brief again by the handback skill and wait for a new go-ahead. A `Watch:` line the maintainer named is no veto: § 2 files it.
 2. **The gate** — `gate.commands`, else AGENTS.md § Commands' lint and tests — passed in this session after the last edit; if not, run it now. A red gate stops the batch. A repository with no gate says so in the report.
 3. `git status --short` lists only this task's files. Anything else is someone's in-progress work: leave it out and name it in the report.
 

@@ -59,7 +59,7 @@ The packet follows § Hand-off packet's shape and rules.
 One reviewer per lens, all at once, in the background, each with the packet carrying its lens on the `Lens:` line as its whole task; the reviewer definition carries the rules. The first of these the agent can do:
 
 1. **The kit's reviewer agent:** in Claude Code, one `Agent` call per lens in one message, `subagent_type: "lifecycle:reviewer"`, `run_in_background: true`. The kit's hook holds it to commands that read.
-2. **A general-purpose subagent** per lens, whose task is the definition — `agents/reviewer.md` in the folder `lifecycle where` prints, without its front matter — above the packet. Use it where the first is not listed: a plugin installed in this session is not always picked up at once. No guard fires for it: the brief marks that lens `(no guard)`.
+2. **A general-purpose subagent** per lens, whose task is the definition — `agents/reviewer.md` in the folder `lifecycle where` prints, without its front matter — above the packet. Use it where the first is not listed: a plugin installed in this session is not always picked up at once. No guard fires for it: the brief marks that lens `(read-only guard off)`, and the plan round's mark `(no guard)`.
 3. **A fresh session per lens the maintainer opens:** the definition and that lens's packet in one file in a scratch folder outside the tree, which the maintainer pastes into a new session, pasting the return back. The brief marks that lens `(pasted)`.
 
 The clarify skill launches its one plan reviewer by this list too.
