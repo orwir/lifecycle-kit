@@ -8,7 +8,7 @@ Style: one claim per entry, at most 120 characters before the `(#N)`, what a rep
 
 ---
 
-## Unreleased
+## [0.19.1] — 2026-11-25
 
 ### Changed
 - Both briefs end with *For you*, the one place they ask, and their first line says whether anything waits (#77)
